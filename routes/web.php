@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\BookController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
@@ -25,3 +26,18 @@ Route::middleware('auth')->group(function () {
 });
 
 require __DIR__.'/auth.php';
+
+Route::middleware(['auth', 'verified'])
+    ->controller(BookController::class)
+    ->prefix('admin/books')
+    ->name('admin.books.')
+    ->group(function () {
+        // TODO: add spatie laravel permission
+        Route::get('/', 'index')->name('index');
+        Route::get('/create', 'create')->name('create');
+        Route::post('/', 'store')->name('store');
+        Route::get('/{book}/edit', 'edit')->name('edit');
+        Route::post('/{book}', 'update')->name('update');
+        Route::delete('/{book}', 'destroy')->name('destroy');
+        Route::get('/{book}', 'show')->name('show');
+    });
