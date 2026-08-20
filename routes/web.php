@@ -3,6 +3,7 @@
 use App\Http\Controllers\BookController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Foundation\Application;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -15,8 +16,8 @@ Route::get('/', function () {
     ]);
 });
 
-Route::get('/dashboard', function () {
-    return Inertia::render('Dashboard');
+Route::get('/dashboard', function (Request $request) {
+    return redirect()->route('admin.dashboard', $request->query());
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {
@@ -28,16 +29,24 @@ Route::middleware('auth')->group(function () {
 require __DIR__.'/auth.php';
 
 Route::middleware(['auth', 'verified'])
-    ->controller(BookController::class)
-    ->prefix('admin/books')
-    ->name('admin.books.')
+    ->prefix('admin')
+    ->name('admin.')
     ->group(function () {
-        // TODO: add spatie laravel permission
-        Route::get('/', 'index')->name('index');
-        Route::get('/create', 'create')->name('create');
-        Route::post('/', 'store')->name('store');
-        Route::get('/{book}/edit', 'edit')->name('edit');
-        Route::post('/{book}', 'update')->name('update');
-        Route::delete('/{book}', 'destroy')->name('destroy');
-        Route::get('/{book}', 'show')->name('show');
+        Route::get('/', function () {
+            return Inertia::render('Admin/Dashboard');
+        })->name('dashboard');
+
+        Route::controller(BookController::class)
+            ->prefix('books')
+            ->name('books.')
+            ->group(function () {
+                // TODO: add spatie laravel permission
+                Route::get('/', 'index')->name('index');
+                Route::get('/create', 'create')->name('create');
+                Route::post('/', 'store')->name('store');
+                Route::get('/{book}/edit', 'edit')->name('edit');
+                Route::post('/{book}', 'update')->name('update');
+                Route::delete('/{book}', 'destroy')->name('destroy');
+                Route::get('/{book}', 'show')->name('show');
+            });
     });

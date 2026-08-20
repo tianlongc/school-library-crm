@@ -1,6 +1,6 @@
 import { Transition } from '@headlessui/react';
 import { Link } from '@inertiajs/react';
-import { createContext, useContext, useState } from 'react';
+import { cloneElement, createContext, useContext, useState } from 'react';
 
 const DropDownContext = createContext();
 
@@ -20,16 +20,27 @@ const Dropdown = ({ children }) => {
 
 const Trigger = ({ children }) => {
     const { open, setOpen, toggleOpen } = useContext(DropDownContext);
+    const trigger = cloneElement(children, {
+        'aria-expanded': open,
+        'aria-haspopup': 'menu',
+        onClick: (event) => {
+            children.props.onClick?.(event);
+            toggleOpen();
+        },
+    });
 
     return (
         <>
-            <div onClick={toggleOpen}>{children}</div>
+            {trigger}
 
             {open && (
-                <div
+                <button
+                    type="button"
                     className="fixed inset-0 z-40"
                     onClick={() => setOpen(false)}
-                ></div>
+                    tabIndex="-1"
+                    aria-label="Close menu"
+                />
             )}
         </>
     );
@@ -70,7 +81,7 @@ const Content = ({
             >
                 <div
                     className={`absolute z-50 mt-2 rounded-md shadow-lg ${alignmentClasses} ${widthClasses}`}
-                    onClick={() => setOpen(false)}
+                    role="menu"
                 >
                     <div
                         className={
@@ -86,12 +97,19 @@ const Content = ({
     );
 };
 
-const DropdownLink = ({ className = '', children, ...props }) => {
+const DropdownLink = ({ className = '', children, onClick, ...props }) => {
+    const { setOpen } = useContext(DropDownContext);
+
     return (
         <Link
             {...props}
+            role="menuitem"
+            onClick={(event) => {
+                onClick?.(event);
+                setOpen(false);
+            }}
             className={
-                'block w-full px-4 py-2 text-start text-sm leading-5 text-gray-700 transition duration-150 ease-in-out hover:bg-gray-100 focus:bg-gray-100 focus:outline-none ' +
+                'block w-full px-4 py-2 text-start text-sm leading-5 text-slate-700 transition-colors duration-150 hover:bg-slate-100 hover:text-slate-950 focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-teal-700 ' +
                 className
             }
         >
