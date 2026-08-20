@@ -1,5 +1,5 @@
-import PageHeader from '@/Components/Admin/PageHeader';
-import AdminLayout from '@/Layouts/AdminLayout';
+import PageHeader from '@/Components/PageHeader';
+import StaffLayout from '@/Layouts/StaffLayout';
 import { jsonRequest } from '@/Utils/jsonRequest';
 import { getRequestErrorMessage } from '@/Utils/requestErrorMessage';
 import { Head, Link, router } from '@inertiajs/react';
@@ -13,7 +13,7 @@ export default function Index({ books, filters }) {
 
     const submitSearch = (event) => {
         event.preventDefault();
-        router.get(route('admin.books.index'), search.trim() ? { search: search.trim() } : {}, { preserveState: true, replace: true });
+        router.get(route('staff.books.index'), search.trim() ? { search: search.trim() } : {}, { preserveState: true, replace: true });
     };
 
     const confirmDelete = (book) => {
@@ -26,7 +26,7 @@ export default function Index({ books, filters }) {
             async onOk() {
                 try {
                     await jsonRequest({
-                        url: route('admin.books.destroy', book.id),
+                        url: route('staff.books.destroy', book.id),
                         method: 'DELETE',
                     });
 
@@ -47,13 +47,13 @@ export default function Index({ books, filters }) {
     };
 
     return (
-        <AdminLayout title="Books">
+        <StaffLayout title="Books">
             <Head title="Books" />
             <PageHeader
                 eyebrow="Catalogue"
                 title="Books"
                 description="Manage books available in the school library."
-                actions={<Link href={route('admin.books.create')} className="ui-button-primary"><span aria-hidden="true" className="text-lg leading-none">+</span>Add book</Link>}
+                actions={<Link href={route('staff.books.create')} className="ui-button-primary"><span aria-hidden="true" className="text-lg leading-none">+</span>Add book</Link>}
             />
 
             <section className="ui-panel" aria-labelledby="book-catalogue">
@@ -78,6 +78,6 @@ export default function Index({ books, filters }) {
                 />
             </section>
 
-        </AdminLayout>
+        </StaffLayout>
     );
 }

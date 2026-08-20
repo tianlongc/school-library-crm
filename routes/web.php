@@ -17,8 +17,16 @@ Route::get('/', function () {
 });
 
 Route::get('/dashboard', function (Request $request) {
-    return redirect()->route('admin.dashboard', $request->query());
-})->middleware(['auth', 'verified'])->name('dashboard');
+    if ($request->user()->can('admin.dashboard.view')) {
+        return redirect()->route('admin.dashboard', $request->query());
+    }
+
+    if ($request->user()->can('workspace.access')) {
+        return redirect()->route('staff.dashboard', $request->query());
+    }
+
+    return redirect()->route('student.dashboard', $request->query());
+})->middleware(['auth'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -28,25 +36,44 @@ Route::middleware('auth')->group(function () {
 
 require __DIR__.'/auth.php';
 
-Route::middleware(['auth', 'verified'])
+// Student
+Route::middleware(['auth', 'can:student.dashboard.view'])
+    ->prefix('student')
+    ->name('student.')
+    ->group(function () {
+        Route::get('/', function () {
+            return Inertia::render('Student/Dashboard');
+        })->name('dashboard');
+    });
+// Admin
+Route::middleware(['auth', 'can:admin.dashboard.view'])
     ->prefix('admin')
     ->name('admin.')
     ->group(function () {
         Route::get('/', function () {
             return Inertia::render('Admin/Dashboard');
         })->name('dashboard');
+    });
+
+// Staff: Librarian + Admin
+Route::middleware(['auth', 'can:workspace.access'])
+    ->prefix('staff')
+    ->name('staff.')
+    ->group(function () {
+        Route::get('/', function () {
+            return Inertia::render('Staff/Dashboard');
+        })->name('dashboard');
 
         Route::controller(BookController::class)
             ->prefix('books')
             ->name('books.')
             ->group(function () {
-                // TODO: add spatie laravel permission
-                Route::get('/', 'index')->name('index');
-                Route::get('/create', 'create')->name('create');
-                Route::post('/', 'store')->name('store');
-                Route::get('/{book}/edit', 'edit')->name('edit');
-                Route::post('/{book}', 'update')->name('update');
-                Route::delete('/{book}', 'destroy')->name('destroy');
-                Route::get('/{book}', 'show')->name('show');
+                Route::get('/', 'index')->middleware('can:books.view')->name('index');
+                Route::get('/create', 'create')->middleware('can:books.create')->name('create');
+                Route::post('/', 'store')->middleware('can:books.create')->name('store');
+                Route::get('/{book}/edit', 'edit')->middleware('can:books.update')->name('edit');
+                Route::post('/{book}', 'update')->middleware('can:books.update')->name('update');
+                Route::delete('/{book}', 'destroy')->middleware('can:books.delete')->name('destroy');
+                Route::get('/{book}', 'show')->middleware('can:books.view')->name('show');
             });
     });
