@@ -22,7 +22,10 @@ export default function ResetPassword({ token, email }) {
     };
 
     return (
-        <GuestLayout>
+        <GuestLayout
+            title="Choose a new password"
+            description="Use a strong password that you do not reuse elsewhere."
+        >
             <Head title="Reset Password" />
 
             <form onSubmit={submit}>
@@ -36,6 +39,7 @@ export default function ResetPassword({ token, email }) {
                         value={data.email}
                         className="mt-1 block w-full"
                         autoComplete="username"
+                        spellCheck="false"
                         onChange={(e) => setData('email', e.target.value)}
                     />
 
@@ -83,8 +87,8 @@ export default function ResetPassword({ token, email }) {
                     />
                 </div>
 
-                <div className="mt-4 flex items-center justify-end">
-                    <PrimaryButton className="ms-4" disabled={processing}>
+                <div className="mt-6 flex items-center justify-end">
+                    <PrimaryButton disabled={processing}>
                         Reset Password
                     </PrimaryButton>
                 </div>

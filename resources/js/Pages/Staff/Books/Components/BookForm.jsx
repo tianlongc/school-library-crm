@@ -60,7 +60,7 @@ export default function BookForm({ book = null, submitLabel, url, onSuccess }) {
             </div>
 
             <div className="flex flex-col-reverse gap-3 border-t border-slate-200 bg-slate-50 px-5 py-4 sm:flex-row sm:justify-end sm:px-6">
-                <Link href={route('admin.books.index')} className="ui-button-secondary">Cancel</Link>
+                <Link href={route('staff.books.index')} className="ui-button-secondary">Cancel</Link>
                 <button type="submit" disabled={submitting} className="ui-button-primary disabled:cursor-wait">
                     {submitting ? 'Saving…' : submitLabel}
                 </button>

@@ -47,13 +47,12 @@ export default function UpdatePasswordForm({ className = '' }) {
     return (
         <section className={className}>
             <header>
-                <h2 className="text-lg font-medium text-gray-900">
-                    Update Password
+                <h2 className="text-lg font-semibold tracking-tight text-slate-950">
+                    Update password
                 </h2>
 
-                <p className="mt-1 text-sm text-gray-600">
-                    Ensure your account is using a long, random password to stay
-                    secure.
+                <p className="mt-1.5 text-sm leading-6 text-slate-600">
+                    Use a long, unique password to keep your account secure.
                 </p>
             </header>
 
@@ -66,6 +65,7 @@ export default function UpdatePasswordForm({ className = '' }) {
 
                     <TextInput
                         id="current_password"
+                        name="current_password"
                         ref={currentPasswordInput}
                         value={data.current_password}
                         onChange={(e) =>
@@ -87,6 +87,7 @@ export default function UpdatePasswordForm({ className = '' }) {
 
                     <TextInput
                         id="password"
+                        name="password"
                         ref={passwordInput}
                         value={data.password}
                         onChange={(e) => setData('password', e.target.value)}
@@ -106,6 +107,7 @@ export default function UpdatePasswordForm({ className = '' }) {
 
                     <TextInput
                         id="password_confirmation"
+                        name="password_confirmation"
                         value={data.password_confirmation}
                         onChange={(e) =>
                             setData('password_confirmation', e.target.value)
@@ -131,7 +133,7 @@ export default function UpdatePasswordForm({ className = '' }) {
                         leave="transition ease-in-out"
                         leaveTo="opacity-0"
                     >
-                        <p className="text-sm text-gray-600">
+                        <p className="text-sm font-medium text-emerald-700" role="status" aria-live="polite">
                             Saved.
                         </p>
                     </Transition>

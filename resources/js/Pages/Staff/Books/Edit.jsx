@@ -1,5 +1,5 @@
-import PageHeader from '@/Components/Admin/PageHeader';
-import AdminLayout from '@/Layouts/AdminLayout';
+import PageHeader from '@/Components/PageHeader';
+import StaffLayout from '@/Layouts/StaffLayout';
 import { Head, router } from '@inertiajs/react';
 import { App as AntdApp } from 'antd';
 import BookForm from './Components/BookForm';
@@ -8,14 +8,14 @@ export default function Edit({ book }) {
     const { message } = AntdApp.useApp();
 
     return (
-        <AdminLayout title="Edit book">
+        <StaffLayout title="Edit book">
             <Head title={`Edit ${book.title}`} />
             <PageHeader
                 title="Edit book"
                 description="Update this book’s catalogue information and copy count."
                 breadcrumbs={[
-                    { label: 'Books', href: route('admin.books.index') },
-                    { label: book.title, href: route('admin.books.show', book.id) },
+                    { label: 'Books', href: route('staff.books.index') },
+                    { label: book.title, href: route('staff.books.show', book.id) },
                     { label: 'Edit' },
                 ]}
             />
@@ -24,13 +24,13 @@ export default function Edit({ book }) {
                 <BookForm
                     book={book}
                     submitLabel="Save changes"
-                    url={route('admin.books.update', book.id)}
+                    url={route('staff.books.update', book.id)}
                     onSuccess={() => {
                         message.success('Book updated.');
-                        router.get(route('admin.books.show', book.id));
+                        router.get(route('staff.books.show', book.id));
                     }}
                 />
             </div>
-        </AdminLayout>
+        </StaffLayout>
     );
 }

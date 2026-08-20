@@ -1,5 +1,5 @@
-import PageHeader from '@/Components/Admin/PageHeader';
-import AdminLayout from '@/Layouts/AdminLayout';
+import PageHeader from '@/Components/PageHeader';
+import StaffLayout from '@/Layouts/StaffLayout';
 import { Head, Link } from '@inertiajs/react';
 
 function formatDate(value) {
@@ -27,19 +27,19 @@ function DetailItem({ label, children }) {
 
 export default function Show({ book }) {
     return (
-        <AdminLayout title={book.title}>
+        <StaffLayout title={book.title}>
             <Head title={book.title} />
             <PageHeader
                 title={book.title}
                 description={`Catalogue record by ${book.author}`}
                 breadcrumbs={[
-                    { label: 'Books', href: route('admin.books.index') },
+                    { label: 'Books', href: route('staff.books.index') },
                     { label: book.title },
                 ]}
                 actions={
                     <>
-                        <Link href={route('admin.books.index')} className="ui-button-secondary">Back to books</Link>
-                        <Link href={route('admin.books.edit', book.id)} className="ui-button-primary">Edit book</Link>
+                        <Link href={route('staff.books.index')} className="ui-button-secondary">Back to books</Link>
+                        <Link href={route('staff.books.edit', book.id)} className="ui-button-primary">Edit book</Link>
                     </>
                 }
             />
@@ -71,6 +71,6 @@ export default function Show({ book }) {
                     </section>
                 </div>
             </div>
-        </AdminLayout>
+        </StaffLayout>
     );
 }
