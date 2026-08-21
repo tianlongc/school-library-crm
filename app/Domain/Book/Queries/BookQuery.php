@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Http\Queries;
+namespace App\Domain\Book\Queries;
 
-use App\Models\Book;
+use App\Domain\Book\Models\Book;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 

@@ -1,6 +1,6 @@
 <?php
 
-use App\Models\Book;
+use App\Domain\Book\Models\Book;
 use App\Models\User;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Inertia\Testing\AssertableInertia as Assert;

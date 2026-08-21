@@ -2,11 +2,14 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Queries\BookQuery;
+use App\Domain\Book\Actions\CreateBookAction;
+use App\Domain\Book\Actions\DeleteBookAction;
+use App\Domain\Book\Actions\UpdateBookAction;
+use App\Domain\Book\Models\Book;
+use App\Domain\Book\Queries\BookQuery;
 use App\Http\Requests\StoreBookRequest;
 use App\Http\Requests\UpdateBookRequest;
 use App\Http\Resources\BookResource;
-use App\Models\Book;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -38,15 +41,17 @@ class BookController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(StoreBookRequest $request): JsonResponse
+    public function store(StoreBookRequest $request, CreateBookAction $action): JsonResponse
     {
-        $book = Book::create([
-            'title' => $request->title,
-            'author' => $request->author,
-            'description' => $request->description,
-            'isbn' => $request->isbn,
-            'total_copies' => $request->total_copies,
-        ]);
+        $book = $action->execute(
+            attributes: [
+                'title' => $request->input('title'),
+                'author' => $request->input('author'),
+                'description' => $request->input('description'),
+                'isbn' => $request->input('isbn'),
+                'total_copies' => $request->input('total_copies'),
+            ]
+        );
 
         return response()->json([
             'message' => 'Book created successfully',
@@ -77,15 +82,18 @@ class BookController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(UpdateBookRequest $request, Book $book): JsonResponse
+    public function update(UpdateBookRequest $request, Book $book, UpdateBookAction $action): JsonResponse
     {
-        $book->updateOrFail([
-            'title' => $request->title,
-            'author' => $request->author,
-            'description' => $request->description,
-            'isbn' => $request->isbn,
-            'total_copies' => $request->total_copies,
-        ]);
+        $book = $action->execute(
+            book: $book,
+            attributes: [
+                'title' => $request->input('title'),
+                'author' => $request->input('author'),
+                'isbn' => $request->input('isbn'),
+                'description' => $request->input('description'),
+                'total_copies' => $request->input('total_copies'),
+            ],
+        );
 
         return response()->json([
             'message' => 'Book updated successfully',
@@ -96,9 +104,9 @@ class BookController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Book $book): JsonResponse
+    public function destroy(Book $book, DeleteBookAction $action): JsonResponse
     {
-        $book->deleteOrFail();
+        $action->execute(book: $book);
 
         return response()->json([
             'message' => 'Book deleted successfully',
