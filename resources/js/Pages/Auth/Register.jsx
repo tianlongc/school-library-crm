@@ -22,7 +22,10 @@ export default function Register() {
     };
 
     return (
-        <GuestLayout>
+        <GuestLayout
+            title="Create a student account"
+            description="Public registration creates a student account. Library roles are assigned separately by an administrator."
+        >
             <Head title="Register" />
 
             <form onSubmit={submit}>
@@ -53,6 +56,7 @@ export default function Register() {
                         value={data.email}
                         className="mt-1 block w-full"
                         autoComplete="username"
+                        spellCheck="false"
                         onChange={(e) => setData('email', e.target.value)}
                         required
                     />
@@ -102,16 +106,17 @@ export default function Register() {
                     />
                 </div>
 
-                <div className="mt-4 flex items-center justify-end">
+                <div className="mt-6 flex flex-wrap items-center justify-between gap-4">
                     <Link
                         href={route('login')}
-                        className="rounded-md text-sm text-gray-600 underline hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                        className="ui-action-link text-sm"
+                        prefetch
                     >
                         Already registered?
                     </Link>
 
-                    <PrimaryButton className="ms-4" disabled={processing}>
-                        Register
+                    <PrimaryButton disabled={processing}>
+                        Create account
                     </PrimaryButton>
                 </div>
             </form>

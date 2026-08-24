@@ -1,5 +1,5 @@
-import PageHeader from '@/Components/Admin/PageHeader';
-import AdminLayout from '@/Layouts/AdminLayout';
+import PageHeader from '@/Components/PageHeader';
+import StaffLayout from '@/Layouts/StaffLayout';
 import { Head, router } from '@inertiajs/react';
 import { App as AntdApp } from 'antd';
 import BookForm from './Components/BookForm';
@@ -8,13 +8,13 @@ export default function Create() {
     const { message } = AntdApp.useApp();
 
     return (
-        <AdminLayout title="Add book">
+        <StaffLayout title="Add book">
             <Head title="Add Book" />
             <PageHeader
                 title="Add book"
                 description="Create a catalogue record for a book held by the school library."
                 breadcrumbs={[
-                    { label: 'Books', href: route('admin.books.index') },
+                    { label: 'Books', href: route('staff.books.index') },
                     { label: 'Add book' },
                 ]}
             />
@@ -22,13 +22,13 @@ export default function Create() {
             <div className="max-w-3xl">
                 <BookForm
                     submitLabel="Save book"
-                    url={route('admin.books.store')}
+                    url={route('staff.books.store')}
                     onSuccess={(payload) => {
                         message.success("Book created.");
-                        router.get(route('admin.books.show', payload.book.id));
+                        router.get(route('staff.books.show', payload.book.id));
                     }}
                 />
             </div>
-        </AdminLayout>
+        </StaffLayout>
     );
 }

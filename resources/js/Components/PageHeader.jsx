@@ -5,11 +5,26 @@ export default function PageHeader({ title, description, eyebrow, breadcrumbs = 
         <div className="ui-page-header">
             <div className="min-w-0">
                 {breadcrumbs.length > 0 && (
-                    <nav className="mb-3 flex flex-wrap items-center gap-2 text-xs font-medium text-slate-500" aria-label="Breadcrumb">
+                    <nav
+                        className="mb-3 flex flex-wrap items-center gap-2 text-xs font-medium text-slate-500"
+                        aria-label="Breadcrumb"
+                    >
                         {breadcrumbs.map((item, index) => (
                             <span key={item.label} className="flex items-center gap-2">
-                                {index > 0 && <span aria-hidden="true" className="text-slate-300">/</span>}
-                                {item.href ? <Link href={item.href} className="ui-action-link">{item.label}</Link> : <span className="max-w-64 truncate" aria-current="page">{item.label}</span>}
+                                {index > 0 && (
+                                    <span aria-hidden="true" className="text-slate-300">
+                                        /
+                                    </span>
+                                )}
+                                {item.href ? (
+                                    <Link href={item.href} className="ui-action-link">
+                                        {item.label}
+                                    </Link>
+                                ) : (
+                                    <span className="max-w-64 truncate" aria-current="page">
+                                        {item.label}
+                                    </span>
+                                )}
                             </span>
                         ))}
                     </nav>

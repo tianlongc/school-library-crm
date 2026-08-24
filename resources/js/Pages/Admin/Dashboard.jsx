@@ -1,68 +1,91 @@
-import PageHeader from '@/Components/Admin/PageHeader';
+import PageHeader from '@/Components/PageHeader';
 import AdminLayout from '@/Layouts/AdminLayout';
 import { Head, Link } from '@inertiajs/react';
 
-const plannedWorkflows = [
-    { name: 'Members', detail: 'Student records & borrowing eligibility' },
-    { name: 'Circulation', detail: 'Issue, renew & return books' },
-    { name: 'Reporting', detail: 'Availability, overdue & activity insights' },
+const accessSurfaces = [
+    {
+        name: 'Student',
+        status: 'Live',
+        description: 'A focused account home. Catalogue and borrowing services remain planned.',
+    },
+    {
+        name: 'Librarian',
+        status: 'Live',
+        description: 'The operational workspace for maintaining the Books catalogue.',
+    },
+    {
+        name: 'Administrator',
+        status: 'Live',
+        description: 'This oversight surface, with access to current Staff operations.',
+    },
 ];
+
+const plannedModules = ['User and role management', 'Circulation reporting', 'Library configuration'];
 
 export default function Dashboard() {
     return (
-        <AdminLayout title="Dashboard">
-            <Head title="Dashboard" />
+        <AdminLayout title="Overview">
+            <Head title="Admin dashboard" />
 
-            <PageHeader eyebrow="Workspace" title="Library dashboard" description="Start with the live catalogue today. Member and circulation workflows will join this workspace as they are built." />
+            <PageHeader
+                eyebrow="Administration"
+                title="Workspace overview"
+                description="Review the current role boundaries and move into Staff operations for live catalogue work."
+                actions={(
+                    <Link href={route('staff.dashboard')} className="ui-button-primary" prefetch>
+                        Open Staff operations
+                        <span aria-hidden="true">&rarr;</span>
+                    </Link>
+                )}
+            />
 
-            <div className="grid gap-6">
-                <section className="ui-panel" aria-labelledby="catalogue-workspace">
-                    <div className="ui-panel-header">
-                        <div>
-                            <h2 id="catalogue-workspace" className="ui-panel-title">Catalogue workspace</h2>
-                            <p className="ui-panel-description">The active part of your library system</p>
-                        </div>
-                        <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700 ring-1 ring-inset ring-emerald-600/20">
-                            <span className="h-1.5 w-1.5 rounded-full bg-emerald-600" aria-hidden="true" />
-                            Active
-                        </span>
+            <section className="mt-8" aria-labelledby="access-ledger-title">
+                <div className="flex flex-wrap items-end justify-between gap-4">
+                    <div>
+                        <p className="ui-page-eyebrow">Access ledger</p>
+                        <h2 id="access-ledger-title" className="font-serif text-2xl font-semibold tracking-tight text-[var(--library-ink)]">
+                            Current workspace boundaries
+                        </h2>
                     </div>
+                    <p className="max-w-md text-sm leading-6 text-slate-500">
+                        Permissions protect the routes; these cards explain the experience each role receives.
+                    </p>
+                </div>
 
-                    <div className="grid min-h-64 gap-8 p-6 sm:p-8 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
-                        <div className="max-w-2xl">
-                            <div className="library-mark mb-5">
-                                <svg aria-hidden="true" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8"><path strokeLinecap="round" strokeLinejoin="round" d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z" /></svg>
+                <div className="mt-6 grid gap-px overflow-hidden rounded-2xl border border-[var(--library-line)] bg-[var(--library-line)] lg:grid-cols-3">
+                    {accessSurfaces.map((surface, index) => (
+                        <article key={surface.name} className="relative bg-white p-6 sm:p-7">
+                            <div className="flex items-center justify-between gap-4">
+                                <span className="font-mono text-xs font-bold text-amber-700">0{index + 1}</span>
+                                <span className="ui-badge ui-badge-success">{surface.status}</span>
                             </div>
-                            <h3 className="text-balance text-xl font-semibold tracking-tight text-slate-950">Keep every title findable and ready for circulation.</h3>
-                            <p className="mt-2 text-pretty text-sm leading-6 text-slate-600">Create catalogue records, search by title, author or ISBN, and maintain copy counts from one focused workspace.</p>
-                        </div>
-                        <div className="flex flex-col gap-2 sm:flex-row">
-                            <Link href={route('admin.books.index')} className="ui-button-secondary">Browse books</Link>
-                            <Link href={route('admin.books.create')} className="ui-button-primary">Add book</Link>
-                        </div>
-                    </div>
-                </section>
+                            <h3 className="mt-10 font-serif text-2xl font-semibold text-[var(--library-ink)]">{surface.name}</h3>
+                            <p className="mt-3 text-sm leading-6 text-slate-600">{surface.description}</p>
+                        </article>
+                    ))}
+                </div>
+            </section>
 
-                <aside className="ui-panel" aria-labelledby="planned-workflows">
-                    <div className="ui-panel-header">
-                        <div>
-                            <h2 id="planned-workflows" className="ui-panel-title">Next workflows</h2>
-                            <p className="ui-panel-description">Planned additions to this workspace</p>
-                        </div>
-                    </div>
-                    <ol className="grid divide-y divide-slate-100 px-5 sm:grid-cols-3 sm:divide-x sm:divide-y-0 sm:px-6">
-                        {plannedWorkflows.map((workflow, index) => (
-                            <li key={workflow.name} className="flex gap-3 py-4 sm:px-5 sm:first:pl-0 sm:last:pr-0">
-                                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-slate-100 text-xs font-semibold tabular-nums text-slate-600">{index + 1}</span>
-                                <div>
-                                    <p className="text-sm font-semibold text-slate-800">{workflow.name}</p>
-                                    <p className="mt-0.5 text-xs leading-5 text-slate-500">{workflow.detail}</p>
-                                </div>
-                            </li>
-                        ))}
-                    </ol>
-                </aside>
-            </div>
+            <section className="mt-8 grid gap-6 rounded-2xl border border-[var(--library-line)] bg-white p-6 shadow-sm lg:grid-cols-[minmax(0,0.75fr)_minmax(0,1.25fr)] lg:p-8" aria-labelledby="admin-roadmap-title">
+                <div>
+                    <p className="ui-page-eyebrow">Backend required</p>
+                    <h2 id="admin-roadmap-title" className="font-serif text-2xl font-semibold tracking-tight text-[var(--library-ink)]">
+                        Next administration modules
+                    </h2>
+                    <p className="mt-2 max-w-md text-sm leading-6 text-slate-600">
+                        These remain visible as a roadmap, not clickable controls, until their routes and data contracts exist.
+                    </p>
+                </div>
+
+                <ul className="grid gap-3">
+                    {plannedModules.map((module) => (
+                        <li key={module} className="flex items-center justify-between gap-4 rounded-xl border border-slate-200 bg-slate-50/70 px-4 py-3.5">
+                            <span className="text-sm font-semibold text-slate-700">{module}</span>
+                            <span className="ui-planned-chip">Planned</span>
+                        </li>
+                    ))}
+                </ul>
+            </section>
         </AdminLayout>
     );
 }

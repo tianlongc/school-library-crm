@@ -1,39 +1,59 @@
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head } from '@inertiajs/react';
+import PageHeader from '@/Components/PageHeader';
+import AdminLayout from '@/Layouts/AdminLayout';
+import StaffLayout from '@/Layouts/StaffLayout';
+import StudentLayout from '@/Layouts/StudentLayout';
+import { Head, usePage } from '@inertiajs/react';
 import DeleteUserForm from './Partials/DeleteUserForm';
 import UpdatePasswordForm from './Partials/UpdatePasswordForm';
 import UpdateProfileInformationForm from './Partials/UpdateProfileInformationForm';
 
+function AccountLayout({ children }) {
+    const { auth } = usePage().props;
+
+    if (auth.can.viewAdminDashboard) {
+        return <AdminLayout title="Account settings">{children}</AdminLayout>;
+    }
+
+    if (auth.can.accessStaffWorkspace) {
+        return <StaffLayout title="Account settings">{children}</StaffLayout>;
+    }
+
+    return <StudentLayout>{children}</StudentLayout>;
+}
+
 export default function Edit({ mustVerifyEmail, status }) {
     return (
-        <AuthenticatedLayout
-            header={
-                <h2 className="text-xl font-semibold leading-tight text-gray-800">
-                    Profile
-                </h2>
-            }
-        >
-            <Head title="Profile" />
+        <AccountLayout>
+            <Head title="Account settings" />
 
-            <div className="py-12">
-                <div className="mx-auto max-w-7xl space-y-6 sm:px-6 lg:px-8">
-                    <div className="bg-white p-4 shadow sm:rounded-lg sm:p-8">
+            <PageHeader
+                eyebrow="Account"
+                title="Account settings"
+                description="Keep your profile information and sign-in credentials up to date."
+            />
+
+            <div className="grid gap-6 xl:grid-cols-2">
+                <section className="ui-panel p-5 sm:p-7">
+                    <div className="max-w-2xl">
                         <UpdateProfileInformationForm
                             mustVerifyEmail={mustVerifyEmail}
                             status={status}
-                            className="max-w-xl"
                         />
                     </div>
+                </section>
 
-                    <div className="bg-white p-4 shadow sm:rounded-lg sm:p-8">
-                        <UpdatePasswordForm className="max-w-xl" />
+                <section className="ui-panel p-5 sm:p-7">
+                    <div className="max-w-2xl">
+                        <UpdatePasswordForm />
                     </div>
+                </section>
 
-                    <div className="bg-white p-4 shadow sm:rounded-lg sm:p-8">
-                        <DeleteUserForm className="max-w-xl" />
+                <section className="ui-panel border-rose-200 p-5 sm:p-7 xl:col-span-2">
+                    <div className="max-w-2xl">
+                        <DeleteUserForm />
                     </div>
-                </div>
+                </section>
             </div>
-        </AuthenticatedLayout>
+        </AccountLayout>
     );
 }

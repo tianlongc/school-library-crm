@@ -21,7 +21,7 @@ class BookController extends Controller
     {
         $search = (string) $request->string('search')->trim();
 
-        return Inertia::render('Admin/Books/Index', [
+        return Inertia::render('Staff/Books/Index', [
             'books' => BookResource::collection($query->getBookList($search)),
             'filters' => ['search' => $search],
         ]);
@@ -32,7 +32,7 @@ class BookController extends Controller
      */
     public function create(): Response
     {
-        return Inertia::render('Admin/Books/Create');
+        return Inertia::render('Staff/Books/Create');
     }
 
     /**
@@ -59,7 +59,7 @@ class BookController extends Controller
      */
     public function show(Book $book): Response
     {
-        return Inertia::render('Admin/Books/Show', [
+        return Inertia::render('Staff/Books/Show', [
             'book' => BookResource::make($book)->resolve(),
         ]);
     }
@@ -69,7 +69,7 @@ class BookController extends Controller
      */
     public function edit(Book $book): Response
     {
-        return Inertia::render('Admin/Books/Edit', [
+        return Inertia::render('Staff/Books/Edit', [
             'book' => BookResource::make($book)->resolve(),
         ]);
     }

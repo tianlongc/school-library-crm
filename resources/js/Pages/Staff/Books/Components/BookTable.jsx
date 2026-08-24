@@ -7,7 +7,7 @@ function BookActions({ book, onDelete, className = '' }) {
     return (
         <div className={`flex flex-wrap items-center justify-center gap-1 ${className}`} role="group" aria-label={`Actions for ${book.title}`}>
             <Link
-                href={route('admin.books.show', book.id)}
+                href={route('staff.books.show', book.id)}
                 className="ui-icon-button h-9 w-9 text-slate-600"
                 aria-label={`View ${book.title}`}
                 title="View book"
@@ -15,7 +15,7 @@ function BookActions({ book, onDelete, className = '' }) {
                 <EyeOutlined aria-hidden="true" />
             </Link>
             <Link
-                href={route('admin.books.edit', book.id)}
+                href={route('staff.books.edit', book.id)}
                 className="ui-icon-button h-9 w-9 text-teal-700 hover:bg-teal-50 hover:text-teal-900"
                 aria-label={`Edit ${book.title}`}
                 title="Edit book"
@@ -66,7 +66,7 @@ export default function BookTable({ books, search, meta, links, onDelete }) {
                                 <svg aria-hidden="true" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8"><path strokeLinecap="round" strokeLinejoin="round" d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z" /></svg>
                             </span>
                             <div className="min-w-0 flex-1">
-                                <Link href={route('admin.books.show', book.id)} className="ui-action-link line-clamp-2">{book.title}</Link>
+                                <Link href={route('staff.books.show', book.id)} className="ui-action-link line-clamp-2">{book.title}</Link>
                                 <p className="mt-0.5 truncate text-xs text-slate-500">{book.author}</p>
                             </div>
                         </div>
@@ -98,7 +98,7 @@ export default function BookTable({ books, search, meta, links, onDelete }) {
                                         <span className="flex h-10 w-9 shrink-0 items-center justify-center rounded-md bg-teal-50 text-teal-700">
                                             <svg aria-hidden="true" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8"><path strokeLinecap="round" strokeLinejoin="round" d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z" /></svg>
                                         </span>
-                                        <div className="min-w-0 max-w-xs"><Link href={route('admin.books.show', book.id)} className="ui-action-link block truncate text-sm">{book.title}</Link></div>
+                                        <div className="min-w-0 max-w-xs"><Link href={route('staff.books.show', book.id)} className="ui-action-link block truncate text-sm">{book.title}</Link></div>
                                     </div>
                                 </td>
                                 <td className="whitespace-nowrap px-5 py-4 text-sm text-slate-600">{book.author}</td>

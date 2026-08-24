@@ -1,4 +1,5 @@
 import InputError from '@/Components/InputError';
+import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
 import TextInput from '@/Components/TextInput';
 import GuestLayout from '@/Layouts/GuestLayout';
@@ -16,37 +17,41 @@ export default function ForgotPassword({ status }) {
     };
 
     return (
-        <GuestLayout>
+        <GuestLayout
+            title="Reset your password"
+            description="We will send a secure reset link to your account email."
+        >
             <Head title="Forgot Password" />
 
-            <div className="mb-4 text-sm text-gray-600">
-                Forgot your password? No problem. Just let us know your email
-                address and we will email you a password reset link that will
-                allow you to choose a new one.
-            </div>
-
             {status && (
-                <div className="mb-4 text-sm font-medium text-green-600">
+                <div
+                    className="ui-alert mb-5 border-emerald-200 bg-emerald-50 text-emerald-800"
+                    role="status"
+                >
                     {status}
                 </div>
             )}
 
             <form onSubmit={submit}>
+                <InputLabel htmlFor="email" value="Email" />
+
                 <TextInput
                     id="email"
                     type="email"
                     name="email"
                     value={data.email}
                     className="mt-1 block w-full"
+                    autoComplete="username"
+                    spellCheck="false"
                     isFocused={true}
                     onChange={(e) => setData('email', e.target.value)}
                 />
 
                 <InputError message={errors.email} className="mt-2" />
 
-                <div className="mt-4 flex items-center justify-end">
-                    <PrimaryButton className="ms-4" disabled={processing}>
-                        Email Password Reset Link
+                <div className="mt-6 flex items-center justify-end">
+                    <PrimaryButton disabled={processing}>
+                        Send reset link
                     </PrimaryButton>
                 </div>
             </form>

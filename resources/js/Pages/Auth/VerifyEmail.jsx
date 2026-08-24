@@ -12,25 +12,29 @@ export default function VerifyEmail({ status }) {
     };
 
     return (
-        <GuestLayout>
+        <GuestLayout
+            title="Verify your email"
+            description="Open the verification link we sent before entering the library workspace."
+        >
             <Head title="Email Verification" />
 
-            <div className="mb-4 text-sm text-gray-600">
-                Thanks for signing up! Before getting started, could you verify
-                your email address by clicking on the link we just emailed to
-                you? If you didn't receive the email, we will gladly send you
-                another.
+            <div className="ui-alert mb-5">
+                If the message has not arrived, check your spam folder or send
+                another verification email.
             </div>
 
             {status === 'verification-link-sent' && (
-                <div className="mb-4 text-sm font-medium text-green-600">
+                <div
+                    className="ui-alert mb-5 border-emerald-200 bg-emerald-50 text-emerald-800"
+                    role="status"
+                >
                     A new verification link has been sent to the email address
                     you provided during registration.
                 </div>
             )}
 
             <form onSubmit={submit}>
-                <div className="mt-4 flex items-center justify-between">
+                <div className="mt-6 flex flex-wrap items-center justify-between gap-4">
                     <PrimaryButton disabled={processing}>
                         Resend Verification Email
                     </PrimaryButton>
@@ -39,7 +43,7 @@ export default function VerifyEmail({ status }) {
                         href={route('logout')}
                         method="post"
                         as="button"
-                        className="rounded-md text-sm text-gray-600 underline hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                        className="ui-action-link text-sm"
                     >
                         Log Out
                     </Link>

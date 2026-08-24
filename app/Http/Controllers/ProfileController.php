@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redirect;
 use Inertia\Inertia;
 use Inertia\Response;
+use Illuminate\Validation\ValidationException;
 
 class ProfileController extends Controller
 {
@@ -50,6 +51,12 @@ class ProfileController extends Controller
         ]);
 
         $user = $request->user();
+
+        if ($user->hasRole('admin')) {
+            throw ValidationException::withMessages([
+                'password' => 'Administrator accounts cannot be deleted from profile settings.',
+            ]);
+        }
 
         Auth::logout();
 

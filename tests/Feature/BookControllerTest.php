@@ -2,6 +2,7 @@
 
 use App\Models\Book;
 use App\Models\User;
+use Database\Seeders\RolesAndPermissionsSeeder;
 use Inertia\Testing\AssertableInertia as Assert;
 
 function validBookData(array $overrides = []): array
@@ -15,24 +16,49 @@ function validBookData(array $overrides = []): array
     ], $overrides);
 }
 
+beforeEach(function () {
+    $this->withoutVite();
+    $this->seed(RolesAndPermissionsSeeder::class);
+});
+
 it('redirects guests away from book management', function () {
-    $this->get(route('admin.books.index'))
+    $this->get(route('staff.books.index'))
         ->assertRedirect(route('login'));
+});
+
+it('forbids users from the staff book workspace', function () {
+    $user = User::factory()->create();
+    $user->assignRole('user');
+
+    $this->actingAs($user)
+        ->get(route('staff.books.index'))
+        ->assertForbidden();
+});
+
+it('allows admins to access the staff book workspace', function () {
+    $admin = User::factory()->create();
+    $admin->assignRole('admin');
+
+    $this->actingAs($admin)
+        ->get(route('staff.books.index'))
+        ->assertSuccessful();
 });
 
 describe('authenticated book management', function () {
     beforeEach(function () {
-        $this->withoutVite();
-        $this->actingAs(User::factory()->create());
+        $librarian = User::factory()->create();
+        $librarian->assignRole('librarian');
+
+        $this->actingAs($librarian);
     });
 
     it('renders the book index', function () {
         Book::factory()->create();
 
-        $this->get(route('admin.books.index'))
+        $this->get(route('staff.books.index'))
             ->assertSuccessful()
             ->assertInertia(fn (Assert $page) => $page
-                ->component('Admin/Books/Index')
+                ->component('Staff/Books/Index')
                 ->has('books.data', 1)
                 ->where('filters.search', '')
             );
@@ -41,7 +67,7 @@ describe('authenticated book management', function () {
     it('returns twelve books per page', function () {
         Book::factory()->count(13)->create();
 
-        $this->get(route('admin.books.index'))
+        $this->get(route('staff.books.index'))
             ->assertSuccessful()
             ->assertInertia(fn (Assert $page) => $page
                 ->has('books.data', 12)
@@ -61,7 +87,7 @@ describe('authenticated book management', function () {
             'updated_at' => now(),
         ]);
 
-        $this->get(route('admin.books.index'))
+        $this->get(route('staff.books.index'))
             ->assertInertia(fn (Assert $page) => $page
                 ->where('books.data.0.id', $newerBook->id)
                 ->where('books.data.1.id', $olderBook->id)
@@ -84,7 +110,7 @@ describe('authenticated book management', function () {
             'isbn' => '9780000000002',
         ]);
 
-        $this->get(route('admin.books.index', ['search' => $search]))
+        $this->get(route('staff.books.index', ['search' => $search]))
             ->assertSuccessful()
             ->assertInertia(fn (Assert $page) => $page
                 ->has('books.data', 1)
@@ -102,7 +128,7 @@ describe('authenticated book management', function () {
             'author' => 'Indexable Writer',
         ]);
 
-        $this->get(route('admin.books.index', ['search' => 'Indexable']))
+        $this->get(route('staff.books.index', ['search' => 'Indexable']))
             ->assertInertia(fn (Assert $page) => $page
                 ->where('books.links.next', fn (?string $url) => $url !== null && str_contains($url, 'search=Indexable')
                 )
@@ -110,20 +136,20 @@ describe('authenticated book management', function () {
     });
 
     it('renders the create page', function () {
-        $this->get(route('admin.books.create'))
+        $this->get(route('staff.books.create'))
             ->assertSuccessful()
             ->assertInertia(fn (Assert $page) => $page
-                ->component('Admin/Books/Create')
+                ->component('Staff/Books/Create')
             );
     });
 
     it('renders the edit page', function () {
         $book = Book::factory()->create();
 
-        $this->get(route('admin.books.edit', $book))
+        $this->get(route('staff.books.edit', $book))
             ->assertSuccessful()
             ->assertInertia(fn (Assert $page) => $page
-                ->component('Admin/Books/Edit')
+                ->component('Staff/Books/Edit')
                 ->where('book.id', $book->id)
                 ->where('book.isbn', $book->isbn)
             );
@@ -132,7 +158,7 @@ describe('authenticated book management', function () {
     it('creates a book from valid json', function () {
         $data = validBookData();
 
-        $this->postJson(route('admin.books.store'), $data)
+        $this->postJson(route('staff.books.store'), $data)
             ->assertCreated()
             ->assertJsonPath('message', 'Book created successfully')
             ->assertJsonPath('book.title', $data['title'])
@@ -147,7 +173,7 @@ describe('authenticated book management', function () {
     });
 
     it('rejects missing required fields', function () {
-        $this->postJson(route('admin.books.store'), [])
+        $this->postJson(route('staff.books.store'), [])
             ->assertUnprocessable()
             ->assertJsonValidationErrors([
                 'title',
@@ -159,7 +185,7 @@ describe('authenticated book management', function () {
 
     it('requires an isbn containing exactly thirteen characters', function (string $isbn) {
         $this->postJson(
-            route('admin.books.store'),
+            route('staff.books.store'),
             validBookData(['isbn' => $isbn]),
         )
             ->assertUnprocessable()
@@ -173,7 +199,7 @@ describe('authenticated book management', function () {
         $book = Book::factory()->create();
 
         $this->postJson(
-            route('admin.books.store'),
+            route('staff.books.store'),
             validBookData(['isbn' => $book->isbn]),
         )
             ->assertUnprocessable()
@@ -187,7 +213,7 @@ describe('authenticated book management', function () {
             'isbn' => $book->isbn,
         ]);
 
-        $this->postJson(route('admin.books.update', $book), $data)
+        $this->postJson(route('staff.books.update', $book), $data)
             ->assertSuccessful()
             ->assertJsonPath('book.id', $book->id)
             ->assertJsonPath('book.isbn', $book->isbn);
@@ -200,7 +226,7 @@ describe('authenticated book management', function () {
         $otherBook = Book::factory()->create();
 
         $this->postJson(
-            route('admin.books.update', $book),
+            route('staff.books.update', $book),
             validBookData(['isbn' => $otherBook->isbn]),
         )
             ->assertUnprocessable()
@@ -216,7 +242,7 @@ describe('authenticated book management', function () {
             'total_copies' => 8,
         ]);
 
-        $this->postJson(route('admin.books.update', $book), $data)
+        $this->postJson(route('staff.books.update', $book), $data)
             ->assertSuccessful()
             ->assertJsonPath('book.title', 'Refactoring')
             ->assertJsonPath('book.total_copies', 8);
@@ -232,10 +258,10 @@ describe('authenticated book management', function () {
     it('shows the requested book', function () {
         $book = Book::factory()->create();
 
-        $this->get(route('admin.books.show', $book))
+        $this->get(route('staff.books.show', $book))
             ->assertSuccessful()
             ->assertInertia(fn (Assert $page) => $page
-                ->component('Admin/Books/Show')
+                ->component('Staff/Books/Show')
                 ->where('book.id', $book->id)
                 ->where('book.title', $book->title)
                 ->where('book.author', $book->author)
@@ -247,7 +273,7 @@ describe('authenticated book management', function () {
     it('soft deletes a book', function () {
         $book = Book::factory()->create();
 
-        $this->deleteJson(route('admin.books.destroy', $book))
+        $this->deleteJson(route('staff.books.destroy', $book))
             ->assertSuccessful();
 
         $this->assertSoftDeleted($book);
@@ -258,7 +284,7 @@ describe('authenticated book management', function () {
         $archivedBook = Book::factory()->create();
         $archivedBook->delete();
 
-        $this->get(route('admin.books.index'))
+        $this->get(route('staff.books.index'))
             ->assertSuccessful()
             ->assertInertia(fn (Assert $page) => $page
                 ->has('books.data', 1)
@@ -267,7 +293,7 @@ describe('authenticated book management', function () {
     });
 
     it('returns not found for an unknown book', function () {
-        $this->get(route('admin.books.show', 999999))
+        $this->get(route('staff.books.show', 999999))
             ->assertNotFound();
     });
 
@@ -275,7 +301,7 @@ describe('authenticated book management', function () {
         $book = Book::factory()->create();
         $book->delete();
 
-        $this->get(route('admin.books.show', $book->id))
+        $this->get(route('staff.books.show', $book->id))
             ->assertNotFound();
     });
 });
