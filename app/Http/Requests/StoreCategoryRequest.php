@@ -5,7 +5,7 @@ namespace App\Http\Requests;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
-class UpdateBookRequest extends FormRequest
+class StoreCategoryRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -22,15 +22,8 @@ class UpdateBookRequest extends FormRequest
      */
     public function rules(): array
     {
-        $book = $this->route('book');
-
         return [
-            'title' => 'required|string|max:255',
-            'author' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'isbn' => 'required|string|size:13|unique:books,isbn,'.$book->getKey().',id',
-            'total_copies' => 'required|integer|min:1',
-            'category_id' => 'nullable|integer|exists:categories,id',
+            'name' => 'required|string|max:255|unique:categories,name',
         ];
     }
 }

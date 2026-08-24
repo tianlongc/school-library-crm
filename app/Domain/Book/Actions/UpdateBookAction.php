@@ -13,7 +13,8 @@ class UpdateBookAction
      *      author: string,
      *      isbn: string,
      *      description: ?string,
-     *      total_copies: int
+     *      total_copies: int,
+     *      category_id: ?int
      * } $attributes
      */
     public function execute(Book $book, array $attributes): Book
@@ -25,6 +26,7 @@ class UpdateBookAction
                 'isbn' => $attributes['isbn'],
                 'description' => $attributes['description'],
                 'total_copies' => $attributes['total_copies'],
+                'category_id' => $attributes['category_id'],
             ]);
         });
 

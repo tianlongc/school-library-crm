@@ -22,6 +22,10 @@ class RolesAndPermissionsSeeder extends Seeder
             'books.create',
             'books.update',
             'books.delete',
+            'categories.view',
+            'categories.create',
+            'categories.update',
+            'categories.delete',
         ];
 
         $dashboardPermissions = [

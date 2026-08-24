@@ -18,6 +18,7 @@ class BookQuery
                         ->orWhere('isbn', 'like', "%{$search}%");
                 });
             })
+            ->with('category:id,name')
             ->latest();
     }
 

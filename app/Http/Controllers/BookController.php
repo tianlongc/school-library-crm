@@ -7,6 +7,7 @@ use App\Domain\Book\Actions\DeleteBookAction;
 use App\Domain\Book\Actions\UpdateBookAction;
 use App\Domain\Book\Models\Book;
 use App\Domain\Book\Queries\BookQuery;
+use App\Domain\Category\Queries\CategoryQuery;
 use App\Http\Requests\StoreBookRequest;
 use App\Http\Requests\UpdateBookRequest;
 use App\Http\Resources\BookResource;
@@ -33,9 +34,11 @@ class BookController extends Controller
     /**
      * Show the form for creating a new resource.
      */
-    public function create(): Response
+    public function create(CategoryQuery $query): Response
     {
-        return Inertia::render('Staff/Books/Create');
+        return Inertia::render('Staff/Books/Create', [
+            'categories' => $query->getOptions(),
+        ]);
     }
 
     /**
@@ -50,6 +53,7 @@ class BookController extends Controller
                 'description' => $request->input('description'),
                 'isbn' => $request->input('isbn'),
                 'total_copies' => $request->input('total_copies'),
+                'category_id' => $request->input('category_id'),
             ]
         );
 
@@ -72,10 +76,11 @@ class BookController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(Book $book): Response
+    public function edit(Book $book, CategoryQuery $query): Response
     {
         return Inertia::render('Staff/Books/Edit', [
             'book' => BookResource::make($book)->resolve(),
+            'categories' => $query->getOptions(),
         ]);
     }
 
@@ -92,6 +97,7 @@ class BookController extends Controller
                 'isbn' => $request->input('isbn'),
                 'description' => $request->input('description'),
                 'total_copies' => $request->input('total_copies'),
+                'category_id' => $request->input('category_id'),
             ],
         );
 
