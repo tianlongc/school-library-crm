@@ -4,7 +4,7 @@ import { Head, router } from '@inertiajs/react';
 import { App as AntdApp } from 'antd';
 import BookForm from './Components/BookForm';
 
-export default function Edit({ book }) {
+export default function Edit({ book, categories }) {
     const { message } = AntdApp.useApp();
 
     return (
@@ -23,6 +23,7 @@ export default function Edit({ book }) {
             <div className="max-w-3xl">
                 <BookForm
                     book={book}
+                    categories={categories}
                     submitLabel="Save changes"
                     url={route('staff.books.update', book.id)}
                     onSuccess={() => {

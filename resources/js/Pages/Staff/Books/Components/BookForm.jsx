@@ -5,14 +5,16 @@ import { Link, useForm } from '@inertiajs/react';
 import { useState } from 'react';
 import BookFormFields from './BookFormFields';
 
-export default function BookForm({ book = null, submitLabel, url, onSuccess }) {
+export default function BookForm({ book = null, categories = [], submitLabel, url, onSuccess }) {
     const { data, setData, errors, setError, clearErrors } = useForm({
         title: book?.title ?? '',
         author: book?.author ?? '',
         isbn: book?.isbn ?? '',
         description: book?.description ?? '',
         total_copies: book?.total_copies ?? 1,
+        category_id: book?.category_id ?? '',
     });
+
     const [submitting, setSubmitting] = useState(false);
     const [requestError, setRequestError] = useState('');
 
@@ -56,7 +58,13 @@ export default function BookForm({ book = null, submitLabel, url, onSuccess }) {
                 <div aria-live="polite">
                     {requestError && <div className="mb-5 rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800" role="alert">{requestError}</div>}
                 </div>
-                <BookFormFields data={data} errors={errors} setData={setData} clearErrors={clearErrors} />
+                <BookFormFields
+                    categories={categories}
+                    data={data}
+                    errors={errors}
+                    setData={setData}
+                    clearErrors={clearErrors}
+                />
             </div>
 
             <div className="flex flex-col-reverse gap-3 border-t border-slate-200 bg-slate-50 px-5 py-4 sm:flex-row sm:justify-end sm:px-6">
