@@ -3,7 +3,7 @@
 namespace Tests\Feature;
 
 use App\Domain\Member\Models\Member;
-use App\Models\User;
+use App\Domain\User\Models\User;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
