@@ -24,7 +24,7 @@ export default function Login({ status, canResetPassword }) {
     return (
         <GuestLayout
             title="Welcome back"
-            description="Students and administrators use this same sign-in to reach their library account."
+            description="Members and library staff use this same sign-in to reach their account."
         >
             <Head title="Log in" />
 

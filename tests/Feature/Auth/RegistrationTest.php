@@ -1,5 +1,7 @@
 <?php
 
+use App\Domain\Member\Enums\MemberStatus;
+use App\Domain\Member\Models\Member;
 use App\Models\User;
 use Database\Seeders\RolesAndPermissionsSeeder;
 
@@ -24,13 +26,19 @@ test('new users can register', function () {
     $this->assertAuthenticated();
     $response->assertRedirect(route('dashboard', absolute: false));
 
-    $user = User::where('email', 'test@example.com')->firstOrFail();
+    $user = User::where('email', 'test@example.com')->with('member')->firstOrFail();
 
     expect($user->getRoleNames()->all())
         ->toHaveCount(1)
-        ->toContain('user');
+        ->toContain('member');
 
-    expect($user->can('student.dashboard.view'))->toBeTrue()
+    expect($user->hasRole('member'))->toBeTrue()
+        ->and($user->can('member.dashboard.view'))->toBeTrue()
         ->and($user->can('workspace.access'))->toBeFalse()
-        ->and($user->can('admin.dashboard.view'))->toBeFalse();
+        ->and($user->member)->toBeInstanceOf(Member::class)
+        ->and($user->member->status)->toBe(MemberStatus::Active)
+        ->and($user->member->member_number)->toMatch('/^MEM\d{6}$/');
+
+    $this->get(route('member.dashboard'))
+        ->assertSuccessful();
 });

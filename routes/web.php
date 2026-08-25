@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\BookController;
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\MemberDashboardController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Foundation\Application;
 use Illuminate\Http\Request;
@@ -22,7 +23,7 @@ Route::get('/dashboard', function (Request $request) {
         return redirect()->route('staff.dashboard', $request->query());
     }
 
-    return redirect()->route('student.dashboard', $request->query());
+    return redirect()->route('member.dashboard', $request->query());
 })->middleware(['auth'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {
@@ -33,15 +34,14 @@ Route::middleware('auth')->group(function () {
 
 require __DIR__.'/auth.php';
 
-// Student
-Route::middleware(['auth', 'can:student.dashboard.view'])
-    ->prefix('student')
-    ->name('student.')
-    ->group(function () {
-        Route::get('/', function () {
-            return Inertia::render('Student/Dashboard');
-        })->name('dashboard');
+// Member
+Route::middleware('auth')
+    ->prefix('member')
+    ->name('member.')
+    ->group(function (): void {
+        Route::get('/', MemberDashboardController::class)->name('dashboard');
     });
+
 // Admin
 Route::middleware(['auth', 'can:admin.dashboard.view'])
     ->prefix('admin')

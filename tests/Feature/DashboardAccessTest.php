@@ -1,5 +1,6 @@
 <?php
 
+use App\Domain\Member\Models\Member;
 use App\Models\User;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -13,7 +14,7 @@ it('redirects guests from protected role dashboards', function (string $routeNam
     $this->get(route($routeName))
         ->assertRedirect(route('login'));
 })->with([
-    'student dashboard' => 'student.dashboard',
+    'member dashboard' => 'member.dashboard',
     'staff dashboard' => 'staff.dashboard',
     'admin dashboard' => 'admin.dashboard',
 ]);
@@ -26,36 +27,37 @@ it('redirects each role from the generic dashboard to its home', function (strin
         ->get(route('dashboard', ['source' => 'navigation']))
         ->assertRedirect(route($dashboardRoute, ['source' => 'navigation']));
 })->with([
-    'student' => ['user', 'student.dashboard'],
+    'member' => ['member', 'member.dashboard'],
     'librarian' => ['librarian', 'staff.dashboard'],
     'administrator' => ['admin', 'staff.dashboard'],
 ]);
 
-it('forbids users from the staff dashboard', function () {
-    $user = User::factory()->create();
-    $user->assignRole('user');
+it('forbids members from the staff dashboard', function () {
+    $member = User::factory()->create();
+    $member->assignRole('member');
 
-    $this->actingAs($user)
+    $this->actingAs($member)
         ->get(route('staff.dashboard'))
         ->assertForbidden();
 });
 
-it('renders the student dashboard only for users with student access', function () {
-    $student = User::factory()->create();
-    $student->assignRole('user');
+it('renders the member dashboard only for users with member access', function () {
+    $member = User::factory()->create();
+    Member::factory()->for($member)->create();
+    $member->assignRole('member');
 
-    $this->actingAs($student)
-        ->get(route('student.dashboard'))
+    $this->actingAs($member)
+        ->get(route('member.dashboard'))
         ->assertSuccessful()
         ->assertInertia(fn (Assert $page) => $page
-            ->component('Student/Dashboard')
+            ->component('Member/Dashboard')
         );
 
     $librarian = User::factory()->create();
     $librarian->assignRole('librarian');
 
     $this->actingAs($librarian)
-        ->get(route('student.dashboard'))
+        ->get(route('member.dashboard'))
         ->assertForbidden();
 });
 
@@ -97,7 +99,7 @@ it('shares the navigation capabilities used by account settings', function (
     string $role,
     bool $viewAdminDashboard,
     bool $accessStaffWorkspace,
-    bool $viewStudentDashboard,
+    bool $viewMemberDashboard,
 ) {
     $user = User::factory()->create();
     $user->assignRole($role);
@@ -109,10 +111,10 @@ it('shares the navigation capabilities used by account settings', function (
             ->component('Profile/Edit')
             ->where('auth.can.viewAdminDashboard', $viewAdminDashboard)
             ->where('auth.can.accessStaffWorkspace', $accessStaffWorkspace)
-            ->where('auth.can.viewStudentDashboard', $viewStudentDashboard)
+            ->where('auth.can.viewMemberDashboard', $viewMemberDashboard)
         );
 })->with([
-    'student' => ['user', false, false, true],
+    'member' => ['member', false, false, true],
     'librarian' => ['librarian', false, true, false],
     'administrator' => ['admin', true, true, false],
 ]);

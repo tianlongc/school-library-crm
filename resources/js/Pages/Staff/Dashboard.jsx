@@ -3,7 +3,7 @@ import StaffLayout from '@/Layouts/StaffLayout';
 import { Head, Link } from '@inertiajs/react';
 
 const plannedWorkflows = [
-    { name: 'Members', detail: 'Student records & borrowing eligibility' },
+    { name: 'Members', detail: 'Member accounts & borrowing eligibility' },
     { name: 'Circulation', detail: 'Issue, renew & return books' },
     { name: 'Reporting', detail: 'Availability, overdue & activity insights' },
 ];

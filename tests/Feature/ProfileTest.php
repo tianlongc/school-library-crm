@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Domain\Member\Models\Member;
 use App\Models\User;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -65,6 +66,7 @@ class ProfileTest extends TestCase
     public function test_user_can_delete_their_account(): void
     {
         $user = User::factory()->create();
+        $member = Member::factory()->for($user)->create();
 
         $response = $this
             ->actingAs($user)
@@ -78,6 +80,7 @@ class ProfileTest extends TestCase
 
         $this->assertGuest();
         $this->assertNull($user->fresh());
+        $this->assertModelMissing($member);
     }
 
     public function test_correct_password_must_be_provided_to_delete_account(): void

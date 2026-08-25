@@ -41,7 +41,7 @@ export default function GuestLayout({
                             Find a book. Check your account. Keep the day moving.
                         </h2>
                         <p className="mt-5 max-w-lg text-base leading-7 text-white/65">
-                            Students and administrators use the same account flow. What
+                            Members and library staff use the same account flow. What
                             each person can do is determined by their library role.
                         </p>
                     </div>

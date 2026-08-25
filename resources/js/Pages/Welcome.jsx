@@ -12,13 +12,13 @@ const capabilities = [
         label: 'Accounts',
         title: 'One shared account entry point',
         description:
-            'Students and administrators use the same secure login and account flow.',
+            'Members and library staff use the same secure login and account flow.',
     },
     {
         label: 'Library team',
         title: 'Roles grow with responsibility',
         description:
-            'Student accounts register here; library access is assigned separately by an administrator.',
+            'Member accounts register here; staff access is assigned separately by an administrator.',
     },
 ];
 
@@ -119,7 +119,7 @@ export default function Welcome({ auth, canRegister }) {
                 <title>School Library</title>
                 <meta
                     name="description"
-                    content="A shared school library workspace for students and administrators."
+                    content="A shared school library workspace for members and library staff."
                     head-key="description"
                 />
             </Head>
@@ -196,7 +196,7 @@ export default function Welcome({ auth, canRegister }) {
                                         className="ui-button-secondary px-5 py-3"
                                         prefetch
                                     >
-                                        Create student account
+                                        Create member account
                                     </Link>
                                 )}
                             </div>
