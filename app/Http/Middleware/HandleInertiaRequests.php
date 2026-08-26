@@ -39,6 +39,7 @@ class HandleInertiaRequests extends Middleware
                     'viewAdminDashboard' => $user?->can('admin.dashboard.view') ?? false,
                     'accessStaffWorkspace' => $user?->can('workspace.access') ?? false,
                     'viewMemberDashboard' => $user?->can('member.dashboard.view') ?? false,
+                    'viewMembers' => $user?->can('members.view') ?? false,
                 ],
             ],
         ];

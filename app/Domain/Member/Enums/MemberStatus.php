@@ -8,6 +8,26 @@ enum MemberStatus: string
     case Suspended = 'suspended';
     case Inactive = 'inactive';
 
+    public function label(): string
+    {
+        return match ($this) {
+            self::Active => 'Active',
+            self::Suspended => 'Suspended',
+            self::Inactive => 'Inactive',
+        };
+    }
+
+    public static function options(): array
+    {
+        return array_map(
+            fn (self $status) => [
+                'value' => $status->value,
+                'label' => $status->label(),
+            ],
+            self::cases(),
+        );
+    }
+
     // Check eligiblity of a student
     public function canBorrow(): bool
     {

@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\BookController;
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\MemberController;
 use App\Http\Controllers\MemberDashboardController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Foundation\Application;
@@ -84,5 +85,15 @@ Route::middleware(['auth', 'can:workspace.access'])
                 Route::get('/{category}/edit', 'edit')->middleware('can:categories.update')->name('edit');
                 Route::post('/{category}', 'update')->middleware('can:categories.update')->name('update');
                 Route::delete('/{category}', 'destroy')->middleware('can:categories.delete')->name('destroy');
+            });
+
+        Route::controller(MemberController::class)
+            ->prefix('members')
+            ->name('members.')
+            ->group(function (): void {
+                Route::get('/', 'index')->name('index');
+                Route::post('/{member}/suspend', 'suspend')->name('suspend');
+                Route::post('/{member}/reactivate', 'reactivate')->name('reactivate');
+                Route::post('/{member}/deactivate', 'deactivate')->name('deactivate');
             });
     });
