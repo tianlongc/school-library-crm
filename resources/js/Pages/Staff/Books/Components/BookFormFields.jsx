@@ -9,7 +9,7 @@ function FieldError({ id, message }) {
 const inputClassName = (hasError) =>
     `ui-input mt-1.5 ${hasError ? 'ui-input-error' : ''}`;
 
-export default function BookFormFields({ clearErrors, data, errors, setData }) {
+export default function BookFormFields({ categories, clearErrors, data, errors, setData }) {
     const updateField = (field, value) => {
         setData(field, value);
         clearErrors(field);
@@ -36,7 +36,29 @@ export default function BookFormFields({ clearErrors, data, errors, setData }) {
                 <FieldError id="isbn-error" message={errors.isbn} />
             </div>
 
-            <div className="sm:col-span-2 sm:max-w-xs">
+            <div>
+                <label htmlFor="category_id" className="ui-label">Category <span className="font-normal text-slate-400">(optional)</span></label>
+                <select
+                    id="category_id"
+                    name="category_id"
+                    value={data.category_id}
+                    onChange={(event) => updateField('category_id', event.target.value)}
+                    className={inputClassName(Boolean(errors.category_id))}
+                    aria-invalid={Boolean(errors.category_id)}
+                    aria-describedby={errors.category_id ? 'category-error' : 'category-help'}
+                >
+                    <option value="">Uncategorized</option>
+                    {categories.map((category) => (
+                        <option key={category.id} value={category.id}>{category.name}</option>
+                    ))}
+                </select>
+                <p id="category-help" className="ui-help">
+                    Choose the catalogue section readers will browse.
+                </p>
+                <FieldError id="category-error" message={errors.category_id} />
+            </div>
+
+            <div>
                 <label htmlFor="total_copies" className="ui-label">Total copies <span className="text-rose-600">*</span></label>
                 <input id="total_copies" name="total_copies" type="number" min="1" step="1" inputMode="numeric" value={data.total_copies} onChange={(event) => updateField('total_copies', event.target.value)} className={inputClassName(Boolean(errors.total_copies))} required autoComplete="off" aria-invalid={Boolean(errors.total_copies)} aria-describedby={errors.total_copies ? 'total-copies-error' : 'total-copies-help'} />
                 <p id="total-copies-help" className="ui-help">Physical copies owned by the library.</p>

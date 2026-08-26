@@ -1,6 +1,7 @@
 <?php
 
-use App\Models\Book;
+use App\Domain\Book\Models\Book;
+use App\Domain\Category\Models\Category;
 use App\Models\User;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -136,14 +137,21 @@ describe('authenticated book management', function () {
     });
 
     it('renders the create page', function () {
+        Category::factory()->create(['name' => 'Technology']);
+        Category::factory()->create(['name' => 'Arts']);
+
         $this->get(route('staff.books.create'))
             ->assertSuccessful()
             ->assertInertia(fn (Assert $page) => $page
                 ->component('Staff/Books/Create')
+                ->has('categories', 2)
+                ->where('categories.0.name', 'Arts')
+                ->where('categories.1.name', 'Technology')
             );
     });
 
     it('renders the edit page', function () {
+        $category = Category::factory()->create();
         $book = Book::factory()->create();
 
         $this->get(route('staff.books.edit', $book))
@@ -152,6 +160,7 @@ describe('authenticated book management', function () {
                 ->component('Staff/Books/Edit')
                 ->where('book.id', $book->id)
                 ->where('book.isbn', $book->isbn)
+                ->where('categories.0.id', $category->id)
             );
     });
 
@@ -170,6 +179,41 @@ describe('authenticated book management', function () {
             'isbn' => $data['isbn'],
             'total_copies' => $data['total_copies'],
         ]);
+    });
+
+    it('creates a book with a selected category', function () {
+        $category = Category::factory()->create();
+
+        $this->postJson(
+            route('staff.books.store'),
+            validBookData(['category_id' => $category->id]),
+        )
+            ->assertCreated()
+            ->assertJsonPath('book.category_id', $category->id);
+
+        $book = Book::query()->where('isbn', '9780132350884')->sole();
+
+        expect($book->category?->is($category))->toBeTrue();
+    });
+
+    it('creates a book without a category', function () {
+        $this->postJson(
+            route('staff.books.store'),
+            validBookData(['category_id' => null]),
+        )
+            ->assertCreated()
+            ->assertJsonPath('book.category_id', null);
+
+        expect(Book::query()->where('isbn', '9780132350884')->sole()->category_id)->toBeNull();
+    });
+
+    it('rejects an unknown category when creating a book', function () {
+        $this->postJson(
+            route('staff.books.store'),
+            validBookData(['category_id' => 999999]),
+        )
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('category_id');
     });
 
     it('rejects missing required fields', function () {
@@ -253,6 +297,55 @@ describe('authenticated book management', function () {
             ->and($book->author)->toBe('Martin Fowler')
             ->and($book->isbn)->toBe('9780201485677')
             ->and($book->total_copies)->toBe(8);
+    });
+
+    it('changes a books category', function () {
+        $originalCategory = Category::factory()->create();
+        $newCategory = Category::factory()->create();
+        $book = Book::factory()->create(['category_id' => $originalCategory->id]);
+
+        $this->postJson(
+            route('staff.books.update', $book),
+            validBookData([
+                'isbn' => $book->isbn,
+                'category_id' => $newCategory->id,
+            ]),
+        )
+            ->assertSuccessful()
+            ->assertJsonPath('book.category_id', $newCategory->id);
+
+        expect($book->refresh()->category?->is($newCategory))->toBeTrue();
+    });
+
+    it('removes a books category', function () {
+        $category = Category::factory()->create();
+        $book = Book::factory()->create(['category_id' => $category->id]);
+
+        $this->postJson(
+            route('staff.books.update', $book),
+            validBookData([
+                'isbn' => $book->isbn,
+                'category_id' => null,
+            ]),
+        )
+            ->assertSuccessful()
+            ->assertJsonPath('book.category_id', null);
+
+        expect($book->refresh()->category_id)->toBeNull();
+    });
+
+    it('rejects an unknown category when updating a book', function () {
+        $book = Book::factory()->create();
+
+        $this->postJson(
+            route('staff.books.update', $book),
+            validBookData([
+                'isbn' => $book->isbn,
+                'category_id' => 999999,
+            ]),
+        )
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('category_id');
     });
 
     it('shows the requested book', function () {

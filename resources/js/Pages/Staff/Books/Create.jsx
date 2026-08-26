@@ -4,7 +4,7 @@ import { Head, router } from '@inertiajs/react';
 import { App as AntdApp } from 'antd';
 import BookForm from './Components/BookForm';
 
-export default function Create() {
+export default function Create({ categories }) {
     const { message } = AntdApp.useApp();
 
     return (
@@ -21,6 +21,7 @@ export default function Create() {
 
             <div className="max-w-3xl">
                 <BookForm
+                    categories={categories}
                     submitLabel="Save book"
                     url={route('staff.books.store')}
                     onSuccess={(payload) => {

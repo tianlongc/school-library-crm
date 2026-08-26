@@ -28,7 +28,7 @@ it('redirects each role from the generic dashboard to its home', function (strin
 })->with([
     'student' => ['user', 'student.dashboard'],
     'librarian' => ['librarian', 'staff.dashboard'],
-    'administrator' => ['admin', 'admin.dashboard'],
+    'administrator' => ['admin', 'staff.dashboard'],
 ]);
 
 it('forbids users from the staff dashboard', function () {
@@ -74,7 +74,7 @@ it('renders the staff dashboard for authorized staff', function (string $role) {
     'admin' => 'admin',
 ]);
 
-it('renders the admin dashboard only for administrators', function () {
+it('renders user management only for administrators', function () {
     $admin = User::factory()->create();
     $admin->assignRole('admin');
 

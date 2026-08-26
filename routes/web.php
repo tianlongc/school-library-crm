@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\BookController;
+use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Foundation\Application;
 use Illuminate\Http\Request;
@@ -17,10 +18,6 @@ Route::get('/', function () {
 });
 
 Route::get('/dashboard', function (Request $request) {
-    if ($request->user()->can('admin.dashboard.view')) {
-        return redirect()->route('admin.dashboard', $request->query());
-    }
-
     if ($request->user()->can('workspace.access')) {
         return redirect()->route('staff.dashboard', $request->query());
     }
@@ -75,5 +72,17 @@ Route::middleware(['auth', 'can:workspace.access'])
                 Route::post('/{book}', 'update')->middleware('can:books.update')->name('update');
                 Route::delete('/{book}', 'destroy')->middleware('can:books.delete')->name('destroy');
                 Route::get('/{book}', 'show')->middleware('can:books.view')->name('show');
+            });
+
+        Route::controller(CategoryController::class)
+            ->prefix('categories')
+            ->name('categories.')
+            ->group(function () {
+                Route::get('/', 'index')->middleware('can:categories.view')->name('index');
+                Route::get('/create', 'create')->middleware('can:categories.create')->name('create');
+                Route::post('/', 'store')->middleware('can:categories.create')->name('store');
+                Route::get('/{category}/edit', 'edit')->middleware('can:categories.update')->name('edit');
+                Route::post('/{category}', 'update')->middleware('can:categories.update')->name('update');
+                Route::delete('/{category}', 'destroy')->middleware('can:categories.delete')->name('destroy');
             });
     });

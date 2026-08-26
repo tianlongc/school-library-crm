@@ -5,7 +5,7 @@ export default function StaffLayout({ children, title }) {
     return (
         <WorkspaceLayout
             accountLabel="Library account"
-            eyebrow="Staff workspace"
+            eyebrow="Library workspace"
             Sidebar={StaffSidebar}
             title={title}
         >

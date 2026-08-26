@@ -3,7 +3,14 @@ import { Link, usePage } from '@inertiajs/react';
 const navigation = [
     { name: 'Dashboard', routeName: 'staff.dashboard', icon: 'dashboard' },
     { name: 'Books', routeName: 'staff.books.index', active: 'staff.books.*', icon: 'books' },
+    { name: 'Categories', routeName: 'staff.categories.index', active: 'staff.categories.*', icon: 'categories' },
 ];
+
+const adminNavigation = {
+    name: 'User management',
+    routeName: 'admin.dashboard',
+    icon: 'users',
+};
 
 const plannedWorkflows = ['Members', 'Loans', 'Returns'];
 
@@ -11,7 +18,7 @@ function NavigationIcon({ name }) {
     const paths = {
         dashboard: <><rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" /><rect x="3" y="14" width="7" height="7" rx="1" /><rect x="14" y="14" width="7" height="7" rx="1" /></>,
         books: <><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" /><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z" /></>,
-        admin: <><path d="m10 17-5-5 5-5" /><path d="M5 12h14" /></>,
+        users: <><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M19 8v6M22 11h-6" /></>,
         members: <><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" /></>,
         loans: <><path d="M8 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-3" /><path d="M12 17 21 8M15 8h6v6" /></>,
         returns: <><path d="m9 14-4-4 4-4" /><path d="M5 10h11a4 4 0 0 1 4 4v1a4 4 0 0 1-4 4h-3" /></>,
@@ -58,28 +65,18 @@ export default function StaffSidebar({ onNavigate }) {
                 </div>
                 <div>
                     <p className="text-sm font-semibold tracking-wide">School Library</p>
-                    <p className="text-xs text-slate-400">Librarian workspace</p>
+                    <p className="text-xs text-slate-400">Library workspace</p>
                 </div>
             </div>
 
             <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-5" aria-label="Primary navigation">
-                {auth.can.viewAdminDashboard && (
-                    <div className="mb-4 border-b border-white/10 pb-4">
-                        <Link
-                            href={route('admin.dashboard')}
-                            onClick={onNavigate}
-                            className="flex min-h-11 items-center gap-3 rounded-lg border border-amber-300/25 bg-amber-300/10 px-3 text-sm font-semibold text-amber-100 transition-colors duration-150 hover:border-amber-300/40 hover:bg-amber-300/15 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-300"
-                            prefetch
-                        >
-                            <NavigationIcon name="admin" />
-                            <span>Back to Admin</span>
-                        </Link>
-                    </div>
-                )}
-
                 {navigation.map((item) => (
                     <NavigationItem key={item.name} item={item} onNavigate={onNavigate} />
                 ))}
+
+                {auth.can.viewAdminDashboard && (
+                    <NavigationItem item={adminNavigation} onNavigate={onNavigate} />
+                )}
 
                 <div className="mx-2 mt-6 rounded-xl border border-white/10 bg-white/[0.035] p-3.5">
                     <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.14em] text-slate-400">Planned workflows</p>

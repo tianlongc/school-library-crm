@@ -1,15 +1,5 @@
-import AdminSidebar from '@/Components/Admin/AdminSidebar';
-import WorkspaceLayout from '@/Layouts/WorkspaceLayout';
+import StaffLayout from '@/Layouts/StaffLayout';
 
 export default function AdminLayout({ children, title }) {
-    return (
-        <WorkspaceLayout
-            accountLabel="Administrator"
-            eyebrow="Admin workspace"
-            Sidebar={AdminSidebar}
-            title={title}
-        >
-            {children}
-        </WorkspaceLayout>
-    );
+    return <StaffLayout title={title}>{children}</StaffLayout>;
 }
