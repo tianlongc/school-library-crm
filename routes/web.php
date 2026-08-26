@@ -36,7 +36,9 @@ Route::middleware('auth')->group(function () {
 
 require __DIR__.'/auth.php';
 
-// Member
+/**
+ * Member Area
+ */
 Route::middleware('auth')
     ->prefix('member')
     ->name('member.')
@@ -44,21 +46,27 @@ Route::middleware('auth')
         Route::get('/', MemberDashboardController::class)->name('dashboard');
     });
 
-// Admin
+/**
+ * Admin Area
+ */
 Route::middleware(['auth', 'can:admin.dashboard.view'])
     ->prefix('admin')
     ->name('admin.')
     ->group(function () {
-        Route::get('/', function () {
-            return Inertia::render('Admin/Dashboard');
-        })->name('dashboard');
+        Route::controller(UserManagementController::class)
+            ->group(function (): void {
+                Route::get('/', 'index')->middleware('can:users.view')->name('dashboard');
+                Route::post('/{user}/role', 'updateRole')->name('users.role.update');
+            });
     });
 
-// Staff: Librarian + Admin
+/**
+ * Staff Area: Librarian + Admin
+ */
 Route::middleware(['auth', 'can:workspace.access'])
     ->prefix('staff')
     ->name('staff.')
-    ->group(function () {
+    ->group(function (): void {
         Route::get('/', function () {
             return Inertia::render('Staff/Dashboard');
         })->name('dashboard');
