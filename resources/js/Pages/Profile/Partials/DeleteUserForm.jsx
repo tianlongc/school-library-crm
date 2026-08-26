@@ -1,16 +1,10 @@
-import DangerButton from '@/Components/DangerButton';
-import InputError from '@/Components/InputError';
-import InputLabel from '@/Components/InputLabel';
-import Modal from '@/Components/Modal';
-import SecondaryButton from '@/Components/SecondaryButton';
-import TextInput from '@/Components/TextInput';
 import { useForm } from '@inertiajs/react';
+import { Button, Flex, Form, Input, Modal, Typography } from 'antd';
 import { useRef, useState } from 'react';
 
 export default function DeleteUserForm({ className = '' }) {
     const [confirmingUserDeletion, setConfirmingUserDeletion] = useState(false);
     const passwordInput = useRef();
-
     const {
         data,
         setData,
@@ -23,90 +17,78 @@ export default function DeleteUserForm({ className = '' }) {
         password: '',
     });
 
-    const confirmUserDeletion = () => {
-        setConfirmingUserDeletion(true);
-    };
-
-    const deleteUser = (e) => {
-        e.preventDefault();
-
-        destroy(route('profile.destroy'), {
-            preserveScroll: true,
-            onSuccess: () => closeModal(),
-            onError: () => passwordInput.current.focus(),
-            onFinish: () => reset(),
-        });
-    };
-
     const closeModal = () => {
         setConfirmingUserDeletion(false);
-
         clearErrors();
         reset();
     };
 
+    const deleteUser = () => {
+        destroy(route('profile.destroy'), {
+            preserveScroll: true,
+            onSuccess: closeModal,
+            onError: () => passwordInput.current?.focus(),
+            onFinish: () => reset(),
+        });
+    };
+
     return (
-        <section className={`space-y-6 ${className}`}>
-            <header>
-                <h2 className="text-lg font-semibold tracking-tight text-rose-900">
-                    Delete account
-                </h2>
-
-                <p className="mt-1.5 text-sm leading-6 text-slate-600">
-                    Permanently remove your account and its associated data. This
-                    action cannot be undone.
-                </p>
-            </header>
-
-            <DangerButton onClick={confirmUserDeletion}>
+        <section className={className}>
+            <Typography.Title level={3} type="danger">
                 Delete account
-            </DangerButton>
+            </Typography.Title>
+            <Typography.Paragraph type="secondary">
+                Permanently remove your account and its associated data. This action
+                cannot be undone.
+            </Typography.Paragraph>
 
-            <Modal show={confirmingUserDeletion} onClose={closeModal}>
-                <form onSubmit={deleteUser} className="p-5 sm:p-7">
-                    <h2 className="text-balance font-serif text-2xl font-semibold tracking-tight text-slate-950">
-                        Delete your account?
-                    </h2>
+            <Button danger onClick={() => setConfirmingUserDeletion(true)}>
+                Delete account
+            </Button>
 
-                    <p className="mt-2 text-pretty text-sm leading-6 text-slate-600">
-                        Enter your password to confirm permanent account deletion.
-                    </p>
+            <Modal
+                destroyOnHidden
+                footer={null}
+                onCancel={closeModal}
+                open={confirmingUserDeletion}
+                title="Delete your account?"
+            >
+                <Typography.Paragraph type="secondary">
+                    Enter your password to confirm permanent account deletion.
+                </Typography.Paragraph>
 
-                    <div className="mt-6">
-                        <InputLabel
-                            htmlFor="password"
-                            value="Password"
-                        />
-
-                        <TextInput
-                            id="password"
-                            type="password"
+                <Form layout="vertical" onFinish={deleteUser} requiredMark={false}>
+                    <Form.Item
+                        htmlFor="delete-account-password"
+                        label="Password"
+                        validateStatus={errors.password ? 'error' : undefined}
+                        help={errors.password}
+                    >
+                        <Input.Password
+                            id="delete-account-password"
                             name="password"
                             ref={passwordInput}
+                            autoComplete="current-password"
+                            autoFocus
                             value={data.password}
-                            onChange={(e) =>
-                                setData('password', e.target.value)
+                            onChange={(event) =>
+                                setData('password', event.target.value)
                             }
-                            className="mt-1 block w-full"
-                            isFocused
                         />
+                    </Form.Item>
 
-                        <InputError
-                            message={errors.password}
-                            className="mt-2"
-                        />
-                    </div>
-
-                    <div className="mt-6 flex flex-wrap justify-end gap-3">
-                        <SecondaryButton onClick={closeModal}>
-                            Cancel
-                        </SecondaryButton>
-
-                        <DangerButton disabled={processing}>
+                    <Flex justify="flex-end" gap={8} wrap>
+                        <Button onClick={closeModal}>Cancel</Button>
+                        <Button
+                            danger
+                            htmlType="submit"
+                            loading={processing}
+                            type="primary"
+                        >
                             Delete account
-                        </DangerButton>
-                    </div>
-                </form>
+                        </Button>
+                    </Flex>
+                </Form>
             </Modal>
         </section>
     );

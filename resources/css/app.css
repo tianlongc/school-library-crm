@@ -7,203 +7,421 @@
         --library-ink: #14242e;
         --library-ink-soft: #213741;
         --library-paper: #f4f6f3;
-        --library-surface: #ffffff;
         --library-line: #dce3df;
         --library-teal: #0f766e;
-        --library-teal-dark: #0b5f59;
         --library-amber: #d19a36;
     }
 
     html {
         color-scheme: light;
-        background: var(--library-paper);
+        background: var(--ant-color-bg-layout, #f5f5f5);
     }
 
     body {
-        @apply min-w-0 bg-slate-50 text-slate-900 antialiased;
-        background-color: var(--library-paper);
-        background-image: radial-gradient(circle at 85% 0%, rgb(15 118 110 / 0.06), transparent 24rem);
+        @apply min-w-0 antialiased;
+        margin: 0;
+        background: var(--ant-color-bg-layout, #f5f5f5);
+        color: var(--ant-color-text, var(--library-ink));
+    }
+
+    #app {
+        min-height: 100vh;
     }
 
     ::selection {
-        @apply bg-teal-100 text-teal-950;
+        background: rgb(15 118 110 / 0.18);
+        color: var(--library-ink);
     }
 
     :where(a, button, input, select, textarea, summary) {
         -webkit-tap-highlight-color: rgb(15 118 110 / 0.14);
         touch-action: manipulation;
     }
-
-    :where(h1, h2, h3)[id] {
-        scroll-margin-top: 6rem;
-    }
 }
 
 @layer components {
     .ui-skip-link {
-        @apply fixed left-4 top-3 z-[100] -translate-y-20 rounded-md bg-slate-950 px-4 py-2 text-sm font-semibold text-white shadow-xl transition-transform duration-150 focus:translate-y-0;
+        @apply fixed left-4 top-3 z-[1100] -translate-y-20 rounded-md px-4 py-2 text-sm font-semibold text-white transition-transform duration-150 focus:translate-y-0;
+        background: var(--library-ink);
     }
 
-    .ui-shell {
-        @apply min-h-screen text-slate-900;
-        background: linear-gradient(135deg, rgb(255 255 255 / 0.42), transparent 42%), var(--library-paper);
+    .ui-eyebrow,
+    .app-page-eyebrow {
+        @apply text-[0.6875rem] font-semibold uppercase tracking-[0.16em];
+        color: var(--library-teal) !important;
     }
 
-    .ui-main {
-        @apply px-4 py-6 sm:px-6 lg:px-8 lg:py-9;
+    .library-rule {
+        @apply h-8 w-1 shrink-0 rounded-full;
+        background: linear-gradient(to bottom, var(--library-amber) 0 42%, var(--library-teal) 42% 100%);
     }
 
-    .ui-main-inner {
-        @apply w-full;
+    .library-mark {
+        @apply relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg text-white;
+        background: var(--library-teal);
+        box-shadow: inset -7px 0 0 rgb(20 36 46 / 0.2);
     }
 
-    .ui-panel {
-        @apply overflow-hidden rounded-2xl border bg-white;
-        border-color: var(--library-line);
-        box-shadow: 0 1px 2px rgb(20 36 46 / 0.04), 0 14px 40px rgb(20 36 46 / 0.04);
+    .library-mark::after {
+        @apply absolute bottom-1.5 left-2 right-2 h-px bg-white/50 content-[''];
     }
 
-    .ui-panel-header {
-        @apply flex items-start justify-between gap-4 border-b px-5 py-4 sm:px-6;
-        border-color: var(--library-line);
+    .workspace-layout,
+    .workspace-main-layout,
+    .member-layout {
+        min-height: 100vh;
     }
 
-    .ui-panel-title {
-        @apply text-sm font-semibold tracking-[-0.01em] text-slate-950;
+    .workspace-sider.ant-layout-sider {
+        position: fixed;
+        inset-block: 0;
+        inset-inline-start: 0;
+        z-index: 100;
+        height: 100vh;
+        overflow: hidden;
     }
 
-    .ui-panel-description {
-        @apply mt-1 text-xs leading-5 text-slate-500;
+    .workspace-main-layout {
+        min-width: 0;
+        margin-inline-start: 272px;
     }
 
-    .ui-button {
-        @apply inline-flex min-h-10 items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-colors duration-150 disabled:cursor-not-allowed disabled:opacity-55;
+    .workspace-header.ant-layout-header {
+        position: sticky;
+        inset-block-start: 0;
+        z-index: 90;
+        height: 64px;
+        padding: 0;
+        border-bottom: 1px solid var(--ant-color-border-secondary, #f0f0f0);
+        background: rgb(255 255 255 / 0.94);
+        backdrop-filter: blur(12px);
+        line-height: normal;
     }
 
-    .ui-button:focus-visible,
-    .ui-button-primary:focus-visible,
-    .ui-button-secondary:focus-visible,
-    .ui-button-ghost:focus-visible,
-    .ui-button-danger:focus-visible,
-    .ui-icon-button:focus-visible,
-    .ui-input:focus-visible,
-    .ui-select:focus-visible,
-    .ui-action-link:focus-visible {
-        outline: 2px solid var(--library-teal);
-        outline-offset: 2px;
+    .workspace-header-inner {
+        @apply flex h-16 items-center gap-3 px-4 sm:px-6 lg:px-8;
+        line-height: normal;
     }
 
-    .ui-button-primary {
-        @apply ui-button text-white shadow-sm;
+    .workspace-menu-button.ant-btn {
+        display: none;
+    }
+
+    .workspace-title,
+    .account-menu-name,
+    .account-menu-label,
+    .staff-sidebar-name,
+    .staff-sidebar-workspace,
+    .staff-planned-title,
+    .staff-planned-copy,
+    .member-brand-name,
+    .member-brand-label {
+        display: block;
+    }
+
+    .workspace-heading {
+        @apply flex min-w-0 items-center gap-2;
+        line-height: 20px;
+    }
+
+    .workspace-context {
+        color: var(--ant-color-text-tertiary, #8c8c8c) !important;
+        font-size: 12px;
+        line-height: 20px;
+    }
+
+    .workspace-heading-divider {
+        color: var(--ant-color-border, #d9d9d9);
+        line-height: 20px;
+    }
+
+    .workspace-title.ant-typography {
+        display: block;
+        max-width: min(42vw, 34rem);
+        line-height: 20px;
+    }
+
+    .workspace-account,
+    .member-account {
+        margin-inline-start: auto;
+    }
+
+    .workspace-content {
+        @apply p-4 sm:p-6 lg:p-8;
+        min-width: 0;
+    }
+
+    .staff-sidebar {
+        display: flex;
+        height: 100%;
+        flex-direction: column;
+        background: var(--library-ink);
+    }
+
+    .staff-sidebar-brand {
+        @apply flex h-16 shrink-0 items-center gap-3 border-b border-white/10 px-5;
+    }
+
+    .staff-sidebar-name {
+        color: #fff !important;
+    }
+
+    .staff-sidebar-workspace,
+    .staff-planned-copy {
+        color: rgb(255 255 255 / 0.5) !important;
+        font-size: 12px;
+    }
+
+    .staff-navigation.ant-menu {
+        flex: 1;
+        overflow-y: auto;
+        padding: 16px 8px 8px;
+        border-inline-end: 0;
+    }
+
+    .staff-planned-workflows {
+        @apply mx-3 mb-3 flex gap-3 rounded-lg border border-white/10 bg-white/[0.04] p-3;
+    }
+
+    .staff-planned-icon {
+        margin-top: 3px;
+        color: rgb(255 255 255 / 0.58);
+    }
+
+    .staff-planned-title {
+        @apply text-[0.6875rem] font-semibold uppercase tracking-[0.12em];
+        color: rgb(255 255 255 / 0.72) !important;
+    }
+
+    .staff-utility-navigation.ant-menu {
+        flex: none;
+        padding: 8px;
+        border-top: 1px solid rgb(255 255 255 / 0.1);
+        border-inline-end: 0;
+    }
+
+    .account-menu-trigger.ant-btn {
+        height: 44px;
+        padding: 4px 8px;
+        border-radius: var(--ant-border-radius-lg, 8px);
+        line-height: normal;
+    }
+
+    .account-avatar.ant-avatar {
+        background: var(--library-ink);
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    .account-menu-copy {
+        display: flex;
+        min-width: 0;
+        flex-direction: column;
+        justify-content: center;
+        line-height: normal;
+        text-align: start;
+    }
+
+    .account-menu-name.ant-typography {
+        display: block;
+        max-width: 9rem;
+        font-size: 13px;
+        line-height: 18px;
+    }
+
+    .account-menu-label {
+        font-size: 11px;
+        line-height: 16px;
+    }
+
+    .account-menu-chevron {
+        color: var(--ant-color-text-tertiary, #8c8c8c);
+        font-size: 10px;
+    }
+
+    .app-page-header {
+        @apply mb-6 grid gap-4 border-b pb-5 md:grid-cols-[minmax(0,1fr)_auto] md:items-end;
+    }
+
+    .app-breadcrumb {
+        margin-bottom: 12px;
+    }
+
+    .app-page-title.ant-typography {
+        margin: 0;
+        overflow-wrap: anywhere;
+        color: var(--library-ink);
+        font-family: ui-serif, Georgia, Cambria, "Times New Roman", serif;
+        font-size: clamp(1.75rem, 3vw, 2rem);
+        line-height: 1.2;
+        letter-spacing: -0.025em;
+    }
+
+    .app-page-description.ant-typography {
+        max-width: 44rem;
+        margin: 6px 0 0;
+    }
+
+    .app-page-actions {
+        align-items: center;
+        justify-content: flex-start;
+    }
+
+    .directory-card .ant-card-extra {
+        width: min(24rem, 42vw);
+    }
+
+    .directory-count {
+        margin-inline-start: 8px;
+        font-size: 12px;
+        font-weight: 400;
+    }
+
+    .table-entity-icon {
+        @apply flex h-9 w-9 shrink-0 items-center justify-center rounded-md;
+    }
+
+    .table-category-icon {
+        background: var(--ant-gold-1, #fffbe6);
+        color: var(--ant-gold-7, #d48806);
+    }
+
+    .table-title-link.ant-btn {
+        display: block;
+        max-width: 15rem;
+        height: auto;
+        padding: 0;
+        overflow: hidden;
+        font-weight: 600;
+        line-height: 20px;
+        text-align: start;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .table-secondary-line {
+        display: block;
+        max-width: 15rem;
+        font-size: 12px;
+    }
+
+    .table-pagination {
+        padding: 16px;
+        border-top: 1px solid var(--ant-color-border-secondary, #f0f0f0);
+    }
+
+    .form-request-alert,
+    .auth-alert,
+    .profile-verification-alert {
+        margin-bottom: 16px;
+    }
+
+    .form-actions {
+        margin-top: 8px;
+        padding-top: 16px;
+        border-top: 1px solid var(--ant-color-border-secondary, #f0f0f0);
+    }
+
+    .book-description.ant-typography {
+        margin-bottom: 0;
+        white-space: pre-line;
+    }
+
+    .book-stat-card .ant-statistic {
+        margin-bottom: 8px;
+    }
+
+    .record-history-card,
+    .dashboard-next-card,
+    .member-services-card {
+        margin-top: 24px;
+    }
+
+    .dashboard-feature {
+        padding-block: 8px;
+    }
+
+    .dashboard-feature-copy {
+        max-width: 42rem;
+    }
+
+    .dashboard-feature-copy .ant-typography {
+        margin-bottom: 8px;
+    }
+
+    .planned-workflow-card,
+    .planned-workflow-card .ant-card-body {
+        height: 100%;
+    }
+
+    .planned-workflow-card .ant-typography,
+    .planned-capability-copy.ant-typography {
+        margin: 4px 0 12px;
+    }
+
+    .danger-zone-card.ant-card {
+        border-color: var(--ant-color-error-border, #ffccc7);
+    }
+
+    .member-header.ant-layout-header {
+        @apply flex items-center gap-2 px-4 sm:px-6 lg:px-8;
+        height: 64px;
+        border-bottom: 1px solid var(--ant-color-border-secondary, #f0f0f0);
+        background: var(--ant-color-bg-container, #fff);
+        line-height: normal;
+    }
+
+    .member-brand {
+        @apply flex shrink-0 items-center gap-3 rounded-md bg-transparent p-0 text-left;
+    }
+
+    .member-brand:focus-visible {
+        outline: 2px solid var(--ant-color-primary, var(--library-teal));
+        outline-offset: 3px;
+    }
+
+    .member-brand-mark {
+        @apply flex h-9 w-9 items-center justify-center rounded-lg text-white;
         background: var(--library-teal);
     }
 
-    .ui-button-primary:hover {
-        background: var(--library-teal-dark);
+    .member-brand-name {
+        color: var(--library-ink) !important;
     }
 
-    .ui-button-secondary {
-        @apply ui-button border border-slate-300 bg-white text-slate-700 shadow-sm hover:border-slate-400 hover:bg-slate-50 hover:text-slate-950;
+    .member-brand-label {
+        @apply text-[0.625rem] font-semibold uppercase tracking-[0.14em];
+        color: var(--ant-color-text-tertiary, #8c8c8c) !important;
     }
 
-    .ui-button-ghost {
-        @apply ui-button text-slate-700 hover:bg-white/70 hover:text-slate-950;
+    .member-navigation.ant-menu {
+        min-width: 12rem;
+        flex: 1;
+        border-bottom: 0;
     }
 
-    .ui-button-danger {
-        @apply ui-button bg-rose-700 text-white shadow-sm hover:bg-rose-800;
+    .member-content {
+        @apply mx-auto w-full max-w-7xl p-4 sm:p-6 lg:p-8;
     }
 
-    .ui-icon-button {
-        @apply inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-slate-500 transition-colors duration-150 hover:bg-slate-100 hover:text-slate-900;
-    }
-
-    .ui-input,
-    .ui-select {
-        @apply block h-11 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-900 shadow-sm transition-colors duration-150 placeholder:text-slate-400 hover:border-slate-400 focus:border-teal-700 focus:ring-2 focus:ring-teal-100;
-    }
-
-    textarea.ui-input {
-        @apply h-auto py-2.5;
-    }
-
-    .ui-input-error {
-        @apply border-rose-400 focus:border-rose-600 focus:ring-rose-100;
-    }
-
-    .ui-label {
-        @apply text-sm font-semibold text-slate-800;
-    }
-
-    .ui-help {
-        @apply mt-1.5 text-xs leading-5 text-slate-500;
-    }
-
-    .ui-alert {
-        @apply rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 shadow-sm;
-    }
-
-    .ui-page-header {
-        @apply mb-7 grid gap-5 border-b pb-6 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end;
-        border-color: var(--library-line);
-    }
-
-    .ui-page-eyebrow {
-        @apply mb-2 text-[0.6875rem] font-bold uppercase tracking-[0.18em] text-teal-700;
-    }
-
-    .ui-page-title {
-        @apply max-w-4xl text-balance text-3xl font-semibold tracking-[-0.035em] text-slate-950 sm:text-[2rem];
+    .member-welcome-title.ant-typography {
+        margin: 12px 0 8px;
+        color: var(--library-ink);
         font-family: ui-serif, Georgia, Cambria, "Times New Roman", serif;
     }
 
-    .ui-page-description {
-        @apply mt-1.5 max-w-2xl text-pretty text-sm leading-6 text-slate-600;
+    .member-welcome-copy.ant-typography {
+        max-width: 42rem;
+        font-size: 16px;
+        line-height: 26px;
     }
 
-    .ui-table {
-        @apply min-w-full text-left;
+    .member-card.ant-card {
+        border-top: 4px solid var(--library-amber);
     }
 
-    .ui-table thead {
-        @apply border-b bg-slate-50/80 text-[0.6875rem] font-semibold uppercase tracking-[0.11em] text-slate-500;
-        border-color: var(--library-line);
-    }
-
-    .ui-table tbody {
-        @apply divide-y divide-slate-100 bg-white;
-    }
-
-    .ui-table tbody tr {
-        @apply transition-colors duration-150 hover:bg-teal-50/35;
-    }
-
-    .ui-action-link {
-        @apply rounded-sm font-semibold text-teal-700 transition-colors duration-150 hover:text-teal-900;
-    }
-
-    .ui-eyebrow {
-        @apply text-[0.6875rem] font-bold uppercase tracking-[0.18em] text-teal-700;
-    }
-
-    .ui-badge {
-        @apply inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold;
-    }
-
-    .ui-badge-success {
-        @apply bg-emerald-50 text-emerald-800 ring-1 ring-inset ring-emerald-200;
-    }
-
-    .ui-empty-state {
-        @apply px-5 py-14 text-center;
-    }
-
-    .ui-muted-block {
-        @apply rounded-xl border border-dashed border-slate-300 bg-slate-50/70 px-4 py-6 text-center;
-    }
-
-    .ui-planned-chip {
-        @apply inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[0.6875rem] font-semibold text-slate-500;
+    .planned-service-tag {
+        margin-top: 16px;
     }
 
     .guest-shell {
@@ -217,9 +435,7 @@
 
     .guest-brand-panel {
         @apply relative flex min-h-[19rem] flex-col justify-between overflow-hidden px-6 py-7 sm:px-10 sm:py-9 lg:min-h-screen lg:px-12 lg:py-11;
-        background:
-            radial-gradient(circle at 92% 8%, rgb(15 118 110 / 0.7), transparent 23rem),
-            linear-gradient(145deg, var(--library-ink-soft), var(--library-ink));
+        background: radial-gradient(circle at 92% 8%, rgb(15 118 110 / 0.7), transparent 23rem), linear-gradient(145deg, var(--library-ink-soft), var(--library-ink));
     }
 
     .guest-brand-panel::after {
@@ -232,22 +448,30 @@
     }
 
     .guest-form-panel {
-        @apply flex items-center justify-center bg-[var(--library-paper)] px-5 py-12 sm:px-10 lg:px-16;
+        @apply flex items-center justify-center px-5 py-12 sm:px-10 lg:px-16;
+        background: var(--library-paper);
     }
 
     .guest-wordmark {
-        @apply relative z-10 inline-flex items-center gap-3 rounded-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-teal-600;
+        @apply relative z-10 inline-flex items-center gap-3 rounded-lg;
+    }
+
+    .guest-wordmark:focus-visible {
+        outline: 2px solid var(--library-teal);
+        outline-offset: 4px;
     }
 
     .welcome-shell {
-        @apply min-h-screen overflow-x-hidden text-slate-900;
-        background:
-            radial-gradient(circle at 84% 4%, rgb(15 118 110 / 0.09), transparent 26rem),
-            var(--library-paper);
+        @apply min-h-screen overflow-x-hidden;
+        background: radial-gradient(circle at 84% 4%, rgb(15 118 110 / 0.09), transparent 26rem), var(--library-paper);
     }
 
     .welcome-header {
         @apply mx-auto flex w-full max-w-[88rem] items-center justify-between gap-5 px-5 py-6 sm:px-8 lg:px-10;
+    }
+
+    .welcome-register-button {
+        @apply hidden sm:inline-flex;
     }
 
     .welcome-hero {
@@ -255,7 +479,8 @@
     }
 
     .welcome-title {
-        @apply mt-5 max-w-2xl text-balance font-serif text-5xl font-semibold leading-[0.98] tracking-[-0.045em] text-[var(--library-ink)] sm:text-6xl lg:text-7xl;
+        @apply mt-5 max-w-2xl text-balance font-serif text-5xl font-semibold leading-[0.98] tracking-[-0.045em] sm:text-6xl lg:text-7xl;
+        color: var(--library-ink);
     }
 
     .welcome-lede {
@@ -267,7 +492,7 @@
     }
 
     .welcome-check::before {
-        @apply flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-teal-100 text-[0.65rem] font-bold text-teal-800 content-['\2713'];
+        @apply flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-teal-100 text-[0.65rem] font-semibold text-teal-800 content-['\2713'];
     }
 
     .catalogue-stage {
@@ -279,25 +504,25 @@
     }
 
     .catalogue-shadow-card {
-        @apply absolute inset-x-7 inset-y-5 rotate-3 rounded-3xl border border-teal-900/10 bg-teal-800/10;
+        @apply absolute inset-x-7 inset-y-5 rotate-3 rounded-2xl border border-teal-900/10 bg-teal-800/10;
     }
 
     .catalogue-card {
-        @apply relative rounded-3xl border bg-white p-5 shadow-[0_28px_80px_rgba(20,36,46,0.14)] sm:p-7;
+        @apply relative rounded-2xl border bg-white p-5 shadow-[0_28px_80px_rgba(20,36,46,0.14)] sm:p-7;
         border-color: var(--library-line);
     }
 
     .book-cover {
-        @apply flex min-h-56 flex-col justify-between rounded-2xl p-5 shadow-lg;
+        @apply flex min-h-56 flex-col justify-between rounded-xl p-5 shadow-lg;
         background: linear-gradient(155deg, var(--library-teal), var(--library-ink));
     }
 
     .catalogue-data-cell {
-        @apply rounded-xl border border-slate-100 bg-slate-50/80 p-3;
+        @apply rounded-lg border border-slate-100 bg-slate-50/80 p-3;
     }
 
     .catalogue-data-cell dt {
-        @apply text-[0.65rem] font-bold uppercase tracking-[0.14em] text-slate-400;
+        @apply text-[0.65rem] font-semibold uppercase tracking-[0.14em] text-slate-400;
     }
 
     .catalogue-data-cell dd {
@@ -316,20 +541,48 @@
     .welcome-footer {
         @apply mx-auto flex w-full max-w-[88rem] flex-col gap-2 px-5 py-8 text-xs font-medium text-slate-500 sm:flex-row sm:items-center sm:justify-between sm:px-8 lg:px-10;
     }
+}
 
-    .library-rule {
-        @apply h-8 w-1 shrink-0 rounded-full;
-        background: linear-gradient(to bottom, var(--library-amber) 0 42%, var(--library-teal) 42% 100%);
+@media (max-width: 1023px) {
+    .workspace-sider.ant-layout-sider {
+        display: none;
     }
 
-    .library-mark {
-        @apply relative flex h-11 w-11 items-center justify-center overflow-hidden rounded-xl text-white;
-        background: var(--library-teal);
-        box-shadow: inset -8px 0 0 rgb(20 36 46 / 0.18);
+    .workspace-main-layout {
+        margin-inline-start: 0;
     }
 
-    .library-mark::after {
-        @apply absolute bottom-1.5 left-2 right-2 h-px bg-white/50 content-[''];
+    .workspace-menu-button.ant-btn {
+        display: inline-flex;
+    }
+}
+
+@media (max-width: 767px) {
+    .directory-card .ant-card-head-wrapper {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .directory-card .ant-card-extra {
+        width: 100%;
+        margin-inline-start: 0;
+    }
+
+    .workspace-context,
+    .workspace-heading-divider,
+    .account-menu-copy,
+    .account-menu-chevron,
+    .member-brand-copy {
+        display: none;
+    }
+
+    .member-header.ant-layout-header {
+        padding-inline: 12px;
+    }
+
+    .member-navigation.ant-menu {
+        min-width: 0;
     }
 }
 

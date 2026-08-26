@@ -1,9 +1,5 @@
-import InputError from '@/Components/InputError';
-import InputLabel from '@/Components/InputLabel';
-import PrimaryButton from '@/Components/PrimaryButton';
-import TextInput from '@/Components/TextInput';
-import { Transition } from '@headlessui/react';
 import { Link, useForm, usePage } from '@inertiajs/react';
+import { Alert, Button, Flex, Form, Input, Typography } from 'antd';
 
 export default function UpdateProfileInformation({
     mustVerifyEmail,
@@ -11,106 +7,95 @@ export default function UpdateProfileInformation({
     className = '',
 }) {
     const user = usePage().props.auth.user;
-
     const { data, setData, patch, errors, processing, recentlySuccessful } =
         useForm({
             name: user.name,
             email: user.email,
         });
 
-    const submit = (e) => {
-        e.preventDefault();
-
+    const submit = () => {
         patch(route('profile.update'));
     };
 
     return (
         <section className={className}>
-            <header>
-                <h2 className="text-lg font-semibold tracking-tight text-slate-950">
-                    Profile information
-                </h2>
+            <Typography.Title level={3}>Profile information</Typography.Title>
+            <Typography.Paragraph type="secondary">
+                Update your name and account email address.
+            </Typography.Paragraph>
 
-                <p className="mt-1.5 text-sm leading-6 text-slate-600">
-                    Update your name and account email address.
-                </p>
-            </header>
-
-            <form onSubmit={submit} className="mt-6 space-y-6">
-                <div>
-                    <InputLabel htmlFor="name" value="Name" />
-
-                    <TextInput
+            <Form layout="vertical" onFinish={submit} requiredMark={false}>
+                <Form.Item
+                    htmlFor="name"
+                    label="Name"
+                    validateStatus={errors.name ? 'error' : undefined}
+                    help={errors.name}
+                >
+                    <Input
                         id="name"
                         name="name"
-                        className="mt-1 block w-full"
-                        value={data.name}
-                        onChange={(e) => setData('name', e.target.value)}
-                        required
-                        isFocused
                         autoComplete="name"
+                        autoFocus
+                        value={data.name}
+                        onChange={(event) => setData('name', event.target.value)}
                     />
+                </Form.Item>
 
-                    <InputError className="mt-2" message={errors.name} />
-                </div>
-
-                <div>
-                    <InputLabel htmlFor="email" value="Email" />
-
-                    <TextInput
+                <Form.Item
+                    htmlFor="email"
+                    label="Email"
+                    validateStatus={errors.email ? 'error' : undefined}
+                    help={errors.email}
+                >
+                    <Input
                         id="email"
                         name="email"
                         type="email"
-                        className="mt-1 block w-full"
-                        value={data.email}
-                        onChange={(e) => setData('email', e.target.value)}
-                        required
                         autoComplete="username"
                         spellCheck={false}
+                        value={data.email}
+                        onChange={(event) => setData('email', event.target.value)}
                     />
-
-                    <InputError className="mt-2" message={errors.email} />
-                </div>
+                </Form.Item>
 
                 {mustVerifyEmail && user.email_verified_at === null && (
-                    <div>
-                        <p className="mt-2 text-sm text-slate-700">
-                            Your email address is unverified.
+                    <Alert
+                        className="profile-verification-alert"
+                        type="warning"
+                        title="Your email address is unverified"
+                        description={
                             <Link
                                 href={route('verification.send')}
                                 method="post"
                                 as="button"
-                                className="ui-action-link ml-1 text-sm"
                             >
-                                Click here to re-send the verification email.
+                                Send another verification email
                             </Link>
-                        </p>
-
-                        {status === 'verification-link-sent' && (
-                            <div className="ui-alert mt-3 border-emerald-200 bg-emerald-50 text-emerald-800" role="status">
-                                A new verification link has been sent to your
-                                email address.
-                            </div>
-                        )}
-                    </div>
+                        }
+                        showIcon
+                    />
                 )}
 
-                <div className="flex items-center gap-4">
-                    <PrimaryButton disabled={processing}>Save</PrimaryButton>
+                {status === 'verification-link-sent' && (
+                    <Alert
+                        className="profile-verification-alert"
+                        type="success"
+                        title="Verification email sent"
+                        showIcon
+                    />
+                )}
 
-                    <Transition
-                        show={recentlySuccessful}
-                        enter="transition ease-in-out"
-                        enterFrom="opacity-0"
-                        leave="transition ease-in-out"
-                        leaveTo="opacity-0"
-                    >
-                        <p className="text-sm font-medium text-emerald-700" role="status" aria-live="polite">
-                            Saved.
-                        </p>
-                    </Transition>
-                </div>
-            </form>
+                <Flex align="center" gap={12} wrap>
+                    <Button htmlType="submit" loading={processing} type="primary">
+                        Save changes
+                    </Button>
+                    {recentlySuccessful && (
+                        <Typography.Text type="success" role="status" aria-live="polite">
+                            Profile updated.
+                        </Typography.Text>
+                    )}
+                </Flex>
+            </Form>
         </section>
     );
 }
