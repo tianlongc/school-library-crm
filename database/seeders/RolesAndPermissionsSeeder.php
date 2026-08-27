@@ -33,6 +33,9 @@ class RolesAndPermissionsSeeder extends Seeder
             'members.view',
             'members.suspend',
             'members.deactivate',
+            'loans.view',
+            'loans.issue',
+            'loans.return',
         ];
 
         $adminPermissions = [

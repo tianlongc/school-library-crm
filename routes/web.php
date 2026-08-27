@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\BookController;
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\LoanController;
 use App\Http\Controllers\MemberController;
 use App\Http\Controllers\MemberDashboardController;
 use App\Http\Controllers\ProfileController;
@@ -104,5 +105,15 @@ Route::middleware(['auth', 'can:workspace.access'])
                 Route::post('/{member}/suspend', 'suspend')->name('suspend');
                 Route::post('/{member}/reactivate', 'reactivate')->name('reactivate');
                 Route::post('/{member}/deactivate', 'deactivate')->name('deactivate');
+            });
+
+        Route::controller(LoanController::class)
+            ->prefix('loans')
+            ->name('loans.')
+            ->group(function (): void {
+                Route::get('/', 'index')->name('index');
+                Route::get('/create', 'create')->name('create');
+                Route::post('/', 'store')->name('store');
+                Route::post('/{loan}/return', 'returnLoan')->name('return');
             });
     });

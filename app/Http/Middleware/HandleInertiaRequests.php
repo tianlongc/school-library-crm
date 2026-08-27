@@ -40,6 +40,9 @@ class HandleInertiaRequests extends Middleware
                     'accessStaffWorkspace' => $user?->can('workspace.access') ?? false,
                     'viewMemberDashboard' => $user?->can('member.dashboard.view') ?? false,
                     'viewMembers' => $user?->can('members.view') ?? false,
+                    'viewLoans' => $user?->can('loans.view') ?? false,
+                    'issueLoans' => $user?->can('loans.issue') ?? false,
+                    'returnLoans' => $user?->can('loans.return') ?? false,
                 ],
             ],
         ];
