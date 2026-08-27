@@ -4,7 +4,7 @@ namespace Database\Factories;
 
 use App\Domain\Member\Enums\MemberStatus;
 use App\Domain\Member\Models\Member;
-use App\Models\User;
+use App\Domain\User\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**

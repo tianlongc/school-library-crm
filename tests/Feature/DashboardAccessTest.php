@@ -1,7 +1,7 @@
 <?php
 
 use App\Domain\Member\Models\Member;
-use App\Models\User;
+use App\Domain\User\Models\User;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Inertia\Testing\AssertableInertia as Assert;
 

@@ -2,7 +2,7 @@
 
 use App\Domain\Book\Models\Book;
 use App\Domain\Category\Models\Category;
-use App\Models\User;
+use App\Domain\User\Models\User;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Inertia\Testing\AssertableInertia as Assert;
 

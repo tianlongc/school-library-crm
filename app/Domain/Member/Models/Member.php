@@ -3,8 +3,8 @@
 namespace App\Domain\Member\Models;
 
 use App\Domain\Member\Enums\MemberStatus;
-use App\Models\User;
 use App\Domain\Member\Policies\MemberPolicy;
+use App\Domain\User\Models\User;
 use Database\Factories\MemberFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\UseFactory;
@@ -18,7 +18,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 #[UsePolicy(MemberPolicy::class)]
 class Member extends Model
 {
-    /** @use HasFactory<\Database\Factories\MemberFactory> */
+    /** @use HasFactory<MemberFactory> */
     use HasFactory;
 
     protected $attributes = [
