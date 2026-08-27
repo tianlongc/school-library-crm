@@ -127,6 +127,9 @@ it('shares the navigation capabilities used by account settings', function (
     bool $viewAdminDashboard,
     bool $accessStaffWorkspace,
     bool $viewMemberDashboard,
+    bool $viewLoans,
+    bool $issueLoans,
+    bool $returnLoans,
 ) {
     $user = User::factory()->create();
     $user->assignRole($role);
@@ -139,9 +142,12 @@ it('shares the navigation capabilities used by account settings', function (
             ->where('auth.can.viewAdminDashboard', $viewAdminDashboard)
             ->where('auth.can.accessStaffWorkspace', $accessStaffWorkspace)
             ->where('auth.can.viewMemberDashboard', $viewMemberDashboard)
+            ->where('auth.can.viewLoans', $viewLoans)
+            ->where('auth.can.issueLoans', $issueLoans)
+            ->where('auth.can.returnLoans', $returnLoans)
         );
 })->with([
-    'member' => ['member', false, false, true],
-    'librarian' => ['librarian', false, true, false],
-    'administrator' => ['admin', true, true, false],
+    'member' => ['member', false, false, true, false, false, false],
+    'librarian' => ['librarian', false, true, false, true, true, true],
+    'administrator' => ['admin', true, true, false, true, true, true],
 ]);
