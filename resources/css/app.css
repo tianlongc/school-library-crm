@@ -444,6 +444,16 @@
         border-top: 4px solid var(--library-amber);
     }
 
+    .member-loan-card.ant-card {
+        border-inline-start: 3px solid var(--library-teal);
+    }
+
+    .member-loan-due.ant-typography {
+        display: block;
+        margin-top: 16px;
+        font-size: 12px;
+    }
+
     .planned-service-tag {
         margin-top: 16px;
     }

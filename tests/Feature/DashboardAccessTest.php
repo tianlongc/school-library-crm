@@ -1,5 +1,6 @@
 <?php
 
+use App\Domain\Loan\Models\Loan;
 use App\Domain\Member\Models\Member;
 use App\Domain\User\Models\User;
 use Database\Seeders\RolesAndPermissionsSeeder;
@@ -59,6 +60,32 @@ it('renders the member dashboard only for users with member access', function ()
     $this->actingAs($librarian)
         ->get(route('member.dashboard'))
         ->assertForbidden();
+});
+
+it('shows only the signed in members current loans', function () {
+    $user = User::factory()->create();
+    $member = Member::factory()->for($user)->create();
+    $user->assignRole('member');
+
+    $currentLoan = Loan::factory()->for($member, 'member')->create([
+        'due_at' => now()->addWeek(),
+        'returned_at' => null,
+    ]);
+    Loan::factory()->for($member, 'member')->create([
+        'returned_at' => now()->subDay(),
+    ]);
+    Loan::factory()->create(['returned_at' => null]);
+
+    $this->actingAs($user)
+        ->get(route('member.dashboard'))
+        ->assertSuccessful()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('Member/Dashboard')
+            ->has('currentLoans', 1)
+            ->where('currentLoans.0.id', $currentLoan->id)
+            ->where('currentLoans.0.status', 'active')
+            ->where('currentLoans.0.returned_at', null)
+        );
 });
 
 it('renders the staff dashboard for authorized staff', function (string $role) {

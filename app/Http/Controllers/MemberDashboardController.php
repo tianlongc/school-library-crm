@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\LoanResource;
 use App\Http\Resources\MemberResource;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -21,8 +22,15 @@ class MemberDashboardController extends Controller
 
         Gate::authorize('viewDashboard', $member);
 
+        $currentLoans = $member->loans()
+            ->with(['member.user', 'book', 'issuedBy', 'returnedBy'])
+            ->whereNull('returned_at')
+            ->orderBy('due_at')
+            ->get();
+
         return Inertia::render('Member/Dashboard', [
             'member' => MemberResource::make($member),
+            'currentLoans' => LoanResource::collection($currentLoans)->resolve($request),
         ]);
     }
 }

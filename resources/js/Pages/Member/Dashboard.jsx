@@ -1,13 +1,36 @@
 import InertiaButton from '@/Components/InertiaButton';
 import MemberLayout from '@/Layouts/MemberLayout';
 import { Head, usePage } from '@inertiajs/react';
-import { Card, Col, Descriptions, Flex, Row, Tag, Typography } from 'antd';
+import {
+    Card,
+    Col,
+    Descriptions,
+    Empty,
+    Flex,
+    Row,
+    Tag,
+    Typography,
+} from 'antd';
 
 const plannedServices = [
     'Search the school catalogue',
-    'See current loans and due dates',
     'Follow availability and borrowing status',
 ];
+
+const loanStatus = {
+    active: {
+        color: 'processing',
+        label: 'Active',
+    },
+    overdue: {
+        color: 'error',
+        label: 'Overdue',
+    },
+};
+
+const dueDateFormatter = new Intl.DateTimeFormat('en-MY', {
+    dateStyle: 'medium',
+});
 
 const memberStatusColor = {
     active: {
@@ -25,7 +48,7 @@ const memberStatusColor = {
 };
 
 export default function Dashboard() {
-    const { auth, member } = usePage().props;
+    const { auth, currentLoans = [], member } = usePage().props;
 
     const status = memberStatusColor[member.status] ?? {
         color: 'default',
@@ -82,14 +105,85 @@ export default function Dashboard() {
                 </Col>
             </Row>
 
+            <Card
+                className="member-services-card"
+                extra={
+                    <Typography.Text type="secondary">
+                        {currentLoans.length}{' '}
+                        {currentLoans.length === 1 ? 'book' : 'books'}
+                    </Typography.Text>
+                }
+                title="Current loans"
+            >
+                {currentLoans.length === 0 ? (
+                    <Empty
+                        description="You have no books on loan."
+                        image={Empty.PRESENTED_IMAGE_SIMPLE}
+                    />
+                ) : (
+                    <div className="grid gap-3 md:grid-cols-2">
+                        {currentLoans.map((loan) => {
+                            const statusDetails = loanStatus[loan.status] ?? {
+                                color: 'default',
+                                label: 'Unknown',
+                            };
+
+                            return (
+                                <Card
+                                    key={loan.id}
+                                    className="member-loan-card"
+                                    size="small"
+                                    variant="outlined"
+                                >
+                                    <Flex
+                                        align="flex-start"
+                                        gap={16}
+                                        justify="space-between"
+                                    >
+                                        <div className="min-w-0">
+                                            <Typography.Text strong>
+                                                {loan.book.title}
+                                            </Typography.Text>
+                                            <Typography.Text
+                                                className="table-secondary-line"
+                                                type="secondary"
+                                            >
+                                                ISBN {loan.book.isbn}
+                                            </Typography.Text>
+                                        </div>
+                                        <Tag color={statusDetails.color}>
+                                            {statusDetails.label}
+                                        </Tag>
+                                    </Flex>
+
+                                    <Typography.Text
+                                        className="member-loan-due"
+                                        type={
+                                            loan.status === 'overdue'
+                                                ? 'danger'
+                                                : 'secondary'
+                                        }
+                                    >
+                                        Due{' '}
+                                        {dueDateFormatter.format(
+                                            new Date(loan.due_at),
+                                        )}
+                                    </Typography.Text>
+                                </Card>
+                            );
+                        })}
+                    </div>
+                )}
+            </Card>
+
             <Card title="Member library services" className="member-services-card">
                 <Typography.Paragraph type="secondary">
-                    These experiences need catalogue and circulation endpoints before
-                    they become interactive.
+                    These catalogue experiences will become interactive as the next
+                    library services are connected.
                 </Typography.Paragraph>
                 <Row gutter={[16, 16]}>
                     {plannedServices.map((service) => (
-                        <Col xs={24} md={8} key={service}>
+                        <Col xs={24} md={12} key={service}>
                             <Card size="small" variant="outlined">
                                 <Typography.Text strong>{service}</Typography.Text>
                                 <div className="planned-service-tag">
