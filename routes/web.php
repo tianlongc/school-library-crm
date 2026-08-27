@@ -2,8 +2,10 @@
 
 use App\Http\Controllers\BookController;
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\MemberController;
 use App\Http\Controllers\MemberDashboardController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\UserManagementController;
 use Illuminate\Foundation\Application;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -34,7 +36,9 @@ Route::middleware('auth')->group(function () {
 
 require __DIR__.'/auth.php';
 
-// Member
+/**
+ * Member Area
+ */
 Route::middleware('auth')
     ->prefix('member')
     ->name('member.')
@@ -42,21 +46,27 @@ Route::middleware('auth')
         Route::get('/', MemberDashboardController::class)->name('dashboard');
     });
 
-// Admin
+/**
+ * Admin Area
+ */
 Route::middleware(['auth', 'can:admin.dashboard.view'])
     ->prefix('admin')
     ->name('admin.')
     ->group(function () {
-        Route::get('/', function () {
-            return Inertia::render('Admin/Dashboard');
-        })->name('dashboard');
+        Route::controller(UserManagementController::class)
+            ->group(function (): void {
+                Route::get('/', 'index')->middleware('can:users.view')->name('dashboard');
+                Route::post('/{user}/role', 'updateRole')->name('users.role.update');
+            });
     });
 
-// Staff: Librarian + Admin
+/**
+ * Staff Area: Librarian + Admin
+ */
 Route::middleware(['auth', 'can:workspace.access'])
     ->prefix('staff')
     ->name('staff.')
-    ->group(function () {
+    ->group(function (): void {
         Route::get('/', function () {
             return Inertia::render('Staff/Dashboard');
         })->name('dashboard');
@@ -84,5 +94,15 @@ Route::middleware(['auth', 'can:workspace.access'])
                 Route::get('/{category}/edit', 'edit')->middleware('can:categories.update')->name('edit');
                 Route::post('/{category}', 'update')->middleware('can:categories.update')->name('update');
                 Route::delete('/{category}', 'destroy')->middleware('can:categories.delete')->name('destroy');
+            });
+
+        Route::controller(MemberController::class)
+            ->prefix('members')
+            ->name('members.')
+            ->group(function (): void {
+                Route::get('/', 'index')->name('index');
+                Route::post('/{member}/suspend', 'suspend')->name('suspend');
+                Route::post('/{member}/reactivate', 'reactivate')->name('reactivate');
+                Route::post('/{member}/deactivate', 'deactivate')->name('deactivate');
             });
     });

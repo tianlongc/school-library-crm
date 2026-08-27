@@ -11,4 +11,24 @@ class MemberPolicy
     {
         return $user->is($member->user) && $user->can('member.dashboard.view');
     }
+
+    public function viewAny(User $user): bool
+    {
+        return $user->can('members.view');
+    }
+
+    public function suspend(User $user, Member $member): bool
+    {
+        return $user->can('members.suspend');
+    }
+
+    public function deactivate(User $user, Member $member): bool
+    {
+        return $user->can('members.deactivate');
+    }
+
+    public function reactivate(User $user, Member $member): bool
+    {
+        return $user->can('members.reactivate');
+    }
 }

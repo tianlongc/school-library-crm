@@ -1,139 +1,118 @@
+import InertiaButton from '@/Components/InertiaButton';
 import DeleteOutlined from '@ant-design/icons/DeleteOutlined';
 import EditOutlined from '@ant-design/icons/EditOutlined';
-import { Link } from '@inertiajs/react';
+import TagsOutlined from '@ant-design/icons/TagsOutlined';
+import { Button, Empty, Flex, Pagination, Space, Table, Tag, Tooltip, Typography } from 'antd';
 
-function CategoryActions({ category, onDelete, className = '' }) {
+function CategoryActions({ category, onDelete }) {
     return (
-        <div className={`flex items-center justify-center gap-1 ${className}`} role="group" aria-label={`Actions for ${category.name}`}>
-            <Link
-                href={route('staff.categories.edit', category.id)}
-                className="ui-icon-button h-9 w-9 text-teal-700 hover:bg-teal-50 hover:text-teal-900"
-                aria-label={`Edit ${category.name}`}
-                title="Edit category"
-            >
-                <EditOutlined aria-hidden="true" />
-            </Link>
-            <button
-                type="button"
-                onClick={() => onDelete(category)}
-                className="ui-icon-button h-9 w-9 text-rose-700 hover:bg-rose-50 hover:text-rose-900 focus-visible:outline-rose-700"
-                aria-label={`Delete ${category.name}`}
-                title="Delete category"
-            >
-                <DeleteOutlined aria-hidden="true" />
-            </button>
-        </div>
+        <Space size={4} role="group" aria-label={`Actions for ${category.name}`}>
+            <Tooltip title="Edit category">
+                <InertiaButton
+                    href={route('staff.categories.edit', category.id)}
+                    type="text"
+                    size="small"
+                    icon={<EditOutlined />}
+                    aria-label={`Edit ${category.name}`}
+                />
+            </Tooltip>
+            <Tooltip title="Delete category">
+                <Button
+                    danger
+                    type="text"
+                    size="small"
+                    icon={<DeleteOutlined />}
+                    onClick={() => onDelete(category)}
+                    aria-label={`Delete ${category.name}`}
+                />
+            </Tooltip>
+        </Space>
     );
 }
 
-function BookCount({ count }) {
-    return (
-        <span className="inline-flex min-w-20 items-center justify-center rounded-full bg-teal-50 px-2.5 py-1 text-xs font-semibold tabular-nums text-teal-800 ring-1 ring-inset ring-teal-200">
-            {count} {count === 1 ? 'book' : 'books'}
-        </span>
-    );
-}
-
-function EmptyState({ hasSearch }) {
-    return (
-        <div className="ui-empty-state">
-            <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-xl bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-200">
-                <svg aria-hidden="true" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M20 13 11 22l-9-9V2h11l9 9-2 2Z" />
-                    <circle cx="7.5" cy="7.5" r="1.5" />
-                </svg>
-            </div>
-            <p className="mt-3 text-sm font-semibold text-slate-800">No categories found</p>
-            <p className="mt-1 text-xs text-slate-500">
-                {hasSearch
-                    ? 'Try a broader category name.'
-                    : 'Add the first category to organize the catalogue.'}
-            </p>
-        </div>
-    );
-}
-
-export default function CategoryTable({ categories, links, meta, onDelete, search }) {
-    if (categories.length === 0) {
-        return <EmptyState hasSearch={Boolean(search?.trim())} />;
-    }
+export default function CategoryTable({
+    categories,
+    loading,
+    meta,
+    onDelete,
+    onPageChange,
+    search,
+}) {
+    const columns = [
+        {
+            title: 'Category',
+            dataIndex: 'name',
+            key: 'name',
+            render: (name) => (
+                <Flex align="center" gap={12}>
+                    <span className="table-entity-icon table-category-icon">
+                        <TagsOutlined />
+                    </span>
+                    <Typography.Text strong>{name}</Typography.Text>
+                </Flex>
+            ),
+        },
+        {
+            title: 'Catalogue',
+            dataIndex: 'books_count',
+            key: 'books_count',
+            align: 'center',
+            width: 180,
+            render: (count) => (
+                <Tag color="cyan">
+                    {count} {count === 1 ? 'book' : 'books'}
+                </Tag>
+            ),
+        },
+        {
+            title: 'Actions',
+            key: 'actions',
+            align: 'center',
+            width: 120,
+            render: (_, category) => (
+                <CategoryActions category={category} onDelete={onDelete} />
+            ),
+        },
+    ];
 
     return (
         <>
-            <div className="grid divide-y divide-slate-200 md:hidden">
-                {categories.map((category) => (
-                    <article key={category.id} className="p-4">
-                        <div className="flex items-start gap-3">
-                            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-200">
-                                <svg aria-hidden="true" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8">
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M20 13 11 22l-9-9V2h11l9 9-2 2Z" />
-                                    <circle cx="7.5" cy="7.5" r="1.5" />
-                                </svg>
-                            </span>
-                            <div className="min-w-0 flex-1">
-                                <p className="break-words text-sm font-semibold text-slate-900">{category.name}</p>
-                                <div className="mt-2">
-                                    <BookCount count={category.books_count} />
-                                </div>
-                            </div>
-                        </div>
-                        <CategoryActions category={category} onDelete={onDelete} className="mt-3 border-t border-slate-100 pt-3" />
-                    </article>
-                ))}
-            </div>
-
-            <div className="hidden overflow-x-auto md:block">
-                <table className="ui-table">
-                    <thead>
-                        <tr>
-                            <th className="px-5 py-3.5 sm:px-6">Category</th>
-                            <th className="px-5 py-3.5 text-center">Catalogue</th>
-                            <th className="px-5 py-3.5 text-center">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {categories.map((category) => (
-                            <tr key={category.id}>
-                                <td className="px-5 py-4 sm:px-6">
-                                    <div className="flex items-center gap-3">
-                                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-200">
-                                            <svg aria-hidden="true" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8">
-                                                <path strokeLinecap="round" strokeLinejoin="round" d="M20 13 11 22l-9-9V2h11l9 9-2 2Z" />
-                                                <circle cx="7.5" cy="7.5" r="1.5" />
-                                            </svg>
-                                        </span>
-                                        <span className="break-words text-sm font-semibold text-slate-900">{category.name}</span>
-                                    </div>
-                                </td>
-                                <td className="whitespace-nowrap px-5 py-4 text-center">
-                                    <BookCount count={category.books_count} />
-                                </td>
-                                <td className="whitespace-nowrap px-5 py-4 text-center">
-                                    <CategoryActions category={category} onDelete={onDelete} />
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
-
-            <div className="flex flex-col gap-3 border-t border-slate-200 bg-slate-50 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-                <p className="text-xs text-slate-500">
-                    Page <span className="font-semibold text-slate-700">{meta.current_page}</span> of <span className="font-semibold text-slate-700">{meta.last_page}</span> · {meta.total} categories
-                </p>
-                <div className="flex gap-2">
-                    {links.prev ? (
-                        <Link href={links.prev} preserveScroll preserveState className="ui-button-secondary min-h-9 px-3 py-1.5 text-xs">Previous</Link>
-                    ) : (
-                        <span className="ui-button-secondary min-h-9 cursor-not-allowed px-3 py-1.5 text-xs opacity-45">Previous</span>
-                    )}
-                    {links.next ? (
-                        <Link href={links.next} preserveScroll preserveState className="ui-button-secondary min-h-9 px-3 py-1.5 text-xs">Next</Link>
-                    ) : (
-                        <span className="ui-button-secondary min-h-9 cursor-not-allowed px-3 py-1.5 text-xs opacity-45">Next</span>
-                    )}
-                </div>
-            </div>
+            <Table
+                columns={columns}
+                dataSource={categories}
+                loading={loading}
+                locale={{
+                    emptyText: (
+                        <Empty
+                            image={Empty.PRESENTED_IMAGE_SIMPLE}
+                            description={
+                                search?.trim()
+                                    ? 'No categories match this search.'
+                                    : 'No categories have been added yet.'
+                            }
+                        />
+                    ),
+                }}
+                pagination={false}
+                rowKey="id"
+                scroll={{ x: 640 }}
+                size="middle"
+            />
+            {meta.total > 0 && (
+                <Flex className="table-pagination" align="center" justify="space-between" gap={16} wrap>
+                    <Typography.Text type="secondary">
+                        {meta.total} {meta.total === 1 ? 'category' : 'categories'}
+                    </Typography.Text>
+                    <Pagination
+                        current={meta.current_page}
+                        pageSize={meta.per_page}
+                        total={meta.total}
+                        showSizeChanger={false}
+                        showTitle
+                        onChange={onPageChange}
+                    />
+                </Flex>
+            )}
         </>
     );
 }

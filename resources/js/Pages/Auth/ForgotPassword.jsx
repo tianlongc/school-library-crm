@@ -1,18 +1,13 @@
-import InputError from '@/Components/InputError';
-import InputLabel from '@/Components/InputLabel';
-import PrimaryButton from '@/Components/PrimaryButton';
-import TextInput from '@/Components/TextInput';
 import GuestLayout from '@/Layouts/GuestLayout';
 import { Head, useForm } from '@inertiajs/react';
+import { Alert, Button, Form, Input } from 'antd';
 
 export default function ForgotPassword({ status }) {
     const { data, setData, post, processing, errors } = useForm({
         email: '',
     });
 
-    const submit = (e) => {
-        e.preventDefault();
-
+    const submit = () => {
         post(route('password.email'));
     };
 
@@ -24,37 +19,32 @@ export default function ForgotPassword({ status }) {
             <Head title="Forgot Password" />
 
             {status && (
-                <div
-                    className="ui-alert mb-5 border-emerald-200 bg-emerald-50 text-emerald-800"
-                    role="status"
-                >
-                    {status}
-                </div>
+                <Alert className="auth-alert" type="success" title={status} showIcon />
             )}
 
-            <form onSubmit={submit}>
-                <InputLabel htmlFor="email" value="Email" />
+            <Form layout="vertical" onFinish={submit} requiredMark={false}>
+                <Form.Item
+                    htmlFor="email"
+                    label="Email"
+                    validateStatus={errors.email ? 'error' : undefined}
+                    help={errors.email}
+                >
+                    <Input
+                        id="email"
+                        name="email"
+                        type="email"
+                        autoComplete="username"
+                        autoFocus
+                        spellCheck={false}
+                        value={data.email}
+                        onChange={(event) => setData('email', event.target.value)}
+                    />
+                </Form.Item>
 
-                <TextInput
-                    id="email"
-                    type="email"
-                    name="email"
-                    value={data.email}
-                    className="mt-1 block w-full"
-                    autoComplete="username"
-                    spellCheck="false"
-                    isFocused={true}
-                    onChange={(e) => setData('email', e.target.value)}
-                />
-
-                <InputError message={errors.email} className="mt-2" />
-
-                <div className="mt-6 flex items-center justify-end">
-                    <PrimaryButton disabled={processing}>
-                        Send reset link
-                    </PrimaryButton>
-                </div>
-            </form>
+                <Button block htmlType="submit" loading={processing} type="primary">
+                    Send reset link
+                </Button>
+            </Form>
         </GuestLayout>
     );
 }

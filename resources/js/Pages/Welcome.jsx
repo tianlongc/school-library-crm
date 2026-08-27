@@ -1,5 +1,7 @@
+import InertiaButton from '@/Components/InertiaButton';
 import ApplicationLogo from '@/Components/ApplicationLogo';
 import { Head, Link } from '@inertiajs/react';
+import { Tag } from 'antd';
 
 const capabilities = [
     {
@@ -64,7 +66,7 @@ function CataloguePreview() {
                             </p>
                         </div>
                     </div>
-                    <span className="ui-badge ui-badge-success">Available</span>
+                    <Tag color="success">Available</Tag>
                 </div>
 
                 <div className="mt-6 grid gap-6 sm:grid-cols-[9rem_1fr]">
@@ -134,30 +136,28 @@ export default function Welcome({ auth, canRegister }) {
 
                     <nav className="flex items-center gap-2" aria-label="Account">
                         {isAuthenticated ? (
-                            <Link
+                            <InertiaButton
                                 href={route('dashboard')}
-                                className="ui-button-primary"
-                                prefetch
+                                type="primary"
                             >
                                 Open dashboard
-                            </Link>
+                            </InertiaButton>
                         ) : (
                             <>
-                                <Link
+                                <InertiaButton
                                     href={route('login')}
-                                    className="ui-button-ghost"
-                                    prefetch
+                                    type="text"
                                 >
                                     Log in
-                                </Link>
+                                </InertiaButton>
                                 {canRegister && (
-                                    <Link
+                                    <InertiaButton
                                         href={route('register')}
-                                        className="ui-button-primary hidden sm:inline-flex"
-                                        prefetch
+                                        type="primary"
+                                        className="welcome-register-button"
                                     >
                                         Create account
-                                    </Link>
+                                    </InertiaButton>
                                 )}
                             </>
                         )}
@@ -177,27 +177,26 @@ export default function Welcome({ auth, canRegister }) {
                             </p>
 
                             <div className="mt-8 flex flex-wrap gap-3">
-                                <Link
+                                <InertiaButton
                                     href={
                                         isAuthenticated
                                             ? route('dashboard')
                                             : route('login')
                                     }
-                                    className="ui-button-primary px-5 py-3"
-                                    prefetch
+                                    size="large"
+                                    type="primary"
                                 >
                                     {isAuthenticated
                                         ? 'Open the dashboard'
                                         : 'Continue to log in'}
-                                </Link>
+                                </InertiaButton>
                                 {!isAuthenticated && canRegister && (
-                                    <Link
+                                    <InertiaButton
                                         href={route('register')}
-                                        className="ui-button-secondary px-5 py-3"
-                                        prefetch
+                                        size="large"
                                     >
                                         Create member account
-                                    </Link>
+                                    </InertiaButton>
                                 )}
                             </div>
 

@@ -1,44 +1,34 @@
 import { Link } from '@inertiajs/react';
+import { Breadcrumb, Flex, Typography, theme } from 'antd';
 
 export default function PageHeader({ title, description, eyebrow, breadcrumbs = [], actions }) {
+    const { token } = theme.useToken();
+    const breadcrumbItems = breadcrumbs.map((item) => ({
+        title: item.href ? <Link href={item.href}>{item.label}</Link> : item.label,
+    }));
+
     return (
-        <div className="ui-page-header">
+        <div className="app-page-header" style={{ borderColor: token.colorBorderSecondary }}>
             <div className="min-w-0">
                 {breadcrumbs.length > 0 && (
-                    <nav
-                        className="mb-3 flex flex-wrap items-center gap-2 text-xs font-medium text-slate-500"
-                        aria-label="Breadcrumb"
-                    >
-                        {breadcrumbs.map((item, index) => (
-                            <span key={item.label} className="flex items-center gap-2">
-                                {index > 0 && (
-                                    <span aria-hidden="true" className="text-slate-300">
-                                        /
-                                    </span>
-                                )}
-                                {item.href ? (
-                                    <Link href={item.href} className="ui-action-link">
-                                        {item.label}
-                                    </Link>
-                                ) : (
-                                    <span className="max-w-64 truncate" aria-current="page">
-                                        {item.label}
-                                    </span>
-                                )}
-                            </span>
-                        ))}
-                    </nav>
+                    <Breadcrumb className="app-breadcrumb" items={breadcrumbItems} />
                 )}
-                {eyebrow && <p className="ui-page-eyebrow">{eyebrow}</p>}
-                <div className="flex items-start gap-3">
+                {eyebrow && <Typography.Text className="app-page-eyebrow">{eyebrow}</Typography.Text>}
+                <Flex align="flex-start" gap={12}>
                     <span className="library-rule mt-1" aria-hidden="true" />
                     <div className="min-w-0">
-                        <h1 className="ui-page-title break-words">{title}</h1>
-                        {description && <p className="ui-page-description">{description}</p>}
+                        <Typography.Title level={1} className="app-page-title">
+                            {title}
+                        </Typography.Title>
+                        {description && (
+                            <Typography.Paragraph type="secondary" className="app-page-description">
+                                {description}
+                            </Typography.Paragraph>
+                        )}
                     </div>
-                </div>
+                </Flex>
             </div>
-            {actions && <div className="flex shrink-0 flex-wrap items-center gap-2">{actions}</div>}
+            {actions && <Flex className="app-page-actions" wrap gap={8}>{actions}</Flex>}
         </div>
     );
 }

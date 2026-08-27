@@ -1,15 +1,10 @@
-import InputError from '@/Components/InputError';
-import InputLabel from '@/Components/InputLabel';
-import PrimaryButton from '@/Components/PrimaryButton';
-import TextInput from '@/Components/TextInput';
-import { Transition } from '@headlessui/react';
 import { useForm } from '@inertiajs/react';
+import { Button, Flex, Form, Input, Typography } from 'antd';
 import { useRef } from 'react';
 
 export default function UpdatePasswordForm({ className = '' }) {
     const passwordInput = useRef();
     const currentPasswordInput = useRef();
-
     const {
         data,
         setData,
@@ -24,21 +19,19 @@ export default function UpdatePasswordForm({ className = '' }) {
         password_confirmation: '',
     });
 
-    const updatePassword = (e) => {
-        e.preventDefault();
-
+    const updatePassword = () => {
         put(route('password.update'), {
             preserveScroll: true,
             onSuccess: () => reset(),
-            onError: (errors) => {
-                if (errors.password) {
+            onError: (responseErrors) => {
+                if (responseErrors.password) {
                     reset('password', 'password_confirmation');
-                    passwordInput.current.focus();
+                    passwordInput.current?.focus();
                 }
 
-                if (errors.current_password) {
+                if (responseErrors.current_password) {
                     reset('current_password');
-                    currentPasswordInput.current.focus();
+                    currentPasswordInput.current?.focus();
                 }
             },
         });
@@ -46,99 +39,78 @@ export default function UpdatePasswordForm({ className = '' }) {
 
     return (
         <section className={className}>
-            <header>
-                <h2 className="text-lg font-semibold tracking-tight text-slate-950">
-                    Update password
-                </h2>
+            <Typography.Title level={3}>Update password</Typography.Title>
+            <Typography.Paragraph type="secondary">
+                Use a long, unique password to keep your account secure.
+            </Typography.Paragraph>
 
-                <p className="mt-1.5 text-sm leading-6 text-slate-600">
-                    Use a long, unique password to keep your account secure.
-                </p>
-            </header>
-
-            <form onSubmit={updatePassword} className="mt-6 space-y-6">
-                <div>
-                    <InputLabel
-                        htmlFor="current_password"
-                        value="Current Password"
-                    />
-
-                    <TextInput
+            <Form layout="vertical" onFinish={updatePassword} requiredMark={false}>
+                <Form.Item
+                    htmlFor="current_password"
+                    label="Current password"
+                    validateStatus={errors.current_password ? 'error' : undefined}
+                    help={errors.current_password}
+                >
+                    <Input.Password
                         id="current_password"
                         name="current_password"
                         ref={currentPasswordInput}
-                        value={data.current_password}
-                        onChange={(e) =>
-                            setData('current_password', e.target.value)
-                        }
-                        type="password"
-                        className="mt-1 block w-full"
                         autoComplete="current-password"
+                        value={data.current_password}
+                        onChange={(event) =>
+                            setData('current_password', event.target.value)
+                        }
                     />
+                </Form.Item>
 
-                    <InputError
-                        message={errors.current_password}
-                        className="mt-2"
-                    />
-                </div>
-
-                <div>
-                    <InputLabel htmlFor="password" value="New Password" />
-
-                    <TextInput
+                <Form.Item
+                    htmlFor="password"
+                    label="New password"
+                    validateStatus={errors.password ? 'error' : undefined}
+                    help={errors.password}
+                >
+                    <Input.Password
                         id="password"
                         name="password"
                         ref={passwordInput}
-                        value={data.password}
-                        onChange={(e) => setData('password', e.target.value)}
-                        type="password"
-                        className="mt-1 block w-full"
                         autoComplete="new-password"
+                        value={data.password}
+                        onChange={(event) =>
+                            setData('password', event.target.value)
+                        }
                     />
+                </Form.Item>
 
-                    <InputError message={errors.password} className="mt-2" />
-                </div>
-
-                <div>
-                    <InputLabel
-                        htmlFor="password_confirmation"
-                        value="Confirm Password"
-                    />
-
-                    <TextInput
+                <Form.Item
+                    htmlFor="password_confirmation"
+                    label="Confirm password"
+                    validateStatus={
+                        errors.password_confirmation ? 'error' : undefined
+                    }
+                    help={errors.password_confirmation}
+                >
+                    <Input.Password
                         id="password_confirmation"
                         name="password_confirmation"
-                        value={data.password_confirmation}
-                        onChange={(e) =>
-                            setData('password_confirmation', e.target.value)
-                        }
-                        type="password"
-                        className="mt-1 block w-full"
                         autoComplete="new-password"
+                        value={data.password_confirmation}
+                        onChange={(event) =>
+                            setData('password_confirmation', event.target.value)
+                        }
                     />
+                </Form.Item>
 
-                    <InputError
-                        message={errors.password_confirmation}
-                        className="mt-2"
-                    />
-                </div>
-
-                <div className="flex items-center gap-4">
-                    <PrimaryButton disabled={processing}>Save</PrimaryButton>
-
-                    <Transition
-                        show={recentlySuccessful}
-                        enter="transition ease-in-out"
-                        enterFrom="opacity-0"
-                        leave="transition ease-in-out"
-                        leaveTo="opacity-0"
-                    >
-                        <p className="text-sm font-medium text-emerald-700" role="status" aria-live="polite">
-                            Saved.
-                        </p>
-                    </Transition>
-                </div>
-            </form>
+                <Flex align="center" gap={12} wrap>
+                    <Button htmlType="submit" loading={processing} type="primary">
+                        Save changes
+                    </Button>
+                    {recentlySuccessful && (
+                        <Typography.Text type="success" role="status" aria-live="polite">
+                            Password updated.
+                        </Typography.Text>
+                    )}
+                </Flex>
+            </Form>
         </section>
     );
 }

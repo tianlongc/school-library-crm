@@ -1,15 +1,9 @@
-import PrimaryButton from '@/Components/PrimaryButton';
 import GuestLayout from '@/Layouts/GuestLayout';
 import { Head, Link, useForm } from '@inertiajs/react';
+import { Alert, Button, Flex } from 'antd';
 
 export default function VerifyEmail({ status }) {
     const { post, processing } = useForm({});
-
-    const submit = (e) => {
-        e.preventDefault();
-
-        post(route('verification.send'));
-    };
 
     return (
         <GuestLayout
@@ -18,37 +12,37 @@ export default function VerifyEmail({ status }) {
         >
             <Head title="Email Verification" />
 
-            <div className="ui-alert mb-5">
-                If the message has not arrived, check your spam folder or send
-                another verification email.
-            </div>
+            <Alert
+                className="auth-alert"
+                type="info"
+                title="Check your inbox"
+                description="If the message has not arrived, check your spam folder or send another verification email."
+                showIcon
+            />
 
             {status === 'verification-link-sent' && (
-                <div
-                    className="ui-alert mb-5 border-emerald-200 bg-emerald-50 text-emerald-800"
-                    role="status"
-                >
-                    A new verification link has been sent to the email address
-                    you provided during registration.
-                </div>
+                <Alert
+                    className="auth-alert"
+                    type="success"
+                    title="Verification email sent"
+                    description="A new verification link has been sent to the email address you provided during registration."
+                    showIcon
+                />
             )}
 
-            <form onSubmit={submit}>
-                <div className="mt-6 flex flex-wrap items-center justify-between gap-4">
-                    <PrimaryButton disabled={processing}>
-                        Resend Verification Email
-                    </PrimaryButton>
+            <Flex align="center" justify="space-between" gap={16} wrap>
+                <Button
+                    type="primary"
+                    loading={processing}
+                    onClick={() => post(route('verification.send'))}
+                >
+                    Resend verification email
+                </Button>
 
-                    <Link
-                        href={route('logout')}
-                        method="post"
-                        as="button"
-                        className="ui-action-link text-sm"
-                    >
-                        Log Out
-                    </Link>
-                </div>
-            </form>
+                <Link href={route('logout')} method="post" as="button">
+                    Log out
+                </Link>
+            </Flex>
         </GuestLayout>
     );
 }

@@ -1,6 +1,9 @@
+import InertiaButton from '@/Components/InertiaButton';
 import PageHeader from '@/Components/PageHeader';
 import StaffLayout from '@/Layouts/StaffLayout';
-import { Head, Link } from '@inertiajs/react';
+import EditOutlined from '@ant-design/icons/EditOutlined';
+import { Head } from '@inertiajs/react';
+import { Card, Col, Descriptions, Row, Statistic, Typography } from 'antd';
 
 function formatDate(value) {
     if (!value) {
@@ -16,16 +19,39 @@ function formatDate(value) {
     }).format(new Date(value));
 }
 
-function DetailItem({ label, children }) {
-    return (
-        <div>
-            <dt className="text-xs font-semibold uppercase tracking-wider text-slate-500">{label}</dt>
-            <dd className="mt-1.5 text-sm font-medium text-slate-900">{children}</dd>
-        </div>
-    );
-}
-
 export default function Show({ book }) {
+    const details = [
+        { key: 'title', label: 'Title', children: book.title },
+        { key: 'author', label: 'Author', children: book.author },
+        {
+            key: 'isbn',
+            label: 'ISBN',
+            children: <Typography.Text code>{book.isbn}</Typography.Text>,
+        },
+        {
+            key: 'description',
+            label: 'Description',
+            span: 'filled',
+            children: (
+                <Typography.Paragraph className="book-description">
+                    {book.description || 'No description has been added for this book.'}
+                </Typography.Paragraph>
+            ),
+        },
+    ];
+    const history = [
+        {
+            key: 'created',
+            label: 'Created',
+            children: formatDate(book.created_at),
+        },
+        {
+            key: 'updated',
+            label: 'Last updated',
+            children: formatDate(book.updated_at),
+        },
+    ];
+
     return (
         <StaffLayout title={book.title}>
             <Head title={book.title} />
@@ -38,39 +64,43 @@ export default function Show({ book }) {
                 ]}
                 actions={
                     <>
-                        <Link href={route('staff.books.index')} className="ui-button-secondary">Back to books</Link>
-                        <Link href={route('staff.books.edit', book.id)} className="ui-button-primary">Edit book</Link>
+                        <InertiaButton href={route('staff.books.index')}>
+                            Back to books
+                        </InertiaButton>
+                        <InertiaButton
+                            href={route('staff.books.edit', book.id)}
+                            type="primary"
+                            icon={<EditOutlined />}
+                        >
+                            Edit book
+                        </InertiaButton>
                     </>
                 }
             />
 
-            <div className="grid gap-6 lg:grid-cols-[minmax(0,1.5fr)_minmax(18rem,0.7fr)]">
-                <section className="ui-panel" aria-labelledby="book-details">
-                    <div className="ui-panel-header">
-                        <h2 id="book-details" className="ui-panel-title">Book details</h2>
-                    </div>
-                    <dl className="grid gap-6 p-5 sm:grid-cols-2 sm:p-6">
-                        <DetailItem label="Title">{book.title}</DetailItem>
-                        <DetailItem label="Author">{book.author}</DetailItem>
-                        <DetailItem label="ISBN"><span className="font-mono text-[13px]">{book.isbn}</span></DetailItem>
-                        <DetailItem label="Total copies"><span className="tabular-nums">{book.total_copies}</span></DetailItem>
-                        <div className="sm:col-span-2">
-                            <dt className="text-xs font-semibold uppercase tracking-wider text-slate-500">Description</dt>
-                            <dd className="mt-2 whitespace-pre-line text-sm leading-7 text-slate-700">{book.description || 'No description has been added for this book.'}</dd>
-                        </div>
-                    </dl>
-                </section>
-
-                <div className="grid content-start gap-6">
-                    <section className="ui-panel p-5" aria-labelledby="record-history">
-                        <h2 id="record-history" className="ui-panel-title">Record history</h2>
-                        <dl className="mt-5 grid gap-5">
-                            <DetailItem label="Created">{formatDate(book.created_at)}</DetailItem>
-                            <DetailItem label="Last updated">{formatDate(book.updated_at)}</DetailItem>
-                        </dl>
-                    </section>
-                </div>
-            </div>
+            <Row gutter={[24, 24]}>
+                <Col xs={24} xl={17}>
+                    <Card title="Book details">
+                        <Descriptions
+                            bordered
+                            column={{ xs: 1, sm: 2 }}
+                            items={details}
+                            size="middle"
+                        />
+                    </Card>
+                </Col>
+                <Col xs={24} xl={7}>
+                    <Card className="book-stat-card">
+                        <Statistic title="Total copies" value={book.total_copies} />
+                        <Typography.Text type="secondary">
+                            Physical copies recorded for this title.
+                        </Typography.Text>
+                    </Card>
+                    <Card title="Record history" className="record-history-card">
+                        <Descriptions column={1} items={history} size="small" />
+                    </Card>
+                </Col>
+            </Row>
         </StaffLayout>
     );
 }

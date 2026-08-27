@@ -1,9 +1,6 @@
-import InputError from '@/Components/InputError';
-import InputLabel from '@/Components/InputLabel';
-import PrimaryButton from '@/Components/PrimaryButton';
-import TextInput from '@/Components/TextInput';
 import GuestLayout from '@/Layouts/GuestLayout';
 import { Head, Link, useForm } from '@inertiajs/react';
+import { Button, Flex, Form, Input } from 'antd';
 
 export default function Register() {
     const { data, setData, post, processing, errors, reset } = useForm({
@@ -13,9 +10,7 @@ export default function Register() {
         password_confirmation: '',
     });
 
-    const submit = (e) => {
-        e.preventDefault();
-
+    const submit = () => {
         post(route('register'), {
             onFinish: () => reset('password', 'password_confirmation'),
         });
@@ -28,98 +23,85 @@ export default function Register() {
         >
             <Head title="Register" />
 
-            <form onSubmit={submit}>
-                <div>
-                    <InputLabel htmlFor="name" value="Name" />
-
-                    <TextInput
+            <Form layout="vertical" onFinish={submit} requiredMark={false}>
+                <Form.Item
+                    htmlFor="name"
+                    label="Name"
+                    validateStatus={errors.name ? 'error' : undefined}
+                    help={errors.name}
+                >
+                    <Input
                         id="name"
                         name="name"
-                        value={data.name}
-                        className="mt-1 block w-full"
                         autoComplete="name"
-                        isFocused={true}
-                        onChange={(e) => setData('name', e.target.value)}
-                        required
+                        autoFocus
+                        value={data.name}
+                        onChange={(event) => setData('name', event.target.value)}
                     />
+                </Form.Item>
 
-                    <InputError message={errors.name} className="mt-2" />
-                </div>
-
-                <div className="mt-4">
-                    <InputLabel htmlFor="email" value="Email" />
-
-                    <TextInput
+                <Form.Item
+                    htmlFor="email"
+                    label="Email"
+                    validateStatus={errors.email ? 'error' : undefined}
+                    help={errors.email}
+                >
+                    <Input
                         id="email"
-                        type="email"
                         name="email"
-                        value={data.email}
-                        className="mt-1 block w-full"
+                        type="email"
                         autoComplete="username"
-                        spellCheck="false"
-                        onChange={(e) => setData('email', e.target.value)}
-                        required
+                        spellCheck={false}
+                        value={data.email}
+                        onChange={(event) => setData('email', event.target.value)}
                     />
+                </Form.Item>
 
-                    <InputError message={errors.email} className="mt-2" />
-                </div>
-
-                <div className="mt-4">
-                    <InputLabel htmlFor="password" value="Password" />
-
-                    <TextInput
+                <Form.Item
+                    htmlFor="password"
+                    label="Password"
+                    validateStatus={errors.password ? 'error' : undefined}
+                    help={errors.password}
+                >
+                    <Input.Password
                         id="password"
-                        type="password"
                         name="password"
+                        autoComplete="new-password"
                         value={data.password}
-                        className="mt-1 block w-full"
-                        autoComplete="new-password"
-                        onChange={(e) => setData('password', e.target.value)}
-                        required
-                    />
-
-                    <InputError message={errors.password} className="mt-2" />
-                </div>
-
-                <div className="mt-4">
-                    <InputLabel
-                        htmlFor="password_confirmation"
-                        value="Confirm Password"
-                    />
-
-                    <TextInput
-                        id="password_confirmation"
-                        type="password"
-                        name="password_confirmation"
-                        value={data.password_confirmation}
-                        className="mt-1 block w-full"
-                        autoComplete="new-password"
-                        onChange={(e) =>
-                            setData('password_confirmation', e.target.value)
+                        onChange={(event) =>
+                            setData('password', event.target.value)
                         }
-                        required
                     />
+                </Form.Item>
 
-                    <InputError
-                        message={errors.password_confirmation}
-                        className="mt-2"
+                <Form.Item
+                    htmlFor="password_confirmation"
+                    label="Confirm password"
+                    validateStatus={
+                        errors.password_confirmation ? 'error' : undefined
+                    }
+                    help={errors.password_confirmation}
+                >
+                    <Input.Password
+                        id="password_confirmation"
+                        name="password_confirmation"
+                        autoComplete="new-password"
+                        value={data.password_confirmation}
+                        onChange={(event) =>
+                            setData('password_confirmation', event.target.value)
+                        }
                     />
-                </div>
+                </Form.Item>
 
-                <div className="mt-6 flex flex-wrap items-center justify-between gap-4">
-                    <Link
-                        href={route('login')}
-                        className="ui-action-link text-sm"
-                        prefetch
-                    >
+                <Flex align="center" justify="space-between" gap={16} wrap>
+                    <Link href={route('login')} prefetch>
                         Already registered?
                     </Link>
-
-                    <PrimaryButton disabled={processing}>
+                    <Button htmlType="submit" loading={processing} type="primary">
                         Create account
-                    </PrimaryButton>
-                </div>
-            </form>
+                    </Button>
+                </Flex>
+            </Form>
         </GuestLayout>
     );
 }

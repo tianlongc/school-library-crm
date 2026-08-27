@@ -1,5 +1,8 @@
-import Dropdown from '@/Components/Dropdown';
-import { usePage } from '@inertiajs/react';
+import DownOutlined from '@ant-design/icons/DownOutlined';
+import LogoutOutlined from '@ant-design/icons/LogoutOutlined';
+import SettingOutlined from '@ant-design/icons/SettingOutlined';
+import { router, usePage } from '@inertiajs/react';
+import { Avatar, Button, Dropdown, Flex, Typography } from 'antd';
 
 function initials(name = '') {
     return name
@@ -13,42 +16,48 @@ function initials(name = '') {
 
 export default function AccountMenu({ label = 'Library account' }) {
     const { auth } = usePage().props;
+    const items = [
+        {
+            key: 'settings',
+            icon: <SettingOutlined aria-hidden="true" />,
+            label: 'Account settings',
+        },
+        { type: 'divider' },
+        {
+            key: 'logout',
+            danger: true,
+            icon: <LogoutOutlined aria-hidden="true" />,
+            label: 'Log out',
+        },
+    ];
+
+    const handleMenuClick = ({ key }) => {
+        if (key === 'logout') {
+            router.post(route('logout'));
+            return;
+        }
+
+        router.get(route('profile.edit'));
+    };
 
     return (
-        <Dropdown>
-            <Dropdown.Trigger>
-                <button
-                    type="button"
-                    className="flex items-center gap-2 rounded-lg p-1.5 text-left transition-colors duration-150 hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700"
-                    aria-label="Open account menu"
-                >
-                    <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-[var(--library-ink)] text-xs font-semibold text-white">
+        <Dropdown menu={{ items, onClick: handleMenuClick }} placement="bottomRight" trigger={['click']}>
+            <Button type="text" className="account-menu-trigger" aria-label="Open account menu">
+                <Flex align="center" gap={8}>
+                    <Avatar shape="square" size={36} className="account-avatar">
                         {initials(auth.user.name)}
-                    </span>
-                    <span className="hidden min-w-0 md:block">
-                        <span className="block max-w-32 truncate text-sm font-semibold text-slate-800">
+                    </Avatar>
+                    <span className="account-menu-copy">
+                        <Typography.Text strong ellipsis className="account-menu-name">
                             {auth.user.name}
-                        </span>
-                        <span className="block text-xs text-slate-500">{label}</span>
+                        </Typography.Text>
+                        <Typography.Text type="secondary" className="account-menu-label">
+                            {label}
+                        </Typography.Text>
                     </span>
-                    <svg
-                        aria-hidden="true"
-                        className="hidden h-4 w-4 text-slate-400 md:block"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                    >
-                        <path strokeLinecap="round" strokeLinejoin="round" d="m8 10 4 4 4-4" />
-                    </svg>
-                </button>
-            </Dropdown.Trigger>
-            <Dropdown.Content align="right" width="48">
-                <Dropdown.Link href={route('profile.edit')}>Account settings</Dropdown.Link>
-                <Dropdown.Link href={route('logout')} method="post" as="button">
-                    Log out
-                </Dropdown.Link>
-            </Dropdown.Content>
+                    <DownOutlined className="account-menu-chevron" aria-hidden="true" />
+                </Flex>
+            </Button>
         </Dropdown>
     );
 }
