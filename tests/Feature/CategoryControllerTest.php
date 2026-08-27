@@ -16,11 +16,11 @@ it('redirects guests away from category management', function () {
         ->assertRedirect(route('login'));
 });
 
-it('forbids users from the staff category workspace', function () {
-    $user = User::factory()->create();
-    $user->assignRole('user');
+it('forbids members from the staff category workspace', function () {
+    $member = User::factory()->create();
+    $member->assignRole('member');
 
-    $this->actingAs($user)
+    $this->actingAs($member)
         ->get(route('staff.categories.index'))
         ->assertForbidden();
 });

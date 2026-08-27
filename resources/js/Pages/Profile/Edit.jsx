@@ -1,7 +1,7 @@
 import PageHeader from '@/Components/PageHeader';
 import AdminLayout from '@/Layouts/AdminLayout';
+import MemberLayout from '@/Layouts/MemberLayout';
 import StaffLayout from '@/Layouts/StaffLayout';
-import StudentLayout from '@/Layouts/StudentLayout';
 import { Head, usePage } from '@inertiajs/react';
 import DeleteUserForm from './Partials/DeleteUserForm';
 import UpdatePasswordForm from './Partials/UpdatePasswordForm';
@@ -18,7 +18,7 @@ function AccountLayout({ children }) {
         return <StaffLayout title="Account settings">{children}</StaffLayout>;
     }
 
-    return <StudentLayout>{children}</StudentLayout>;
+    return <MemberLayout>{children}</MemberLayout>;
 }
 
 export default function Edit({ mustVerifyEmail, status }) {

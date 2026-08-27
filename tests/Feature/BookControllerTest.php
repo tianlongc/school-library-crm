@@ -27,11 +27,11 @@ it('redirects guests away from book management', function () {
         ->assertRedirect(route('login'));
 });
 
-it('forbids users from the staff book workspace', function () {
-    $user = User::factory()->create();
-    $user->assignRole('user');
+it('forbids members from the staff book workspace', function () {
+    $member = User::factory()->create();
+    $member->assignRole('member');
 
-    $this->actingAs($user)
+    $this->actingAs($member)
         ->get(route('staff.books.index'))
         ->assertForbidden();
 });

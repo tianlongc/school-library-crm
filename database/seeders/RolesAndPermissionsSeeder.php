@@ -16,6 +16,10 @@ class RolesAndPermissionsSeeder extends Seeder
     {
         app(PermissionRegistrar::class)->forgetCachedPermissions();
 
+        $memberPermissions = [
+            'member.dashboard.view',
+        ];
+
         $staffPermissions = [
             'workspace.access',
             'books.view',
@@ -26,25 +30,29 @@ class RolesAndPermissionsSeeder extends Seeder
             'categories.create',
             'categories.update',
             'categories.delete',
+            'members.view',
+            'members.suspend',
+            'members.deactivate',
         ];
 
-        $dashboardPermissions = [
-            'student.dashboard.view',
+        $adminPermissions = [
             'admin.dashboard.view',
+            'members.reactivate',
+            'members.roles.update',
         ];
 
-        foreach ([...$staffPermissions, ...$dashboardPermissions] as $permission) {
+        foreach ([...$memberPermissions, ...$staffPermissions, ...$adminPermissions] as $permission) {
             Permission::findOrCreate($permission, 'web');
         }
 
-        Role::findOrCreate('user', 'web')
-            ->syncPermissions(['student.dashboard.view']);
+        Role::findOrCreate('member', 'web')
+            ->syncPermissions($memberPermissions);
 
         Role::findOrCreate('librarian', 'web')
             ->syncPermissions($staffPermissions);
 
         Role::findOrCreate('admin', 'web')
-            ->syncPermissions([...$staffPermissions, 'admin.dashboard.view']);
+            ->syncPermissions([...$staffPermissions, ...$adminPermissions]);
 
         app(PermissionRegistrar::class)->forgetCachedPermissions();
     }

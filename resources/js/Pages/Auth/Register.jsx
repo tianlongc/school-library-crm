@@ -23,8 +23,8 @@ export default function Register() {
 
     return (
         <GuestLayout
-            title="Create a student account"
-            description="Public registration creates a student account. Library roles are assigned separately by an administrator."
+            title="Create a member account"
+            description="Public registration creates a library member account. Staff access is assigned separately by an administrator."
         >
             <Head title="Register" />
 

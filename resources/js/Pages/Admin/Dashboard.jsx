@@ -9,7 +9,7 @@ const plannedCapabilities = [
     },
     {
         name: 'Role assignment',
-        description: 'Assign student, librarian, and administrator responsibilities.',
+        description: 'Assign member, librarian, and administrator responsibilities.',
     },
     {
         name: 'Access review',
