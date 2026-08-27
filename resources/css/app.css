@@ -310,6 +310,30 @@
         border-top: 1px solid var(--ant-color-border-secondary, #f0f0f0);
     }
 
+    .loan-ledger-card .loan-row > td:first-child {
+        box-shadow: inset 3px 0 0 transparent;
+    }
+
+    .loan-ledger-card .loan-row-active > td:first-child {
+        box-shadow: inset 3px 0 0 var(--library-teal);
+    }
+
+    .loan-ledger-card .loan-row-overdue > td:first-child {
+        box-shadow: inset 3px 0 0 var(--ant-color-error, #ff4d4f);
+    }
+
+    .loan-ledger-card .loan-row-returned > td:first-child {
+        box-shadow: inset 3px 0 0 var(--ant-color-border, #d9d9d9);
+    }
+
+    .loan-form-card.ant-card {
+        border-top: 3px solid var(--library-teal);
+    }
+
+    .loan-form-note {
+        margin-bottom: 20px;
+    }
+
     .form-request-alert,
     .auth-alert,
     .profile-verification-alert {
