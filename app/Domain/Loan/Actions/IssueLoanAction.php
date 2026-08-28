@@ -60,6 +60,12 @@ class IssueLoanAction
                 ]);
             }
 
+            if ($member->hasOverdueLoans()) {
+                throw ValidationException::withMessages([
+                    'member_number' => 'This member must return overdue books before borrowing another book.',
+                ]);
+            }
+
             $activeLoans = Loan::query()
                 ->where('book_id', $book->id)
                 ->whereNull('returned_at')

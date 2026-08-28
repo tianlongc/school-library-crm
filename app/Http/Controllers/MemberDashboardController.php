@@ -29,7 +29,7 @@ class MemberDashboardController extends Controller
             ->get();
 
         return Inertia::render('Member/Dashboard', [
-            'member' => MemberResource::make($member),
+            'member' => MemberResource::make($member)->resolve($request),
             'currentLoans' => LoanResource::collection($currentLoans)->resolve($request),
         ]);
     }

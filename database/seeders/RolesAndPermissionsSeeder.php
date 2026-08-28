@@ -18,6 +18,8 @@ class RolesAndPermissionsSeeder extends Seeder
 
         $memberPermissions = [
             'member.dashboard.view',
+            'loans.borrow',
+            'loans.return-own',
         ];
 
         $staffPermissions = [

@@ -44,7 +44,9 @@ it('forbids members from the staff dashboard', function () {
 
 it('renders the member dashboard only for users with member access', function () {
     $member = User::factory()->create();
-    Member::factory()->for($member)->create();
+    $memberProfile = Member::factory()->for($member)->create([
+        'member_number' => 'LIB-2026-0042',
+    ]);
     $member->assignRole('member');
 
     $this->actingAs($member)
@@ -52,6 +54,8 @@ it('renders the member dashboard only for users with member access', function ()
         ->assertSuccessful()
         ->assertInertia(fn (Assert $page) => $page
             ->component('Member/Dashboard')
+            ->where('member.member_number', $memberProfile->member_number)
+            ->where('member.status', $memberProfile->status->value)
         );
 
     $librarian = User::factory()->create();
@@ -130,9 +134,14 @@ it('shares the navigation capabilities used by account settings', function (
     bool $viewLoans,
     bool $issueLoans,
     bool $returnLoans,
+    bool $borrowBooks,
 ) {
     $user = User::factory()->create();
     $user->assignRole($role);
+
+    if ($role === 'member') {
+        Member::factory()->for($user)->create();
+    }
 
     $this->actingAs($user)
         ->get(route('profile.edit'))
@@ -145,9 +154,10 @@ it('shares the navigation capabilities used by account settings', function (
             ->where('auth.can.viewLoans', $viewLoans)
             ->where('auth.can.issueLoans', $issueLoans)
             ->where('auth.can.returnLoans', $returnLoans)
+            ->where('auth.can.borrowBooks', $borrowBooks)
         );
 })->with([
-    'member' => ['member', false, false, true, false, false, false],
-    'librarian' => ['librarian', false, true, false, true, true, true],
-    'administrator' => ['admin', true, true, false, true, true, true],
+    'member' => ['member', false, false, true, false, false, false, true],
+    'librarian' => ['librarian', false, true, false, true, true, true, false],
+    'administrator' => ['admin', true, true, false, true, true, true, false],
 ]);

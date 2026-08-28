@@ -3,6 +3,7 @@
 use App\Http\Controllers\BookController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\LoanController;
+use App\Http\Controllers\MemberBookController;
 use App\Http\Controllers\MemberController;
 use App\Http\Controllers\MemberDashboardController;
 use App\Http\Controllers\ProfileController;
@@ -45,6 +46,17 @@ Route::middleware('auth')
     ->name('member.')
     ->group(function (): void {
         Route::get('/', MemberDashboardController::class)->name('dashboard');
+
+        Route::controller(MemberBookController::class)
+            ->prefix('books')
+            ->name('books.')
+            ->group(function (): void {
+                Route::get('/', 'index')->name('index');
+                Route::post('/{book}/borrow', 'borrow')->name('borrow');
+            });
+
+        Route::post('/loans/{loan}/return', [LoanController::class, 'returnLoan'])
+            ->name('loans.return');
     });
 
 /**

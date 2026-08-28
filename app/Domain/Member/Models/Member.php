@@ -43,4 +43,9 @@ class Member extends Model
     {
         return $this->hasMany(Loan::class);
     }
+
+    public function hasOverdueLoans(): bool
+    {
+        return $this->loans()->whereNull('returned_at')->where('due_at', '<', now())->exists();
+    }
 }
