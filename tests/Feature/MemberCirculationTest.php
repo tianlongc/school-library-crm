@@ -74,6 +74,48 @@ it('paginates the member catalogue', function () {
         );
 });
 
+it('allows suspended members to browse the catalogue without borrowing', function () {
+    [$user] = memberCirculationAccount([
+        'status' => MemberStatus::Suspended,
+    ]);
+
+    $this->actingAs($user)
+        ->get(route('member.books.index'))
+        ->assertSuccessful()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('Member/Books/Index')
+            ->where('borrowingEligibility.eligible', false)
+        );
+});
+
+it('keeps inactive members signed in to review and return loans while blocking the catalogue', function () {
+    [$user, $member] = memberCirculationAccount([
+        'status' => MemberStatus::Inactive,
+    ]);
+    $loan = Loan::factory()->for($member)->create([
+        'returned_at' => null,
+        'returned_by_user_id' => null,
+    ]);
+
+    $this->actingAs($user)
+        ->get(route('member.books.index'))
+        ->assertForbidden();
+
+    $this->get(route('member.dashboard'))
+        ->assertSuccessful()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('Member/Dashboard')
+            ->where('member.status', MemberStatus::Inactive->value)
+            ->where('currentLoans.0.id', $loan->id)
+        );
+
+    $this->postJson(route('member.loans.return', $loan))
+        ->assertSuccessful()
+        ->assertJsonPath('loan.status', 'returned');
+
+    $this->assertAuthenticatedAs($user);
+});
+
 it('forbids staff from member catalogue and borrowing endpoints', function () {
     $staff = User::factory()->create();
     $staff->assignRole('librarian');

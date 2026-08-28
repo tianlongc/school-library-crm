@@ -53,6 +53,7 @@ export default function Dashboard() {
     const { auth, currentLoans = [], member } = usePage().props;
     const [returningLoanId, setReturningLoanId] = useState(null);
     const { message, modal } = AntdApp.useApp();
+    const canBrowseCatalogue = member.status !== 'inactive';
     const hasOverdueLoans = currentLoans.some(
         (loan) => loan.status === 'overdue',
     );
@@ -109,12 +110,21 @@ export default function Dashboard() {
                         return current loans from this dashboard.
                     </Typography.Paragraph>
                     <Flex gap={8} wrap>
-                        <InertiaButton
-                            href={route('member.books.index')}
-                            type="primary"
-                        >
-                            Browse catalogue
-                        </InertiaButton>
+                        {canBrowseCatalogue ? (
+                            <InertiaButton
+                                href={route('member.books.index')}
+                                type="primary"
+                            >
+                                Browse catalogue
+                            </InertiaButton>
+                        ) : (
+                            <Alert
+                                type="warning"
+                                showIcon
+                                title="Membership inactive"
+                                description="You cannot browse or borrow books. You can still review and return your current loans."
+                            />
+                        )}
                         <InertiaButton href={route('profile.edit')}>
                             Review account details
                         </InertiaButton>

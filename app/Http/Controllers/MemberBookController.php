@@ -23,13 +23,16 @@ class MemberBookController extends Controller
 
         abort_if($member === null, 403);
 
-        Gate::authorize('viewDashboard', $member);
+        Gate::authorize('browseCatalogue', $member);
 
         $search = (string) $request->string('search')->trim();
 
         return Inertia::render('Member/Books/Index', [
             'books' => BookResource::collection(
-                $bookQuery->getMemberCatalog($member, $search),
+                $bookQuery->getMemberCatalog(
+                    member: $member,
+                    search: $search,
+                ),
             ),
             'filters' => [
                 'search' => $search,

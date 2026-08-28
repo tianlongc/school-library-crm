@@ -2,6 +2,7 @@
 
 use App\Domain\Book\Models\Book;
 use App\Domain\Category\Models\Category;
+use App\Domain\Loan\Models\Loan;
 use App\Domain\User\Models\User;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -396,5 +397,31 @@ describe('authenticated book management', function () {
 
         $this->get(route('staff.books.show', $book->id))
             ->assertNotFound();
+    });
+
+    it('shows the number of available copies to staff', function () {
+        $book = Book::factory()->create([
+            'total_copies' => 3,
+        ]);
+
+        Loan::factory()->for($book)->create([
+            'returned_at' => null,
+        ]);
+
+        Loan::factory()->for($book)->create([
+            'returned_at' => now(),
+        ]);
+
+        $this->get(route('staff.books.index'))
+            ->assertSuccessful()
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('books.data.0.id', $book->id)
+                ->where('books.data.0.total_copies', 3)
+                ->where('books.data.0.available_copies', 2));
+
+        $this->get(route('staff.books.show', $book))
+            ->assertSuccessful()
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('book.available_copies', 2));
     });
 });

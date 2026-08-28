@@ -91,11 +91,27 @@ export default function Show({ book }) {
                 </Col>
                 <Col xs={24} xl={7}>
                     <Card className="book-stat-card">
-                        <Statistic title="Total copies" value={book.total_copies} />
+                        <Row gutter={[12, 12]}>
+                            <Col xs={24} sm={12}>
+                                <Statistic
+                                    title="Available copies"
+                                    value={book.available_copies}
+                                />
+                            </Col>
+
+                            <Col xs={24} sm={12}>
+                                <Statistic
+                                    title="Total copies"
+                                    value={book.total_copies}
+                                />
+                            </Col>
+                        </Row>
+
                         <Typography.Text type="secondary">
-                            Physical copies recorded for this title.
+                            Current availability and physical copies recorded for this title.
                         </Typography.Text>
                     </Card>
+
                     <Card title="Record history" className="record-history-card">
                         <Descriptions column={1} items={history} size="small" />
                     </Card>

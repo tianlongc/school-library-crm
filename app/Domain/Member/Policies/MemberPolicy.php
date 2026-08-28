@@ -31,4 +31,9 @@ class MemberPolicy
     {
         return $user->can('members.reactivate');
     }
+
+    public function browseCatalogue(User $user, Member $member): bool
+    {
+        return $this->viewDashboard($user, $member) && $member->status->canBrowseCatalogue();
+    }
 }

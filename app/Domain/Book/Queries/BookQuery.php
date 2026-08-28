@@ -26,8 +26,20 @@ class BookQuery
     public function getBookList(string $search): LengthAwarePaginator
     {
         return $this->buildQuery($search)
+            ->withCount([
+                'loans as active_loans_count' => fn (Builder $query) => $query
+                    ->whereNull('returned_at'),
+            ])
             ->paginate(12)
             ->withQueryString();
+    }
+
+    public function loadAvailability(Book $book): Book
+    {
+        return $book->loadCount([
+            'loans as active_loans_count' => fn (Builder $query) => $query
+                ->whereNull('returned_at'),
+        ]);
     }
 
     public function getMemberCatalog(Member $member, string $search): LengthAwarePaginator
