@@ -13,7 +13,7 @@ export default function ServerDataTable({
     rowClassName,
     rowKey = 'id',
     scrollX = 900,
-    showQuickJumper = false,
+    showQuickJumper = true,
     singularName,
 }) {
     const firstItem = meta.from ?? 0;
@@ -65,7 +65,9 @@ export default function ServerDataTable({
                         pageSizeOptions={PAGE_SIZE_OPTIONS}
                         responsive
                         showQuickJumper={showQuickJumper}
-                        showSizeChanger
+                        showSizeChanger={{
+                            showSearch: false,
+                         }}
                         showTitle
                         total={meta.total}
                         onChange={onPageChange}
