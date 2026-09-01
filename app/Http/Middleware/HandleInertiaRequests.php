@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Domain\Loan\Models\Loan;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -39,7 +40,11 @@ class HandleInertiaRequests extends Middleware
                     'viewAdminDashboard' => $user?->can('admin.dashboard.view') ?? false,
                     'accessStaffWorkspace' => $user?->can('workspace.access') ?? false,
                     'viewMemberDashboard' => $user?->can('member.dashboard.view') ?? false,
+                    'borrowBooks' => $user?->can('borrow', Loan::class) ?? false,
                     'viewMembers' => $user?->can('members.view') ?? false,
+                    'viewLoans' => $user?->can('loans.view') ?? false,
+                    'issueLoans' => $user?->can('loans.issue') ?? false,
+                    'returnLoans' => $user?->can('loans.return') ?? false,
                 ],
             ],
         ];

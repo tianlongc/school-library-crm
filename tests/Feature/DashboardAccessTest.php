@@ -1,5 +1,6 @@
 <?php
 
+use App\Domain\Loan\Models\Loan;
 use App\Domain\Member\Models\Member;
 use App\Domain\User\Models\User;
 use Database\Seeders\RolesAndPermissionsSeeder;
@@ -43,7 +44,9 @@ it('forbids members from the staff dashboard', function () {
 
 it('renders the member dashboard only for users with member access', function () {
     $member = User::factory()->create();
-    Member::factory()->for($member)->create();
+    $memberProfile = Member::factory()->for($member)->create([
+        'member_number' => 'LIB-2026-0042',
+    ]);
     $member->assignRole('member');
 
     $this->actingAs($member)
@@ -51,6 +54,8 @@ it('renders the member dashboard only for users with member access', function ()
         ->assertSuccessful()
         ->assertInertia(fn (Assert $page) => $page
             ->component('Member/Dashboard')
+            ->where('member.member_number', $memberProfile->member_number)
+            ->where('member.status', $memberProfile->status->value)
         );
 
     $librarian = User::factory()->create();
@@ -59,6 +64,32 @@ it('renders the member dashboard only for users with member access', function ()
     $this->actingAs($librarian)
         ->get(route('member.dashboard'))
         ->assertForbidden();
+});
+
+it('shows only the signed in members current loans', function () {
+    $user = User::factory()->create();
+    $member = Member::factory()->for($user)->create();
+    $user->assignRole('member');
+
+    $currentLoan = Loan::factory()->for($member, 'member')->create([
+        'due_at' => now()->addWeek(),
+        'returned_at' => null,
+    ]);
+    Loan::factory()->for($member, 'member')->create([
+        'returned_at' => now()->subDay(),
+    ]);
+    Loan::factory()->create(['returned_at' => null]);
+
+    $this->actingAs($user)
+        ->get(route('member.dashboard'))
+        ->assertSuccessful()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('Member/Dashboard')
+            ->has('currentLoans', 1)
+            ->where('currentLoans.0.id', $currentLoan->id)
+            ->where('currentLoans.0.status', 'active')
+            ->where('currentLoans.0.returned_at', null)
+        );
 });
 
 it('renders the staff dashboard for authorized staff', function (string $role) {
@@ -100,9 +131,17 @@ it('shares the navigation capabilities used by account settings', function (
     bool $viewAdminDashboard,
     bool $accessStaffWorkspace,
     bool $viewMemberDashboard,
+    bool $viewLoans,
+    bool $issueLoans,
+    bool $returnLoans,
+    bool $borrowBooks,
 ) {
     $user = User::factory()->create();
     $user->assignRole($role);
+
+    if ($role === 'member') {
+        Member::factory()->for($user)->create();
+    }
 
     $this->actingAs($user)
         ->get(route('profile.edit'))
@@ -112,9 +151,13 @@ it('shares the navigation capabilities used by account settings', function (
             ->where('auth.can.viewAdminDashboard', $viewAdminDashboard)
             ->where('auth.can.accessStaffWorkspace', $accessStaffWorkspace)
             ->where('auth.can.viewMemberDashboard', $viewMemberDashboard)
+            ->where('auth.can.viewLoans', $viewLoans)
+            ->where('auth.can.issueLoans', $issueLoans)
+            ->where('auth.can.returnLoans', $returnLoans)
+            ->where('auth.can.borrowBooks', $borrowBooks)
         );
 })->with([
-    'member' => ['member', false, false, true],
-    'librarian' => ['librarian', false, true, false],
-    'administrator' => ['admin', true, true, false],
+    'member' => ['member', false, false, true, false, false, false, true],
+    'librarian' => ['librarian', false, true, false, true, true, true, false],
+    'administrator' => ['admin', true, true, false, true, true, true, false],
 ]);

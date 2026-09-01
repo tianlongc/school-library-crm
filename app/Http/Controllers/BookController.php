@@ -66,10 +66,12 @@ class BookController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Book $book): Response
+    public function show(Book $book, BookQuery $query): Response
     {
         return Inertia::render('Staff/Books/Show', [
-            'book' => BookResource::make($book)->resolve(),
+            'book' => BookResource::make(
+                $query->loadAvailability($book),
+            )->resolve(),
         ]);
     }
 

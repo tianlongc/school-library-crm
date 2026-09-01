@@ -28,9 +28,13 @@ enum MemberStatus: string
         );
     }
 
-    // Check eligiblity of a student
     public function canBorrow(): bool
     {
         return $this === self::Active;
+    }
+
+    public function canBrowseCatalogue(): bool
+    {
+        return $this !== self::Inactive;
     }
 }

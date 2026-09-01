@@ -83,12 +83,27 @@ export default function BookTable({
             render: (isbn) => <Typography.Text code>{isbn}</Typography.Text>,
         },
         {
-            title: 'Copies',
-            dataIndex: 'total_copies',
-            key: 'total_copies',
+            title: 'Availability',
+            key: 'availability',
             align: 'center',
-            width: 100,
-            render: (copies) => <Tag>{copies} total</Tag>,
+            width: 160,
+            render: (_, book) => {
+                const isAvailable = book.available_copies > 0;
+
+                return (
+                    <Space orientation="vertical" size={2}>
+                        <Tag color={isAvailable ? 'success' : 'error'}>
+                            {isAvailable
+                                ? `${book.available_copies} available`
+                                : 'Unavailable'}
+                        </Tag>
+
+                        <Typography.Text type="secondary">
+                            {book.total_copies} total
+                        </Typography.Text>
+                    </Space>
+                );
+            },
         },
         {
             title: 'Actions',

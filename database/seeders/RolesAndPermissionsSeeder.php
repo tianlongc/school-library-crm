@@ -18,6 +18,8 @@ class RolesAndPermissionsSeeder extends Seeder
 
         $memberPermissions = [
             'member.dashboard.view',
+            'loans.borrow',
+            'loans.return-own',
         ];
 
         $staffPermissions = [
@@ -33,6 +35,9 @@ class RolesAndPermissionsSeeder extends Seeder
             'members.view',
             'members.suspend',
             'members.deactivate',
+            'loans.view',
+            'loans.issue',
+            'loans.return',
         ];
 
         $adminPermissions = [

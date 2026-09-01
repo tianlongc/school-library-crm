@@ -2,6 +2,7 @@
 
 namespace App\Domain\Member\Models;
 
+use App\Domain\Loan\Models\Loan;
 use App\Domain\Member\Enums\MemberStatus;
 use App\Domain\Member\Policies\MemberPolicy;
 use App\Domain\User\Models\User;
@@ -12,6 +13,7 @@ use Illuminate\Database\Eloquent\Attributes\UsePolicy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 #[Fillable(['user_id', 'member_number', 'status'])]
 #[UseFactory(MemberFactory::class)]
@@ -35,5 +37,15 @@ class Member extends Model
         return [
             'status' => MemberStatus::class,
         ];
+    }
+
+    public function loans(): HasMany
+    {
+        return $this->hasMany(Loan::class);
+    }
+
+    public function hasOverdueLoans(): bool
+    {
+        return $this->loans()->whereNull('returned_at')->where('due_at', '<', now())->exists();
     }
 }

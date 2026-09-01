@@ -2,6 +2,7 @@ import ApplicationLogo from '@/Components/ApplicationLogo';
 import BookOutlined from '@ant-design/icons/BookOutlined';
 import DashboardOutlined from '@ant-design/icons/DashboardOutlined';
 import LogoutOutlined from '@ant-design/icons/LogoutOutlined';
+import ReadOutlined from '@ant-design/icons/ReadOutlined';
 import SettingOutlined from '@ant-design/icons/SettingOutlined';
 import TagsOutlined from '@ant-design/icons/TagsOutlined';
 import TeamOutlined from '@ant-design/icons/TeamOutlined';
@@ -30,6 +31,13 @@ const primaryNavigation = [
     },
 ];
 
+const loanNavigation = {
+    key: 'staff.loans.index',
+    label: 'Loans',
+    icon: <ReadOutlined />,
+    active: 'staff.loans.*',
+};
+
 const adminNavigation = {
     key: 'admin.dashboard',
     label: 'User management',
@@ -42,14 +50,13 @@ const memberNavigation = {
     label: 'Members',
     icon: <TeamOutlined />,
     active: 'staff.members.*',
-}
-
-const plannedWorkflows = ['Loans', 'Returns'];
+};
 
 export default function StaffSidebar({ onNavigate }) {
     const { auth } = usePage().props;
     const navigation = [
         ...primaryNavigation,
+        ...(auth.can.viewLoans ? [loanNavigation] : []),
         ...(auth.can.viewMembers ? [memberNavigation] : []),
         ...(auth.can.viewAdminDashboard ? [adminNavigation] : []),
     ];
@@ -95,18 +102,6 @@ export default function StaffSidebar({ onNavigate }) {
                 selectedKeys={selectedNavigation ? [selectedNavigation.key] : []}
                 theme="dark"
             />
-
-            <div className="staff-planned-workflows">
-                <TeamOutlined className="staff-planned-icon" />
-                <div>
-                    <Typography.Text className="staff-planned-title">
-                        Planned workflows
-                    </Typography.Text>
-                    <Typography.Text className="staff-planned-copy">
-                        {plannedWorkflows.join(' · ')}
-                    </Typography.Text>
-                </div>
-            </div>
 
             <Menu
                 className="staff-utility-navigation"

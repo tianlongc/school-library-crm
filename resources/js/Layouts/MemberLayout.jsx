@@ -1,18 +1,46 @@
 import AccountMenu from '@/Components/AccountMenu';
 import ApplicationLogo from '@/Components/ApplicationLogo';
+import BookOutlined from '@ant-design/icons/BookOutlined';
 import HomeOutlined from '@ant-design/icons/HomeOutlined';
 import UserOutlined from '@ant-design/icons/UserOutlined';
-import { Link, router } from '@inertiajs/react';
+import { Link } from '@inertiajs/react';
 import { Layout, Menu, Typography } from 'antd';
 
 export default function MemberLayout({ children }) {
     const items = [
-        { key: 'member.dashboard', label: 'Home', icon: <HomeOutlined /> },
-        { key: 'profile.edit', label: 'Account', icon: <UserOutlined /> },
+        {
+            key: 'member.dashboard',
+            label: (
+                <Link href={route('member.dashboard')} prefetch>
+                    Home
+                </Link>
+            ),
+            icon: <HomeOutlined aria-hidden="true" />,
+        },
+        {
+            key: 'member.books.index',
+            label: (
+                <Link href={route('member.books.index')} prefetch>
+                    Catalogue
+                </Link>
+            ),
+            icon: <BookOutlined aria-hidden="true" />,
+        },
+        {
+            key: 'profile.edit',
+            label: (
+                <Link href={route('profile.edit')} prefetch>
+                    Account
+                </Link>
+            ),
+            icon: <UserOutlined aria-hidden="true" />,
+        },
     ];
-    const selectedKey = route().current('profile.*')
-        ? 'profile.edit'
-        : 'member.dashboard';
+    const selectedKey = route().current('member.books.*')
+        ? 'member.books.index'
+        : route().current('profile.*')
+          ? 'profile.edit'
+          : 'member.dashboard';
 
     return (
         <Layout className="member-layout">
@@ -44,7 +72,6 @@ export default function MemberLayout({ children }) {
                     className="member-navigation"
                     items={items}
                     mode="horizontal"
-                    onClick={({ key }) => router.get(route(key))}
                     selectedKeys={[selectedKey]}
                 />
 

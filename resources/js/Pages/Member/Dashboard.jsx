@@ -1,13 +1,38 @@
 import InertiaButton from '@/Components/InertiaButton';
 import MemberLayout from '@/Layouts/MemberLayout';
-import { Head, usePage } from '@inertiajs/react';
-import { Card, Col, Descriptions, Flex, Row, Tag, Typography } from 'antd';
+import { jsonRequest } from '@/Utils/jsonRequest';
+import { getRequestErrorMessage } from '@/Utils/requestErrorMessage';
+import IdcardOutlined from '@ant-design/icons/IdcardOutlined';
+import ReadOutlined from '@ant-design/icons/ReadOutlined';
+import { Head, router, usePage } from '@inertiajs/react';
+import {
+    Alert,
+    App as AntdApp,
+    Button,
+    Card,
+    Col,
+    Empty,
+    Flex,
+    Row,
+    Tag,
+    Typography,
+} from 'antd';
+import { useState } from 'react';
 
-const plannedServices = [
-    'Search the school catalogue',
-    'See current loans and due dates',
-    'Follow availability and borrowing status',
-];
+const loanStatus = {
+    active: {
+        color: 'processing',
+        label: 'Active',
+    },
+    overdue: {
+        color: 'error',
+        label: 'Overdue',
+    },
+};
+
+const dueDateFormatter = new Intl.DateTimeFormat('en-MY', {
+    dateStyle: 'medium',
+});
 
 const memberStatusColor = {
     active: {
@@ -25,80 +50,245 @@ const memberStatusColor = {
 };
 
 export default function Dashboard() {
-    const { auth, member } = usePage().props;
+    const { auth, currentLoans = [], member } = usePage().props;
+    const [returningLoanId, setReturningLoanId] = useState(null);
+    const { message, modal } = AntdApp.useApp();
+    const canBrowseCatalogue = member.status !== 'inactive';
+    const hasOverdueLoans = currentLoans.some(
+        (loan) => loan.status === 'overdue',
+    );
 
     const status = memberStatusColor[member.status] ?? {
         color: 'default',
         label: 'Unknown',
-    }
+    };
+
+    const confirmReturn = (loan) => {
+        modal.confirm({
+            title: 'Return this book?',
+            content: `${loan.book.title} will be removed from your current loans.`,
+            okText: 'Return book',
+            cancelText: 'Keep book',
+            async onOk() {
+                setReturningLoanId(loan.id);
+
+                try {
+                    const payload = await jsonRequest({
+                        url: route('member.loans.return', loan.id),
+                        method: 'POST',
+                    });
+
+                    message.success(payload.message);
+                    router.reload({ only: ['currentLoans'] });
+                } catch (error) {
+                    message.error(
+                        getRequestErrorMessage(
+                            error,
+                            'The book could not be returned. Try again.',
+                        ),
+                    );
+
+                    throw error;
+                } finally {
+                    setReturningLoanId(null);
+                }
+            },
+        });
+    };
 
     return (
         <MemberLayout>
             <Head title="Member Dashboard" />
 
-            <Row gutter={[32, 32]} align="top">
+            <Row className="member-dashboard-intro" gutter={[32, 32]} align="top">
                 <Col xs={24} lg={15}>
-                    <Typography.Text className="app-page-eyebrow">
-                        Your library account
-                    </Typography.Text>
                     <Typography.Title level={1} className="member-welcome-title">
-                        Welcome, {auth.user.name}.
+                        Welcome back, {auth.user.name}.
                     </Typography.Title>
                     <Typography.Paragraph type="secondary" className="member-welcome-copy">
-                        Your member account is ready. Catalogue discovery and borrowing
-                        tools will appear here as those library services are connected.
+                        Browse available books, borrow them from the catalogue, and
+                        return current loans from this dashboard.
                     </Typography.Paragraph>
                     <Flex gap={8} wrap>
-                        <InertiaButton href={route('profile.edit')} type="primary">
+                        {canBrowseCatalogue ? (
+                            <InertiaButton
+                                href={route('member.books.index')}
+                                type="primary"
+                            >
+                                Browse catalogue
+                            </InertiaButton>
+                        ) : (
+                            <Alert
+                                type="warning"
+                                showIcon
+                                title="Membership inactive"
+                                description="You cannot browse or borrow books. You can still review and return your current loans."
+                            />
+                        )}
+                        <InertiaButton href={route('profile.edit')}>
                             Review account details
                         </InertiaButton>
-                        <InertiaButton href="/">Library home</InertiaButton>
                     </Flex>
                 </Col>
                 <Col xs={24} lg={9}>
                     <Card
                         className="member-card"
-                        title="Digital library card"
-                        extra={<Tag color="success">Signed in</Tag>}
+                        title={
+                            <Flex align="center" gap={8}>
+                                <IdcardOutlined aria-hidden="true" />
+                                <span>Digital library card</span>
+                            </Flex>
+                        }
+                        extra={<Tag color={status.color}>{status.label}</Tag>}
                     >
-                        <Typography.Title level={3}>Library member</Typography.Title>
-                        <Descriptions
-                            column={1}
-                            items={[
-                                {
-                                    key: 'number',
-                                    label: 'Member number',
-                                    children: member.member_number,
-                                },
-                                {
-                                    key: 'status',
-                                    label: 'Status',
-                                    children: <Tag color={status.color}>{status.label}</Tag>,
-                                },
-                            ]}
-                            size="small"
-                        />
+                        <Flex gap={24} justify="space-between" vertical>
+                            <div>
+                                <Typography.Text className="member-card-number-label">
+                                    Member number
+                                </Typography.Text>
+                                <Typography.Text
+                                    className="member-card-number"
+                                    translate="no"
+                                >
+                                    {member.member_number}
+                                </Typography.Text>
+                            </div>
+
+                            <Flex
+                                align="flex-end"
+                                className="member-card-meta"
+                                gap={16}
+                                justify="space-between"
+                            >
+                                <div className="min-w-0">
+                                    <Typography.Text className="member-card-meta-label">
+                                        Cardholder
+                                    </Typography.Text>
+                                    <Typography.Text className="member-card-holder">
+                                        {auth.user.name}
+                                    </Typography.Text>
+                                </div>
+                                <Typography.Text className="member-card-account-type">
+                                    Member account
+                                </Typography.Text>
+                            </Flex>
+                        </Flex>
                     </Card>
                 </Col>
             </Row>
 
-            <Card title="Member library services" className="member-services-card">
-                <Typography.Paragraph type="secondary">
-                    These experiences need catalogue and circulation endpoints before
-                    they become interactive.
-                </Typography.Paragraph>
-                <Row gutter={[16, 16]}>
-                    {plannedServices.map((service) => (
-                        <Col xs={24} md={8} key={service}>
-                            <Card size="small" variant="outlined">
-                                <Typography.Text strong>{service}</Typography.Text>
-                                <div className="planned-service-tag">
-                                    <Tag>Planned</Tag>
-                                </div>
-                            </Card>
-                        </Col>
-                    ))}
-                </Row>
+            <Card
+                className="member-services-card"
+                extra={
+                    <Tag>
+                        {currentLoans.length}{' '}
+                        {currentLoans.length === 1 ? 'book' : 'books'}
+                    </Tag>
+                }
+                title={
+                    <Flex align="center" gap={8}>
+                        <ReadOutlined aria-hidden="true" />
+                        <span>Current loans</span>
+                    </Flex>
+                }
+            >
+                {currentLoans.length === 0 ? (
+                    <Empty
+                        description="You have no books on loan."
+                        image={Empty.PRESENTED_IMAGE_SIMPLE}
+                    />
+                ) : (
+                    <Flex vertical gap={16}>
+                        {hasOverdueLoans && (
+                            <Alert
+                                description="Return overdue books before borrowing another book."
+                                showIcon
+                                title="Borrowing is temporarily blocked"
+                                type="warning"
+                            />
+                        )}
+
+                        <div className="member-loan-list">
+                            {currentLoans.map((loan) => {
+                                const statusDetails = loanStatus[loan.status] ?? {
+                                    color: 'default',
+                                    label: 'Unknown',
+                                };
+
+                                return (
+                                    <article
+                                        key={loan.id}
+                                        className="member-loan-row"
+                                    >
+                                        <Flex
+                                            align="flex-start"
+                                            gap={16}
+                                            justify="space-between"
+                                            wrap
+                                        >
+                                            <div className="min-w-0 flex-1">
+                                                <Typography.Title
+                                                    className="member-loan-title"
+                                                    level={4}
+                                                >
+                                                    {loan.book.title}
+                                                </Typography.Title>
+                                                <Typography.Text
+                                                    className="table-secondary-line"
+                                                    type="secondary"
+                                                >
+                                                    ISBN {loan.book.isbn}
+                                                </Typography.Text>
+                                            </div>
+                                            <Tag color={statusDetails.color}>
+                                                {statusDetails.label}
+                                            </Tag>
+                                        </Flex>
+
+                                        <Flex
+                                            align="flex-end"
+                                            className="member-loan-footer"
+                                            gap={12}
+                                            justify="space-between"
+                                            wrap
+                                        >
+                                            <div>
+                                                <Typography.Text className="member-loan-date-label">
+                                                    Due date
+                                                </Typography.Text>
+                                                <Typography.Text
+                                                    className="member-loan-date"
+                                                    type={
+                                                        loan.status === 'overdue'
+                                                            ? 'danger'
+                                                            : undefined
+                                                    }
+                                                >
+                                                    <time dateTime={loan.due_at}>
+                                                        {dueDateFormatter.format(
+                                                            new Date(loan.due_at),
+                                                        )}
+                                                    </time>
+                                                </Typography.Text>
+                                            </div>
+                                            <Button
+                                                loading={
+                                                    returningLoanId === loan.id
+                                                }
+                                                onClick={() =>
+                                                    confirmReturn(loan)
+                                                }
+                                                size="small"
+                                            >
+                                                Return book
+                                            </Button>
+                                        </Flex>
+                                    </article>
+                                );
+                            })}
+                        </div>
+                    </Flex>
+                )}
             </Card>
         </MemberLayout>
     );
