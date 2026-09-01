@@ -49,6 +49,9 @@ test('librarian can view member directory', function () {
             ->has('members.links')
             ->has('filters.search')
             ->has('filters.status')
+            ->where('filters.per_page', 10)
+            ->where('filters.sort', 'created_at')
+            ->where('filters.direction', 'desc')
             ->has('statuses', 3)
             ->where('can.suspend', true)
             ->where('can.deactivate', true)
@@ -95,6 +98,23 @@ test('invalid status is normalized to empty status', function () {
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->where('filters.status', '')
+        );
+});
+
+test('invalid member table parameters are normalized', function () {
+    $user = userWithRole('librarian');
+
+    $this->actingAs($user)
+        ->get(route('staff.members.index', [
+            'per_page' => 999,
+            'sort' => 'status',
+            'direction' => 'sideways',
+        ]))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('filters.per_page', 10)
+            ->where('filters.sort', 'created_at')
+            ->where('filters.direction', 'desc')
         );
 });
 

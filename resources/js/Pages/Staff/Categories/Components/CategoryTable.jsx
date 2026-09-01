@@ -1,8 +1,15 @@
 import InertiaButton from '@/Components/InertiaButton';
+import ServerDataTable from '@/Components/Tables/ServerDataTable';
+import { getSortOrder } from '@/Components/Tables/tableQuery';
 import DeleteOutlined from '@ant-design/icons/DeleteOutlined';
 import EditOutlined from '@ant-design/icons/EditOutlined';
 import TagsOutlined from '@ant-design/icons/TagsOutlined';
-import { Button, Empty, Flex, Pagination, Space, Table, Tag, Tooltip, Typography } from 'antd';
+import { Button, Flex, Space, Tag, Tooltip, Typography } from 'antd';
+import { useMemo } from 'react';
+
+const dateFormatter = new Intl.DateTimeFormat('en-MY', {
+    dateStyle: 'medium',
+});
 
 function CategoryActions({ category, onDelete }) {
     return (
@@ -32,17 +39,20 @@ function CategoryActions({ category, onDelete }) {
 
 export default function CategoryTable({
     categories,
+    filters,
     loading,
     meta,
     onDelete,
     onPageChange,
-    search,
+    onTableChange,
 }) {
-    const columns = [
+    const columns = useMemo(() => [
         {
             title: 'Category',
             dataIndex: 'name',
             key: 'name',
+            sorter: true,
+            sortOrder: getSortOrder(filters, 'name'),
             render: (name) => (
                 <Flex align="center" gap={12}>
                     <span className="table-entity-icon table-category-icon">
@@ -51,6 +61,18 @@ export default function CategoryTable({
                     <Typography.Text strong>{name}</Typography.Text>
                 </Flex>
             ),
+        },
+        {
+            title: 'Created',
+            dataIndex: 'created_at',
+            key: 'created_at',
+            sorter: true,
+            sortOrder: getSortOrder(filters, 'created_at'),
+            width: 150,
+            render: (createdAt) =>
+                createdAt
+                    ? dateFormatter.format(new Date(createdAt))
+                    : '—',
         },
         {
             title: 'Catalogue',
@@ -73,46 +95,24 @@ export default function CategoryTable({
                 <CategoryActions category={category} onDelete={onDelete} />
             ),
         },
-    ];
+    ], [filters, onDelete]);
+
+    const emptyText = filters.search?.trim()
+        ? 'No categories match this search.'
+        : 'No categories have been added yet.';
 
     return (
-        <>
-            <Table
-                columns={columns}
-                dataSource={categories}
-                loading={loading}
-                locale={{
-                    emptyText: (
-                        <Empty
-                            image={Empty.PRESENTED_IMAGE_SIMPLE}
-                            description={
-                                search?.trim()
-                                    ? 'No categories match this search.'
-                                    : 'No categories have been added yet.'
-                            }
-                        />
-                    ),
-                }}
-                pagination={false}
-                rowKey="id"
-                scroll={{ x: 640 }}
-                size="middle"
-            />
-            {meta.total > 0 && (
-                <Flex className="table-pagination" align="center" justify="space-between" gap={16} wrap>
-                    <Typography.Text type="secondary">
-                        {meta.total} {meta.total === 1 ? 'category' : 'categories'}
-                    </Typography.Text>
-                    <Pagination
-                        current={meta.current_page}
-                        pageSize={meta.per_page}
-                        total={meta.total}
-                        showSizeChanger={false}
-                        showTitle
-                        onChange={onPageChange}
-                    />
-                </Flex>
-            )}
-        </>
+        <ServerDataTable
+            columns={columns}
+            data={categories}
+            emptyText={emptyText}
+            loading={loading}
+            meta={meta}
+            pluralName="categories"
+            scrollX={780}
+            singularName="category"
+            onPageChange={onPageChange}
+            onTableChange={onTableChange}
+        />
     );
 }

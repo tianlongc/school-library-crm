@@ -1,15 +1,8 @@
+import ServerDataTable from '@/Components/Tables/ServerDataTable';
+import { getSortOrder } from '@/Components/Tables/tableQuery';
 import UserSwitchOutlined from '@ant-design/icons/UserSwitchOutlined';
-import {
-    Button,
-    Empty,
-    Flex,
-    Pagination,
-    Space,
-    Table,
-    Tag,
-    Tooltip,
-    Typography,
-} from 'antd';
+import { Button, Space, Tag, Tooltip, Typography } from 'antd';
+import { useMemo } from 'react';
 
 const roleColors = {
     admin: 'purple',
@@ -55,10 +48,12 @@ function UserActions({ user, onEditRole }) {
 
 export default function UserTable({
     filtered,
+    filters,
     loading,
     meta,
     onEditRole,
     onPageChange,
+    onTableChange,
     roleOptions,
     users,
 }) {
@@ -66,10 +61,12 @@ export default function UserTable({
         roleOptions.map((role) => [role.value, role.label]),
     );
 
-    const columns = [
+    const columns = useMemo(() => [
         {
             title: 'Account',
-            key: 'account',
+            key: 'name',
+            sorter: true,
+            sortOrder: getSortOrder(filters, 'name'),
             width: 280,
             render: (_, user) => (
                 <div className="min-w-0 py-1">
@@ -104,7 +101,9 @@ export default function UserTable({
         {
             title: 'Member profile',
             dataIndex: 'member',
-            key: 'member',
+            key: 'member_number',
+            sorter: true,
+            sortOrder: getSortOrder(filters, 'member_number'),
             width: 190,
             render: (member) =>
                 member ? (
@@ -141,6 +140,8 @@ export default function UserTable({
             title: 'Created',
             dataIndex: 'created_at',
             key: 'created_at',
+            sorter: true,
+            sortOrder: getSortOrder(filters, 'created_at'),
             width: 150,
             render: (createdAt) =>
                 createdAt
@@ -157,54 +158,24 @@ export default function UserTable({
                 <UserActions user={user} onEditRole={onEditRole} />
             ),
         },
-    ];
+    ], [filters, onEditRole, roleLabels]);
 
     return (
-        <>
-            <Table
-                columns={columns}
-                dataSource={users}
-                loading={loading}
-                locale={{
-                    emptyText: (
-                        <Empty
-                            image={Empty.PRESENTED_IMAGE_SIMPLE}
-                            description={
-                                filtered
-                                    ? 'No accounts match these filters.'
-                                    : 'No user accounts were found.'
-                            }
-                        />
-                    ),
-                }}
-                pagination={false}
-                rowKey="id"
-                scroll={{ x: 1050 }}
-                size="middle"
-            />
-
-            {meta.total > 0 && (
-                <Flex
-                    className="table-pagination"
-                    align="center"
-                    justify="space-between"
-                    gap={16}
-                    wrap
-                >
-                    <Typography.Text type="secondary">
-                        {meta.total} {meta.total === 1 ? 'account' : 'accounts'}
-                    </Typography.Text>
-
-                    <Pagination
-                        current={meta.current_page}
-                        pageSize={meta.per_page}
-                        total={meta.total}
-                        showSizeChanger={false}
-                        showTitle
-                        onChange={onPageChange}
-                    />
-                </Flex>
-            )}
-        </>
+        <ServerDataTable
+            columns={columns}
+            data={users}
+            emptyText={
+                filtered
+                    ? 'No accounts match these filters.'
+                    : 'No user accounts were found.'
+            }
+            loading={loading}
+            meta={meta}
+            pluralName="accounts"
+            scrollX={1050}
+            singularName="account"
+            onPageChange={onPageChange}
+            onTableChange={onTableChange}
+        />
     );
 }

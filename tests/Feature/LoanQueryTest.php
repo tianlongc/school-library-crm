@@ -12,17 +12,36 @@ beforeEach(function () {
 });
 
 describe('loan query', function () {
-    it('returns twelve loans per page', function () {
+    it('returns ten loans per page by default', function () {
         Loan::factory()->count(13)->create();
 
         $loans = $this->loanQuery->paginate();
 
         expect($loans->perPage())
-            ->toBe(12)
+            ->toBe(10)
             ->and($loans->count())
-            ->toBe(12)
+            ->toBe(10)
             ->and($loans->total())
             ->toBe(13);
+    });
+
+    it('sorts loans by due date', function () {
+        $laterLoan = Loan::factory()->create([
+            'due_at' => now()->addMonth(),
+        ]);
+        $earlierLoan = Loan::factory()->create([
+            'due_at' => now()->addDay(),
+        ]);
+
+        $loans = $this->loanQuery->paginate(
+            sort: 'due_at',
+            direction: 'asc',
+        );
+
+        expect($loans->items()[0]->is($earlierLoan))
+            ->toBeTrue()
+            ->and($loans->items()[1]->is($laterLoan))
+            ->toBeTrue();
     });
 
     it('returns the newest issued loans first', function () {

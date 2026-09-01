@@ -13,7 +13,7 @@ beforeEach(function () {
 });
 
 describe('member query', function () {
-    it('returns 12 members per page', function () {
+    it('returns 10 members per page by default', function () {
         Member::factory()
             ->count(13)
             ->create();
@@ -21,11 +21,25 @@ describe('member query', function () {
         $members = $this->memberQuery->getMemberList();
 
         expect($members->perPage())
-            ->toBe(12)
+            ->toBe(10)
             ->and($members->count())
-            ->toBe(12)
+            ->toBe(10)
             ->and($members->total())
             ->toBe(13);
+    });
+
+    it('sorts members by user name', function () {
+        $zara = User::factory()->create(['name' => 'Zara Lim']);
+        $amy = User::factory()->create(['name' => 'Amy Tan']);
+        Member::factory()->for($zara)->create();
+        $alphabeticalFirst = Member::factory()->for($amy)->create();
+
+        $members = $this->memberQuery->getMemberList(
+            sort: 'name',
+            direction: 'asc',
+        );
+
+        expect($members->first()->id)->toBe($alphabeticalFirst->id);
     });
 
     it('returns newest members first', function () {

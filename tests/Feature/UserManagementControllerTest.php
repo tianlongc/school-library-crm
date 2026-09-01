@@ -46,6 +46,9 @@ test('administrator can review the account directory', function () {
             ->has('users.links')
             ->where('filters.search', '')
             ->where('filters.role', '')
+            ->where('filters.per_page', 10)
+            ->where('filters.sort', 'created_at')
+            ->where('filters.direction', 'desc')
             ->has('roles', 3)
             ->where('users.data.0.id', $memberUser->id)
             ->where('users.data.0.member.member_number', $member->member_number)
@@ -98,9 +101,29 @@ test('account directory is paginated', function () {
         ->get(route('admin.dashboard'))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
-            ->has('users.data', 12)
+            ->has('users.data', 10)
             ->where('users.meta.total', 13)
-            ->where('users.meta.per_page', 12)
+            ->where('users.meta.per_page', 10)
+        );
+});
+
+test('administrator can sort accounts by name', function () {
+    $admin = managedAccount('admin');
+    $admin->update(['name' => 'Middle Admin']);
+    managedAccount('librarian')->update(['name' => 'Zara Lim']);
+    $alphabeticalFirst = managedAccount('librarian');
+    $alphabeticalFirst->update(['name' => 'Amy Tan']);
+
+    $this->actingAs($admin)
+        ->get(route('admin.dashboard', [
+            'sort' => 'name',
+            'direction' => 'asc',
+        ]))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('users.data.0.id', $alphabeticalFirst->id)
+            ->where('filters.sort', 'name')
+            ->where('filters.direction', 'asc')
         );
 });
 

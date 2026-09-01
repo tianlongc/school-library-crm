@@ -50,6 +50,23 @@ describe('authenticated loan management', function () {
                 ->has('loans.meta')
                 ->where('filters.search', '')
                 ->where('filters.status', '')
+                ->where('filters.per_page', 10)
+                ->where('filters.sort', 'issued_at')
+                ->where('filters.direction', 'desc')
+            );
+    });
+
+    it('normalizes invalid loan table parameters', function () {
+        $this->get(route('staff.loans.index', [
+            'per_page' => 999,
+            'sort' => 'status',
+            'direction' => 'sideways',
+        ]))
+            ->assertSuccessful()
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('filters.per_page', 10)
+                ->where('filters.sort', 'issued_at')
+                ->where('filters.direction', 'desc')
             );
     });
 

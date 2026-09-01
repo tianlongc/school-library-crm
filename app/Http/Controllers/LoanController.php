@@ -4,10 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Domain\Loan\Actions\IssueLoanAction;
 use App\Domain\Loan\Actions\ReturnLoanAction;
-use App\Domain\Loan\Enums\LoanStatus;
 use App\Domain\Loan\Models\Loan;
 use App\Domain\Loan\Queries\LoanQuery;
 use App\Http\Requests\IssueLoanRequest;
+use App\Http\Requests\LoanIndexRequest;
 use App\Http\Resources\LoanResource;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
@@ -21,27 +21,21 @@ class LoanController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index(Request $request, LoanQuery $loanQuery): Response
+    public function index(LoanIndexRequest $request, LoanQuery $loanQuery): Response
     {
         Gate::authorize('viewAny', Loan::class);
 
-        $search = (string) $request->string('search')->trim();
-        $status = LoanStatus::tryFrom(
-            (string) $request->string('status'),
-        );
-
-        $loans = $loanQuery->paginate(
-            search: $search,
-            status: $status?->value,
-        );
-
         return Inertia::render('Staff/Loans/Index', [
-            'loans' => LoanResource::collection($loans),
-
-            'filters' => [
-                'search' => $search,
-                'status' => $status?->value ?? '',
-            ],
+            'loans' => fn () => LoanResource::collection(
+                $loanQuery->paginate(
+                    search: $request->search(),
+                    status: $request->status(),
+                    perPage: $request->perPage(),
+                    sort: $request->sort(),
+                    direction: $request->direction(),
+                ),
+            ),
+            'filters' => $request->filters(),
         ]);
     }
 

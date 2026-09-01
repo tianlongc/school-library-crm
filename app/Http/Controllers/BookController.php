@@ -8,11 +8,11 @@ use App\Domain\Book\Actions\UpdateBookAction;
 use App\Domain\Book\Models\Book;
 use App\Domain\Book\Queries\BookQuery;
 use App\Domain\Category\Queries\CategoryQuery;
+use App\Http\Requests\BookIndexRequest;
 use App\Http\Requests\StoreBookRequest;
 use App\Http\Requests\UpdateBookRequest;
 use App\Http\Resources\BookResource;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -21,13 +21,18 @@ class BookController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index(Request $request, BookQuery $query): Response
+    public function index(BookIndexRequest $request, BookQuery $query): Response
     {
-        $search = (string) $request->string('search')->trim();
-
         return Inertia::render('Staff/Books/Index', [
-            'books' => BookResource::collection($query->getBookList($search)),
-            'filters' => ['search' => $search],
+            'books' => fn () => BookResource::collection(
+                $query->getBookList(
+                    search: $request->search(),
+                    perPage: $request->perPage(),
+                    sort: $request->sort(),
+                    direction: $request->direction(),
+                ),
+            ),
+            'filters' => $request->filters(),
         ]);
     }
 

@@ -1,33 +1,28 @@
 import InertiaButton from '@/Components/InertiaButton';
 import PageHeader from '@/Components/PageHeader';
+import TableSearchInput from '@/Components/Tables/TableSearchInput';
+import { useServerTable } from '@/Components/Tables/useServerTable';
 import StaffLayout from '@/Layouts/StaffLayout';
 import { jsonRequest } from '@/Utils/jsonRequest';
 import { getRequestErrorMessage } from '@/Utils/requestErrorMessage';
 import PlusOutlined from '@ant-design/icons/PlusOutlined';
-import SearchOutlined from '@ant-design/icons/SearchOutlined';
 import { Head, router } from '@inertiajs/react';
-import { App as AntdApp, Card, Input, Typography } from 'antd';
-import { useState } from 'react';
+import { App as AntdApp, Card } from 'antd';
 import BookTable from './Components/BookTable';
 
 export default function Index({ books, filters }) {
-    const [search, setSearch] = useState(filters.search ?? '');
-    const [loading, setLoading] = useState(false);
     const { message, modal } = AntdApp.useApp();
-
-    const visitBooks = (parameters) => {
-        router.get(route('staff.books.index'), parameters, {
-            preserveState: true,
-            replace: true,
-            onStart: () => setLoading(true),
-            onFinish: () => setLoading(false),
-        });
-    };
-
-    const submitSearch = (value) => {
-        const normalizedSearch = value.trim();
-        visitBooks(normalizedSearch ? { search: normalizedSearch } : {});
-    };
+    const {
+        handlePageChange,
+        handleTableChange,
+        loading,
+        search,
+        setSearch,
+    } = useServerTable({
+        filters,
+        resource: 'books',
+        routeName: 'staff.books.index',
+    });
 
     const confirmDelete = (book) => {
         modal.confirm({
@@ -82,36 +77,26 @@ export default function Index({ books, filters }) {
                 title={
                     <span>
                         Book catalogue
-                        <Typography.Text type="secondary" className="directory-count">
-                            {books.meta.total} total
-                        </Typography.Text>
                     </span>
                 }
                 extra={
-                    <Input.Search
-                        allowClear
-                        aria-label="Search books"
-                        enterButton={<SearchOutlined />}
-                        onChange={(event) => setSearch(event.target.value)}
-                        onSearch={submitSearch}
+                    <TableSearchInput
+                        ariaLabel="Search books"
                         placeholder="Search title, author or ISBN"
                         value={search}
+                        onChange={setSearch}
                     />
                 }
                 styles={{ body: { padding: 0 } }}
             >
                 <BookTable
                     books={books.data}
+                    filters={filters}
                     loading={loading}
-                    search={filters.search}
                     meta={books.meta}
                     onDelete={confirmDelete}
-                    onPageChange={(page) =>
-                        visitBooks({
-                            ...(filters.search ? { search: filters.search } : {}),
-                            page,
-                        })
-                    }
+                    onPageChange={handlePageChange}
+                    onTableChange={handleTableChange}
                 />
             </Card>
         </StaffLayout>

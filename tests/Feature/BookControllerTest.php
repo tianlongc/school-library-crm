@@ -66,16 +66,54 @@ describe('authenticated book management', function () {
             );
     });
 
-    it('returns twelve books per page', function () {
-        Book::factory()->count(13)->create();
+    it('returns ten books per page by default', function () {
+        Book::factory()->count(11)->create();
 
         $this->get(route('staff.books.index'))
             ->assertSuccessful()
             ->assertInertia(fn (Assert $page) => $page
-                ->has('books.data', 12)
+                ->has('books.data', 10)
                 ->where('books.meta.current_page', 1)
-                ->where('books.meta.per_page', 12)
-                ->where('books.meta.total', 13)
+                ->where('books.meta.per_page', 10)
+                ->where('books.meta.total', 11)
+                ->where('filters.per_page', 10)
+                ->where('filters.sort', 'created_at')
+                ->where('filters.direction', 'desc')
+            );
+    });
+
+    it('supports the allowed book page sizes', function (int $perPage) {
+        Book::factory()->count($perPage + 1)->create();
+
+        $this->get(route('staff.books.index', [
+            'per_page' => $perPage,
+        ]))
+            ->assertSuccessful()
+            ->assertInertia(fn (Assert $page) => $page
+                ->has('books.data', $perPage)
+                ->where('books.meta.per_page', $perPage)
+                ->where('filters.per_page', $perPage)
+            );
+    })->with([
+        'five' => 5,
+        'ten' => 10,
+        'twenty' => 20,
+        'fifty' => 50,
+    ]);
+
+    it('normalizes invalid book table parameters', function () {
+        Book::factory()->create();
+
+        $this->get(route('staff.books.index', [
+            'per_page' => 999,
+            'sort' => 'unsafe-column',
+            'direction' => 'sideways',
+        ]))
+            ->assertSuccessful()
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('filters.per_page', 10)
+                ->where('filters.sort', 'created_at')
+                ->where('filters.direction', 'desc')
             );
     });
 
@@ -95,6 +133,34 @@ describe('authenticated book management', function () {
                 ->where('books.data.1.id', $olderBook->id)
             );
     });
+
+    it('sorts books by title', function (
+        string $direction,
+        string $expectedTitle,
+    ) {
+        Book::factory()->create([
+            'title' => 'Alpha Book',
+            'isbn' => '9780000000001',
+        ]);
+        Book::factory()->create([
+            'title' => 'Zulu Book',
+            'isbn' => '9780000000002',
+        ]);
+
+        $this->get(route('staff.books.index', [
+            'sort' => 'title',
+            'direction' => $direction,
+        ]))
+            ->assertSuccessful()
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('books.data.0.title', $expectedTitle)
+                ->where('filters.sort', 'title')
+                ->where('filters.direction', $direction)
+            );
+    })->with([
+        'ascending' => ['asc', 'Alpha Book'],
+        'descending' => ['desc', 'Zulu Book'],
+    ]);
 
     it('searches books by title, author, or isbn', function (
         string $field,

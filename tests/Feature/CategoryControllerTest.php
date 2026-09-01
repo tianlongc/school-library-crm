@@ -64,16 +64,44 @@ describe('authenticated category management', function () {
             );
     });
 
-    it('returns twelve categories per page', function () {
+    it('returns ten categories per page by default', function () {
         Category::factory()->count(13)->create();
 
         $this->get(route('staff.categories.index'))
             ->assertSuccessful()
             ->assertInertia(fn (Assert $page) => $page
-                ->has('categories.data', 12)
+                ->has('categories.data', 10)
                 ->where('categories.meta.current_page', 1)
-                ->where('categories.meta.per_page', 12)
+                ->where('categories.meta.per_page', 10)
                 ->where('categories.meta.total', 13)
+            );
+    });
+
+    it('accepts supported category page sizes', function (int $perPage) {
+        Category::factory()->count(51)->create();
+
+        $this->get(route('staff.categories.index', ['per_page' => $perPage]))
+            ->assertSuccessful()
+            ->assertInertia(fn (Assert $page) => $page
+                ->has('categories.data', $perPage)
+                ->where('categories.meta.per_page', $perPage)
+                ->where('filters.per_page', $perPage)
+            );
+    })->with([5, 10, 20, 50]);
+
+    it('sorts categories by name', function () {
+        Category::factory()->create(['name' => 'Zoology']);
+        $alphabeticalFirst = Category::factory()->create(['name' => 'Art']);
+
+        $this->get(route('staff.categories.index', [
+            'sort' => 'name',
+            'direction' => 'asc',
+        ]))
+            ->assertSuccessful()
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('categories.data.0.id', $alphabeticalFirst->id)
+                ->where('filters.sort', 'name')
+                ->where('filters.direction', 'asc')
             );
     });
 

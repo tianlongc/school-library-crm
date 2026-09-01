@@ -271,12 +271,6 @@
         width: min(24rem, 42vw);
     }
 
-    .directory-count {
-        margin-inline-start: 8px;
-        font-size: 12px;
-        font-weight: 400;
-    }
-
     .table-entity-icon {
         @apply flex h-9 w-9 shrink-0 items-center justify-center rounded-md;
     }

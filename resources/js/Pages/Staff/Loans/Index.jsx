@@ -1,13 +1,13 @@
 import InertiaButton from '@/Components/InertiaButton';
 import PageHeader from '@/Components/PageHeader';
+import TableSearchInput from '@/Components/Tables/TableSearchInput';
+import { useServerTable } from '@/Components/Tables/useServerTable';
 import StaffLayout from '@/Layouts/StaffLayout';
 import { jsonRequest } from '@/Utils/jsonRequest';
 import { getRequestErrorMessage } from '@/Utils/requestErrorMessage';
 import PlusOutlined from '@ant-design/icons/PlusOutlined';
-import SearchOutlined from '@ant-design/icons/SearchOutlined';
 import { Head, router, usePage } from '@inertiajs/react';
-import { App as AntdApp, Card, Flex, Input, Select, Typography } from 'antd';
-import { useState } from 'react';
+import { App as AntdApp, Card, Flex, Select } from 'antd';
 import LoanTable from './Components/LoanTable';
 
 const statusOptions = [
@@ -19,36 +19,19 @@ const statusOptions = [
 
 export default function Index({ filters, loans }) {
     const { auth } = usePage().props;
-    const [search, setSearch] = useState(filters.search ?? '');
-    const [loading, setLoading] = useState(false);
     const { message, modal } = AntdApp.useApp();
-
-    const visitLoans = ({
-        search: nextSearch = filters.search ?? '',
-        status: nextStatus = filters.status ?? '',
-        page,
-    } = {}) => {
-        const parameters = {};
-
-        if (nextSearch.trim()) {
-            parameters.search = nextSearch.trim();
-        }
-
-        if (nextStatus) {
-            parameters.status = nextStatus;
-        }
-
-        if (page) {
-            parameters.page = page;
-        }
-
-        router.get(route('staff.loans.index'), parameters, {
-            onFinish: () => setLoading(false),
-            onStart: () => setLoading(true),
-            preserveState: true,
-            replace: true,
-        });
-    };
+    const {
+        handlePageChange,
+        handleTableChange,
+        loading,
+        search,
+        setFilter,
+        setSearch,
+    } = useServerTable({
+        filters,
+        resource: 'loans',
+        routeName: 'staff.loans.index',
+    });
 
     const confirmReturn = (loan) => {
         modal.confirm({
@@ -106,25 +89,15 @@ export default function Index({ filters, loans }) {
                     <Flex gap={8} wrap>
                         <Select
                             aria-label="Filter loans by status"
-                            onChange={(status) =>
-                                visitLoans({ search, status })
-                            }
+                            onChange={(status) => setFilter('status', status)}
                             options={statusOptions}
                             style={{ minWidth: 140 }}
                             value={filters.status ?? ''}
                         />
 
-                        <Input.Search
-                            allowClear
-                            aria-label="Search loans"
-                            enterButton={<SearchOutlined />}
-                            onChange={(event) => setSearch(event.target.value)}
-                            onSearch={(value) =>
-                                visitLoans({
-                                    search: value,
-                                    status: filters.status,
-                                })
-                            }
+                        <TableSearchInput
+                            ariaLabel="Search loans"
+                            onChange={setSearch}
                             placeholder="Member, book or ISBN"
                             value={search}
                         />
@@ -134,30 +107,18 @@ export default function Index({ filters, loans }) {
                 title={
                     <span>
                         Circulation ledger
-                        <Typography.Text
-                            className="directory-count"
-                            type="secondary"
-                        >
-                            {loans.meta.total} total
-                        </Typography.Text>
                     </span>
                 }
             >
                 <LoanTable
                     canReturn={auth.can.returnLoans}
+                    filters={filters}
                     loading={loading}
                     loans={loans.data}
                     meta={loans.meta}
-                    onPageChange={(page) =>
-                        visitLoans({
-                            page,
-                            search: filters.search,
-                            status: filters.status,
-                        })
-                    }
+                    onPageChange={handlePageChange}
                     onReturn={confirmReturn}
-                    search={filters.search}
-                    status={filters.status}
+                    onTableChange={handleTableChange}
                 />
             </Card>
         </StaffLayout>

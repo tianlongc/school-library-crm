@@ -8,33 +8,30 @@ use App\Domain\Member\Actions\SuspendMemberAction;
 use App\Domain\Member\Enums\MemberStatus;
 use App\Domain\Member\Models\Member;
 use App\Domain\Member\Queries\MemberQuery;
+use App\Http\Requests\MemberIndexRequest;
 use App\Http\Resources\MemberResource;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class MemberController extends Controller
 {
-    public function index(Request $request, MemberQuery $query): Response
+    public function index(MemberIndexRequest $request, MemberQuery $query): Response
     {
         Gate::authorize('viewAny', Member::class);
 
-        $search = (string) $request->string('search')->trim();
-
-        $status = MemberStatus::tryFrom(
-            (string) $request->string('status')
-        );
-
         return Inertia::render('Staff/Members/Index', [
-            'members' => MemberResource::collection(
-                $query->getMemberList($search, $status)
+            'members' => fn () => MemberResource::collection(
+                $query->getMemberList(
+                    search: $request->search(),
+                    status: $request->status(),
+                    perPage: $request->perPage(),
+                    sort: $request->sort(),
+                    direction: $request->direction(),
+                ),
             ),
-            'filters' => [
-                'search' => $search,
-                'status' => $status?->value ?? '',
-            ],
+            'filters' => $request->filters(),
             'statuses' => MemberStatus::options(),
             'can' => [
                 'suspend' => $request->user()->can('members.suspend'),

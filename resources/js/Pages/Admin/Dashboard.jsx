@@ -1,14 +1,14 @@
 import PageHeader from '@/Components/PageHeader';
+import TableSearchInput from '@/Components/Tables/TableSearchInput';
+import { useServerTable } from '@/Components/Tables/useServerTable';
 import AdminLayout from '@/Layouts/AdminLayout';
 import { jsonRequest } from '@/Utils/jsonRequest';
 import { getRequestErrorMessage } from '@/Utils/requestErrorMessage';
-import SearchOutlined from '@ant-design/icons/SearchOutlined';
 import { Head, router } from '@inertiajs/react';
 import {
     App as AntdApp,
     Card,
     Flex,
-    Input,
     Modal,
     Select,
     Typography,
@@ -17,39 +17,22 @@ import { useState } from 'react';
 import UserTable from './Components/UserTable';
 
 export default function Dashboard({ users, filters, roles }) {
-    const [search, setSearch] = useState(filters.search ?? '');
-    const [loading, setLoading] = useState(false);
     const [savingRole, setSavingRole] = useState(false);
     const [selectedRole, setSelectedRole] = useState('');
     const [selectedUser, setSelectedUser] = useState(null);
     const { message } = AntdApp.useApp();
-
-    const visitUsers = ({
-        search: nextSearch = filters.search ?? '',
-        role: nextRole = filters.role ?? '',
-        page,
-    } = {}) => {
-        const parameters = {};
-
-        if (nextSearch.trim()) {
-            parameters.search = nextSearch.trim();
-        }
-
-        if (nextRole) {
-            parameters.role = nextRole;
-        }
-
-        if (page) {
-            parameters.page = page;
-        }
-
-        router.get(route('admin.dashboard'), parameters, {
-            preserveState: true,
-            replace: true,
-            onStart: () => setLoading(true),
-            onFinish: () => setLoading(false),
-        });
-    };
+    const {
+        handlePageChange,
+        handleTableChange,
+        loading,
+        search,
+        setFilter,
+        setSearch,
+    } = useServerTable({
+        filters,
+        resource: 'users',
+        routeName: 'admin.dashboard',
+    });
 
     const openRoleModal = (user) => {
         setSelectedUser(user);
@@ -117,12 +100,6 @@ export default function Dashboard({ users, filters, roles }) {
                 title={
                     <span>
                         Account directory
-                        <Typography.Text
-                            type="secondary"
-                            className="directory-count"
-                        >
-                            {users.meta.total} total
-                        </Typography.Text>
                     </span>
                 }
                 extra={
@@ -134,27 +111,15 @@ export default function Dashboard({ users, filters, roles }) {
                                 ...roles,
                             ]}
                             value={filters.role ?? ''}
-                            onChange={(role) =>
-                                visitUsers({ search, role })
-                            }
+                            onChange={(role) => setFilter('role', role)}
                             style={{ minWidth: 150 }}
                         />
 
-                        <Input.Search
-                            allowClear
-                            aria-label="Search users"
-                            enterButton={<SearchOutlined />}
+                        <TableSearchInput
+                            ariaLabel="Search users"
                             placeholder="Name, email or member number"
                             value={search}
-                            onChange={(event) =>
-                                setSearch(event.target.value)
-                            }
-                            onSearch={(value) =>
-                                visitUsers({
-                                    search: value,
-                                    role: filters.role,
-                                })
-                            }
+                            onChange={setSearch}
                         />
                     </Flex>
                 }
@@ -164,18 +129,14 @@ export default function Dashboard({ users, filters, roles }) {
                     filtered={Boolean(
                         filters.search?.trim() || filters.role,
                     )}
+                    filters={filters}
                     loading={loading}
                     meta={users.meta}
                     roleOptions={roles}
                     users={users.data}
                     onEditRole={openRoleModal}
-                    onPageChange={(page) =>
-                        visitUsers({
-                            search: filters.search,
-                            role: filters.role,
-                            page,
-                        })
-                    }
+                    onPageChange={handlePageChange}
+                    onTableChange={handleTableChange}
                 />
             </Card>
 
