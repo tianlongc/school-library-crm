@@ -1,3 +1,4 @@
+import { SEARCH_DEBOUNCE_MS } from '@/Components/Tables/tableQuery';
 import MemberLayout from '@/Layouts/MemberLayout';
 import { jsonRequest } from '@/Utils/jsonRequest';
 import { getRequestErrorMessage } from '@/Utils/requestErrorMessage';
@@ -12,41 +13,94 @@ import {
     Flex,
     Input,
     Pagination,
+    Spin,
     Tag,
     Typography,
 } from 'antd';
-import { useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 export default function Index({ books, borrowingEligibility, filters }) {
     const { auth } = usePage().props;
     const [search, setSearch] = useState(filters.search ?? '');
     const [loading, setLoading] = useState(false);
     const [borrowingBookId, setBorrowingBookId] = useState(null);
+    const cancelTokenRef = useRef(null);
     const { message, modal } = AntdApp.useApp();
     const canBorrowBooks = Boolean(auth.can.borrowBooks);
     const eligibilityMessage = canBorrowBooks
         ? borrowingEligibility.message
         : 'Your account does not currently have borrowing access.';
 
-    const visitCatalogue = ({ page, search: nextSearch = search } = {}) => {
-        const parameters = {};
-        const normalizedSearch = nextSearch.trim();
+    const visitCatalogue = useCallback(
+        ({ page, search: nextSearch = '' } = {}) => {
+            const previousCancelToken = cancelTokenRef.current;
+            cancelTokenRef.current = null;
+            previousCancelToken?.cancel();
 
-        if (normalizedSearch) {
-            parameters.search = normalizedSearch;
+            const parameters = {};
+            const normalizedSearch = nextSearch.trim();
+            let currentCancelToken = null;
+
+            if (normalizedSearch) {
+                parameters.search = normalizedSearch;
+            }
+
+            if (page) {
+                parameters.page = page;
+            }
+
+            router.get(route('member.books.index'), parameters, {
+                only: ['books', 'filters'],
+                onCancelToken: (cancelToken) => {
+                    currentCancelToken = cancelToken;
+                    cancelTokenRef.current = cancelToken;
+                },
+                onFinish: () => {
+                    if (cancelTokenRef.current !== currentCancelToken) {
+                        return;
+                    }
+
+                    cancelTokenRef.current = null;
+                    setLoading(false);
+                },
+                onStart: () => setLoading(true),
+                preserveScroll: true,
+                preserveState: true,
+                replace: true,
+            });
+        },
+        [],
+    );
+
+    useEffect(() => {
+        setSearch(filters.search ?? '');
+    }, [filters.search]);
+
+    useEffect(() => {
+        const normalizedSearch = search.trim();
+
+        if (normalizedSearch === (filters.search ?? '')) {
+            return undefined;
         }
 
-        if (page) {
-            parameters.page = page;
-        }
+        const timeout = window.setTimeout(() => {
+            visitCatalogue({
+                page: 1,
+                search: normalizedSearch,
+            });
+        }, SEARCH_DEBOUNCE_MS);
 
-        router.get(route('member.books.index'), parameters, {
-            onFinish: () => setLoading(false),
-            onStart: () => setLoading(true),
-            preserveState: true,
-            replace: true,
-        });
-    };
+        return () => window.clearTimeout(timeout);
+    }, [filters.search, search, visitCatalogue]);
+
+    useEffect(
+        () => () => {
+            const activeCancelToken = cancelTokenRef.current;
+            cancelTokenRef.current = null;
+            activeCancelToken?.cancel();
+        },
+        [],
+    );
 
     const confirmBorrow = (book) => {
         modal.confirm({
@@ -110,14 +164,15 @@ export default function Index({ books, borrowingEligibility, filters }) {
                     </Typography.Paragraph>
                 </div>
 
-                <Input.Search
+                <Input
                     allowClear
+                    aria-busy={loading}
                     aria-label="Search the member catalogue"
+                    autoComplete="off"
                     className="w-full sm:max-w-md"
-                    enterButton={<SearchOutlined />}
-                    loading={loading}
+                    prefix={<SearchOutlined />}
+                    suffix={loading ? <Spin size="small" /> : null}
                     onChange={(event) => setSearch(event.target.value)}
-                    onSearch={(value) => visitCatalogue({ search: value })}
                     placeholder="Title, author, or ISBN"
                     value={search}
                 />
