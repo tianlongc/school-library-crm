@@ -37,6 +37,7 @@ abstract class TableIndexRequest extends FormRequest
 
         $this->merge([
             'search' => (string) $this->string('search')->trim(),
+            'page' => max($this->integer('page', 1), 1),
             'per_page' => in_array(
                 $requestedPageSize,
                 self::PAGE_SIZE_OPTIONS,
@@ -83,6 +84,11 @@ abstract class TableIndexRequest extends FormRequest
         ];
     }
 
+    public function page(): int
+    {
+        return (int) $this->validated('page');
+    }
+
     public function search(): string
     {
         return (string) $this->validated('search', '');
@@ -115,6 +121,7 @@ abstract class TableIndexRequest extends FormRequest
     {
         return [
             'search' => $this->search(),
+            'page' => $this->page(),
             'per_page' => $this->perPage(),
             'sort' => $this->sort(),
             'direction' => $this->direction(),
