@@ -103,6 +103,7 @@ Route::middleware(['auth', 'can:workspace.access'])
             ->name('categories.')
             ->group(function () {
                 Route::get('/', 'index')->middleware('can:categories.view')->name('index');
+                Route::post('/query', 'query')->middleware('can:categories.view')->name('query');
                 Route::get('/create', 'create')->middleware('can:categories.create')->name('create');
                 Route::post('/', 'store')->middleware('can:categories.create')->name('store');
                 Route::get('/{category}/edit', 'edit')->middleware('can:categories.update')->name('edit');

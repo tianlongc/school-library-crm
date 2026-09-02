@@ -7,11 +7,13 @@ use App\Domain\Category\Actions\DeleteCategoryAction;
 use App\Domain\Category\Actions\UpdateCategoryAction;
 use App\Domain\Category\Models\Category;
 use App\Domain\Category\Queries\CategoryQuery;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use App\Http\Requests\CategoryIndexRequest;
 use App\Http\Requests\StoreCategoryRequest;
 use App\Http\Requests\UpdateCategoryRequest;
 use App\Http\Resources\CategoryResource;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -24,15 +26,30 @@ class CategoryController extends Controller
     {
         return Inertia::render('Staff/Categories/Index', [
             'categories' => fn () => CategoryResource::collection(
-                $query->getCategoryList(
-                    search: $request->search(),
-                    perPage: $request->perPage(),
-                    sort: $request->sort(),
-                    direction: $request->direction(),
-                ),
+                $this->categoryList($request, $query)
             ),
             'filters' => $request->filters(),
         ]);
+    }
+
+    public function query(CategoryIndexRequest $request, CategoryQuery $query): AnonymousResourceCollection
+    {
+        return CategoryResource::collection(
+            $this->categoryList($request, $query),
+        )->additional([
+            'filters' => $request->filters(),
+        ]);
+    }
+
+    private function categoryList(CategoryIndexRequest $request, CategoryQuery $query): LengthAwarePaginator
+    {
+        return $query->getCategoryList(
+            search: $request->search(),
+            page: $request->page(),
+            perPage: $request->perPage(),
+            sort: $request->sort(),
+            direction: $request->direction(),
+        );
     }
 
     /**

@@ -16,12 +16,26 @@ it('redirects guests away from category management', function () {
         ->assertRedirect(route('login'));
 });
 
+it('rejects unauthenticated category table queries', function () {
+    $this->postJson(route('staff.categories.query'))
+        ->assertUnauthorized();
+});
+
 it('forbids members from the staff category workspace', function () {
     $member = User::factory()->create();
     $member->assignRole('member');
 
     $this->actingAs($member)
         ->get(route('staff.categories.index'))
+        ->assertForbidden();
+});
+
+it('forbids members from querying the staff category table', function () {
+    $member = User::factory()->create();
+    $member->assignRole('member');
+
+    $this->actingAs($member)
+        ->postJson(route('staff.categories.query'))
         ->assertForbidden();
 });
 
@@ -61,6 +75,7 @@ describe('authenticated category management', function () {
                 ->where('categories.data.0.name', 'Science')
                 ->where('categories.data.0.books_count', 2)
                 ->where('filters.search', '')
+                ->where('filters.page', 1)
             );
     });
 
@@ -80,42 +95,51 @@ describe('authenticated category management', function () {
     it('accepts supported category page sizes', function (int $perPage) {
         Category::factory()->count(51)->create();
 
-        $this->get(route('staff.categories.index', ['per_page' => $perPage]))
+        $this->postJson(route('staff.categories.query'), ['per_page' => $perPage])
             ->assertSuccessful()
-            ->assertInertia(fn (Assert $page) => $page
-                ->has('categories.data', $perPage)
-                ->where('categories.meta.per_page', $perPage)
-                ->where('filters.per_page', $perPage)
-            );
+            ->assertJsonCount($perPage, 'data')
+            ->assertJsonPath('meta.per_page', $perPage)
+            ->assertJsonPath('filters.per_page', $perPage);
     })->with([5, 10, 20, 50]);
 
     it('sorts categories by name', function () {
         Category::factory()->create(['name' => 'Zoology']);
         $alphabeticalFirst = Category::factory()->create(['name' => 'Art']);
 
-        $this->get(route('staff.categories.index', [
+        $this->postJson(route('staff.categories.query'), [
             'sort' => 'name',
             'direction' => 'asc',
-        ]))
+        ])
             ->assertSuccessful()
-            ->assertInertia(fn (Assert $page) => $page
-                ->where('categories.data.0.id', $alphabeticalFirst->id)
-                ->where('filters.sort', 'name')
-                ->where('filters.direction', 'asc')
-            );
+            ->assertJsonPath('data.0.id', $alphabeticalFirst->id)
+            ->assertJsonPath('filters.sort', 'name')
+            ->assertJsonPath('filters.direction', 'asc');
     });
 
-    it('searches categories by name and preserves the filter', function () {
+    it('searches categories by name and returns the normalized filter', function () {
         $matchingCategory = Category::factory()->create(['name' => 'Computer Science']);
         Category::factory()->create(['name' => 'History']);
 
-        $this->get(route('staff.categories.index', ['search' => 'Computer']))
+        $this->postJson(route('staff.categories.query'), ['search' => 'Computer'])
             ->assertSuccessful()
-            ->assertInertia(fn (Assert $page) => $page
-                ->has('categories.data', 1)
-                ->where('categories.data.0.id', $matchingCategory->id)
-                ->where('filters.search', 'Computer')
-            );
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.id', $matchingCategory->id)
+            ->assertJsonPath('filters.search', 'Computer');
+    });
+
+    it('accepts explicit category page state without query-string pagination', function () {
+        Category::factory()->count(13)->create();
+
+        $this->postJson(route('staff.categories.query'), [
+            'page' => 2,
+            'per_page' => 5,
+        ])
+            ->assertSuccessful()
+            ->assertJsonCount(5, 'data')
+            ->assertJsonPath('meta.current_page', 2)
+            ->assertJsonPath('meta.per_page', 5)
+            ->assertJsonPath('meta.total', 13)
+            ->assertJsonPath('filters.page', 2);
     });
 
     it('renders the category create page', function () {

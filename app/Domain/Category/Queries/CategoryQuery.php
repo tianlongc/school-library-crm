@@ -3,11 +3,13 @@
 namespace App\Domain\Category\Queries;
 
 use App\Domain\Category\Models\Category;
+use App\Domain\Shared\Queries\TableQuery;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
+use Override;
 
-class CategoryQuery
+class CategoryQuery extends TableQuery
 {
     /**
      * @var array<string, string>
@@ -29,18 +31,32 @@ class CategoryQuery
 
     public function getCategoryList(
         string $search = '',
+        int $page = 1,
         int $perPage = 10,
         string $sort = 'created_at',
         string $direction = 'desc',
     ): LengthAwarePaginator {
-        $direction = $direction === 'asc' ? 'asc' : 'desc';
-        $sortColumn = self::SORT_COLUMNS[$sort] ?? self::SORT_COLUMNS['created_at'];
+        return $this->paginateTable(
+            query: $this->buildQuery($search),
+            page: $page,
+            perPage: $perPage,
+            sort: $sort,
+            direction: $direction,
+        );
+    }
 
-        return $this->buildQuery($search)
-            ->orderBy($sortColumn, $direction)
-            ->orderBy('categories.id', $direction)
-            ->paginate($perPage)
-            ->withQueryString();
+    #[Override]
+    protected function applySorting(Builder $query, string $sort, string $direction): Builder
+    {
+        $column = self::SORT_COLUMNS[$sort] ?? self::SORT_COLUMNS['created_at'];
+
+        return $query->orderBy($column, $direction);
+    }
+
+    #[Override]
+    protected function tieBreaker(): string
+    {
+        return 'categories.id';
     }
 
     /**
