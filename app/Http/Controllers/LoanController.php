@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Domain\Loan\Actions\IssueLoanAction;
+use App\Domain\Loan\Actions\RequestLoanReturnAction;
 use App\Domain\Loan\Actions\ReturnLoanAction;
 use App\Domain\Loan\Models\Loan;
 use App\Domain\Loan\Queries\LoanQuery;
@@ -86,8 +87,22 @@ class LoanController extends Controller
         $returnedLoan->load(['member.user', 'book', 'issuedBy', 'returnedBy']);
 
         return response()->json([
-            'message' => 'Loan returned successfully.',
+            'message' => 'Book received and loan completed.',
             'loan' => LoanResource::make($returnedLoan)->resolve($request),
+        ]);
+    }
+
+    public function requestReturn(Loan $loan, Request $request, RequestLoanReturnAction $action): JsonResponse
+    {
+        Gate::authorize('requestReturn', $loan);
+
+        $requestedLoan = $action->execute($loan);
+
+        $requestedLoan->load(['member.user', 'book', 'issuedBy', 'returnedBy']);
+
+        return response()->json([
+            'message' => 'Return request submitted. Staff must confirm the book was received.',
+            'loan' => LoanResource::make($requestedLoan)->resolve($request),
         ]);
     }
 }

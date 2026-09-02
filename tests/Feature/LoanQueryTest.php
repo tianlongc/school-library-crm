@@ -124,6 +124,11 @@ describe('loan query', function () {
             'due_at' => now()->subDay(),
             'returned_at' => null,
         ]);
+        Loan::factory()->create([
+            'due_at' => now()->addWeek(),
+            'return_requested_at' => now(),
+            'returned_at' => null,
+        ]);
 
         $loans = $this->loanQuery->paginate(status: LoanStatus::Active->value);
 
@@ -140,6 +145,11 @@ describe('loan query', function () {
         ]);
         Loan::factory()->create([
             'due_at' => now()->addWeek(),
+            'returned_at' => null,
+        ]);
+        Loan::factory()->create([
+            'due_at' => now()->subDay(),
+            'return_requested_at' => now(),
             'returned_at' => null,
         ]);
 
@@ -162,6 +172,24 @@ describe('loan query', function () {
         expect($loans->total())
             ->toBe(1)
             ->and($loans->first()->is($returnedLoan))
+            ->toBeTrue();
+    });
+
+    it('filters return requested loans', function () {
+        $requestedLoan = Loan::factory()->create([
+            'return_requested_at' => now(),
+            'returned_at' => null,
+        ]);
+        Loan::factory()->create([
+            'return_requested_at' => null,
+            'returned_at' => null,
+        ]);
+
+        $loans = $this->loanQuery->paginate(status: LoanStatus::ReturnRequested->value);
+
+        expect($loans->total())
+            ->toBe(1)
+            ->and($loans->first()->is($requestedLoan))
             ->toBeTrue();
     });
 

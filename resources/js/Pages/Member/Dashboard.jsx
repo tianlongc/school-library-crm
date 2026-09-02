@@ -28,6 +28,10 @@ const loanStatus = {
         color: 'error',
         label: 'Overdue',
     },
+    return_requested: {
+        color: 'warning',
+        label: 'Return requested',
+    },
 };
 
 const dueDateFormatter = new Intl.DateTimeFormat('en-MY', {
@@ -51,30 +55,28 @@ const memberStatusColor = {
 
 export default function Dashboard() {
     const { auth, currentLoans = [], member } = usePage().props;
-    const [returningLoanId, setReturningLoanId] = useState(null);
+    const [requestingReturnLoanId, setRequestingReturnLoanId] = useState(null);
     const { message, modal } = AntdApp.useApp();
     const canBrowseCatalogue = member.status !== 'inactive';
-    const hasOverdueLoans = currentLoans.some(
-        (loan) => loan.status === 'overdue',
-    );
+    const hasOverdueLoans = currentLoans.some((loan) => loan.is_overdue);
 
     const status = memberStatusColor[member.status] ?? {
         color: 'default',
         label: 'Unknown',
     };
 
-    const confirmReturn = (loan) => {
+    const requestReturn = (loan) => {
         modal.confirm({
-            title: 'Return this book?',
-            content: `${loan.book.title} will be removed from your current loans.`,
-            okText: 'Return book',
+            title: 'Request this return?',
+            content: `Keep ${loan.book.title} with you until staff receives it. The loan remains active until they confirm the return.`,
+            okText: 'Request return',
             cancelText: 'Keep book',
             async onOk() {
-                setReturningLoanId(loan.id);
+                setRequestingReturnLoanId(loan.id);
 
                 try {
                     const payload = await jsonRequest({
-                        url: route('member.loans.return', loan.id),
+                        url: route('member.loans.request-return', loan.id),
                         method: 'POST',
                     });
 
@@ -84,13 +86,13 @@ export default function Dashboard() {
                     message.error(
                         getRequestErrorMessage(
                             error,
-                            'The book could not be returned. Try again.',
+                            'The return request could not be submitted. Try again.',
                         ),
                     );
 
                     throw error;
                 } finally {
-                    setReturningLoanId(null);
+                    setRequestingReturnLoanId(null);
                 }
             },
         });
@@ -107,7 +109,7 @@ export default function Dashboard() {
                     </Typography.Title>
                     <Typography.Paragraph type="secondary" className="member-welcome-copy">
                         Browse available books, borrow them from the catalogue, and
-                        return current loans from this dashboard.
+                        request returns from this dashboard.
                     </Typography.Paragraph>
                     <Flex gap={8} wrap>
                         {canBrowseCatalogue ? (
@@ -201,7 +203,7 @@ export default function Dashboard() {
                     <Flex vertical gap={16}>
                         {hasOverdueLoans && (
                             <Alert
-                                description="Return overdue books before borrowing another book."
+                                description="Staff must receive and confirm overdue returns before you can borrow another book."
                                 showIcon
                                 title="Borrowing is temporarily blocked"
                                 type="warning"
@@ -214,6 +216,8 @@ export default function Dashboard() {
                                     color: 'default',
                                     label: 'Unknown',
                                 };
+                                const isReturnRequested =
+                                    loan.status === 'return_requested';
 
                                 return (
                                     <article
@@ -259,7 +263,7 @@ export default function Dashboard() {
                                                 <Typography.Text
                                                     className="member-loan-date"
                                                     type={
-                                                        loan.status === 'overdue'
+                                                        loan.is_overdue
                                                             ? 'danger'
                                                             : undefined
                                                     }
@@ -272,15 +276,18 @@ export default function Dashboard() {
                                                 </Typography.Text>
                                             </div>
                                             <Button
+                                                disabled={isReturnRequested}
                                                 loading={
-                                                    returningLoanId === loan.id
+                                                    requestingReturnLoanId === loan.id
                                                 }
                                                 onClick={() =>
-                                                    confirmReturn(loan)
+                                                    requestReturn(loan)
                                                 }
                                                 size="small"
                                             >
-                                                Return book
+                                                {isReturnRequested
+                                                    ? 'Awaiting staff'
+                                                    : 'Request return'}
                                             </Button>
                                         </Flex>
                                     </article>

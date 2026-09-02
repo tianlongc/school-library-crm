@@ -1,3 +1,5 @@
+import ServerDataTable from '@/Components/Tables/ServerDataTable';
+import { getSortOrder } from '@/Components/Tables/tableQuery';
 import CheckOutlined from '@ant-design/icons/CheckOutlined';
 import { Button, Space, Tag, Tooltip, Typography } from 'antd';
 import { useMemo } from 'react';
@@ -5,7 +7,15 @@ import { useMemo } from 'react';
 const statusColors = {
     active: 'processing',
     overdue: 'error',
+    return_requested: 'warning',
     returned: 'default',
+};
+
+const statusLabels = {
+    active: 'Active',
+    overdue: 'Overdue',
+    return_requested: 'Return requested',
+    returned: 'Returned',
 };
 
 const dateFormatter = new Intl.DateTimeFormat('en-MY', {
@@ -23,9 +33,6 @@ const formatDate = (value) =>
 const formatDateTime = (value) =>
     value ? dateTimeFormatter.format(new Date(value)) : '—';
 
-const titleCase = (value) =>
-    value.charAt(0).toUpperCase() + value.slice(1);
-
 function LoanAction({ canReturn, loan, onReturn }) {
     if (loan.returned_at) {
         return <Typography.Text type="secondary">Complete</Typography.Text>;
@@ -35,16 +42,28 @@ function LoanAction({ canReturn, loan, onReturn }) {
         return <Typography.Text type="secondary">—</Typography.Text>;
     }
 
+    const isReturnRequested = loan.status === 'return_requested';
+
     return (
-        <Tooltip title="Record this book as returned">
+        <Tooltip
+            title={
+                isReturnRequested
+                    ? 'Confirm the returned book was received'
+                    : 'Record this book as returned'
+            }
+        >
             <Button
-                aria-label={`Return ${loan.book.title} from ${loan.member.name}`}
+                aria-label={
+                    isReturnRequested
+                        ? `Confirm receipt of ${loan.book.title} from ${loan.member.name}`
+                        : `Return ${loan.book.title} from ${loan.member.name}`
+                }
                 icon={<CheckOutlined />}
                 onClick={() => onReturn(loan)}
                 size="small"
-                type="link"
+                type={isReturnRequested ? 'primary' : 'link'}
             >
-                Return
+                {isReturnRequested ? 'Confirm received' : 'Return'}
             </Button>
         </Tooltip>
     );
@@ -130,17 +149,20 @@ export default function LoanTable({
             width: 175,
             render: (_, loan) => (
                 <Space orientation="vertical" size={4}>
-                    <Typography.Text strong={loan.status === 'overdue'}>
+                    <Typography.Text
+                        strong={loan.is_overdue}
+                        type={loan.is_overdue ? 'danger' : undefined}
+                    >
                         {formatDate(loan.due_at)}
                     </Typography.Text>
                     <Tag color={statusColors[loan.status]}>
-                        {titleCase(loan.status)}
+                        {statusLabels[loan.status] ?? 'Unknown'}
                     </Tag>
                 </Space>
             ),
         },
         {
-            title: 'Returned',
+            title: 'Return activity',
             key: 'returned_at',
             sorter: true,
             sortOrder: getSortOrder(filters, 'returned_at'),
@@ -158,6 +180,18 @@ export default function LoanTable({
                             by {loan.returned_by ?? 'Unknown staff'}
                         </Typography.Text>
                     </div>
+                ) : loan.return_requested_at ? (
+                    <div>
+                        <Typography.Text>
+                            {formatDateTime(loan.return_requested_at)}
+                        </Typography.Text>
+                        <Typography.Text
+                            className="table-secondary-line"
+                            type="secondary"
+                        >
+                            Awaiting staff confirmation
+                        </Typography.Text>
+                    </div>
                 ) : (
                     <Typography.Text type="secondary">—</Typography.Text>
                 ),
@@ -167,7 +201,7 @@ export default function LoanTable({
             key: 'action',
             align: 'center',
             fixed: 'right',
-            width: 110,
+            width: 160,
             render: (_, loan) => (
                 <LoanAction
                     canReturn={canReturn}
@@ -193,12 +227,10 @@ export default function LoanTable({
             meta={meta}
             pluralName="loans"
             rowClassName={(loan) => `loan-row loan-row-${loan.status}`}
-            scrollX={1145}
+            scrollX={1220}
             singularName="loan"
             onPageChange={onPageChange}
             onTableChange={onTableChange}
         />
     );
 }
-import ServerDataTable from '@/Components/Tables/ServerDataTable';
-import { getSortOrder } from '@/Components/Tables/tableQuery';

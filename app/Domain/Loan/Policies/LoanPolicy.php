@@ -57,10 +57,11 @@ class LoanPolicy
 
     public function returnLoan(User $user, Loan $loan): bool
     {
-        if ($user->can('loans.return')) {
-            return true;
-        }
+        return $user->can('loans.return');
+    }
 
+    public function requestReturn(User $user, Loan $loan): bool
+    {
         return $user->can('loans.return-own') && $user->member?->getKey() === $loan->member_id;
     }
 

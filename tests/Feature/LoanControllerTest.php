@@ -56,6 +56,26 @@ describe('authenticated loan management', function () {
             );
     });
 
+    it('renders member return requests in the staff ledger', function () {
+        $requestedLoan = Loan::factory()->create([
+            'return_requested_at' => now(),
+            'returned_at' => null,
+        ]);
+        Loan::factory()->create([
+            'return_requested_at' => null,
+            'returned_at' => null,
+        ]);
+
+        $this->get(route('staff.loans.index', ['status' => 'return_requested']))
+            ->assertSuccessful()
+            ->assertInertia(fn (Assert $page) => $page
+                ->has('loans.data', 1)
+                ->where('loans.data.0.id', $requestedLoan->id)
+                ->where('loans.data.0.status', 'return_requested')
+                ->where('filters.status', 'return_requested')
+            );
+    });
+
     it('normalizes invalid loan table parameters', function () {
         $this->get(route('staff.loans.index', [
             'per_page' => 999,
@@ -132,7 +152,7 @@ describe('authenticated loan management', function () {
 
         $this->postJson(route('staff.loans.return', $loan))
             ->assertSuccessful()
-            ->assertJsonPath('message', 'Loan returned successfully.')
+            ->assertJsonPath('message', 'Book received and loan completed.')
             ->assertJsonPath('loan.id', $loan->id)
             ->assertJsonPath('loan.status', 'returned')
             ->assertJsonPath('loan.returned_by', $this->staff->name);
@@ -143,6 +163,30 @@ describe('authenticated loan management', function () {
             ->toBe($this->staff->id)
             ->and($returnedLoan->returned_at)
             ->not->toBeNull();
+    });
+
+    it('confirms a member requested return', function () {
+        $requestedAt = now()->subMinute()->startOfSecond();
+        $loan = Loan::factory()->create([
+            'return_requested_at' => $requestedAt,
+            'returned_at' => null,
+            'returned_by_user_id' => null,
+        ]);
+
+        $this->postJson(route('staff.loans.return', $loan))
+            ->assertSuccessful()
+            ->assertJsonPath('message', 'Book received and loan completed.')
+            ->assertJsonPath('loan.status', 'returned')
+            ->assertJsonPath('loan.returned_by', $this->staff->name);
+
+        $loan->refresh();
+
+        expect($loan->return_requested_at->equalTo($requestedAt))
+            ->toBeTrue()
+            ->and($loan->returned_at)
+            ->not->toBeNull()
+            ->and($loan->returned_by_user_id)
+            ->toBe($this->staff->id);
     });
 
     it('rejects returning the same loan twice', function () {

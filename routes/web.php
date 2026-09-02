@@ -55,8 +55,8 @@ Route::middleware('auth')
                 Route::post('/{book}/borrow', 'borrow')->name('borrow');
             });
 
-        Route::post('/loans/{loan}/return', [LoanController::class, 'returnLoan'])
-            ->name('loans.return');
+        Route::post('/loans/{loan}/return-request', [LoanController::class, 'requestReturn'])
+            ->name('loans.request-return');
     });
 
 /**

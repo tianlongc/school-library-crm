@@ -29,6 +29,7 @@ class LoanFactory extends Factory
             'returned_by_user_id' => null,
             'issued_at' => now(),
             'due_at' => now()->addWeeks(2),
+            'return_requested_at' => null,
             'returned_at' => null,
         ];
     }

@@ -50,17 +50,25 @@ class LoanQuery
                 $status === LoanStatus::Active,
                 fn (Builder $query) => $query
                     ->whereNull('returned_at')
+                    ->whereNull('return_requested_at')
                     ->where('due_at', '>=', now())
             )
             ->when(
                 $status === LoanStatus::Overdue,
                 fn (Builder $query) => $query
                     ->whereNull('returned_at')
+                    ->whereNull('return_requested_at')
                     ->where('due_at', '<', now())
             )
             ->when(
                 $status === LoanStatus::Returned,
                 fn (Builder $query) => $query->whereNotNull('returned_at'),
+            )
+            ->when(
+                $status === LoanStatus::ReturnRequested,
+                fn (Builder $query) => $query
+                    ->whereNull('returned_at')
+                    ->whereNotNull('return_requested_at'),
             );
 
         $sortQuery = match ($sort) {

@@ -6,7 +6,7 @@ import StaffLayout from '@/Layouts/StaffLayout';
 import { jsonRequest } from '@/Utils/jsonRequest';
 import { getRequestErrorMessage } from '@/Utils/requestErrorMessage';
 import PlusOutlined from '@ant-design/icons/PlusOutlined';
-import { Head, router, usePage } from '@inertiajs/react';
+import { Head, router, usePage, usePoll } from '@inertiajs/react';
 import { App as AntdApp, Card, Flex, Select } from 'antd';
 import LoanTable from './Components/LoanTable';
 
@@ -14,6 +14,7 @@ const statusOptions = [
     { value: '', label: 'All loans' },
     { value: 'active', label: 'Active' },
     { value: 'overdue', label: 'Overdue' },
+    { value: 'return_requested', label: 'Return requested' },
     { value: 'returned', label: 'Returned' },
 ];
 
@@ -33,11 +34,19 @@ export default function Index({ filters, loans }) {
         routeName: 'staff.loans.index',
     });
 
+    usePoll(10000, { only: ['loans'] });
+
     const confirmReturn = (loan) => {
+        const isReturnRequested = loan.status === 'return_requested';
+
         modal.confirm({
-            title: 'Return this book?',
-            content: `${loan.book.title} will be checked in from ${loan.member.name}.`,
-            okText: 'Return book',
+            title: isReturnRequested
+                ? 'Confirm book received?'
+                : 'Record this book as returned?',
+            content: isReturnRequested
+                ? `Confirm staff has physically received ${loan.book.title} from ${loan.member.name}.`
+                : `${loan.book.title} will be checked in from ${loan.member.name}.`,
+            okText: isReturnRequested ? 'Confirm received' : 'Record return',
             cancelText: 'Cancel',
             async onOk() {
                 try {
@@ -52,7 +61,7 @@ export default function Index({ filters, loans }) {
                     message.error(
                         getRequestErrorMessage(
                             error,
-                            'The book could not be returned. Try again.',
+                            'The return could not be confirmed. Try again.',
                         ),
                     );
 
@@ -78,7 +87,7 @@ export default function Index({ filters, loans }) {
                         </InertiaButton>
                     ) : undefined
                 }
-                description="Issue books, watch due dates, and record returns from one circulation ledger."
+                description="Issue books, watch due dates, and confirm received returns from one circulation ledger."
                 eyebrow="Circulation"
                 title="Loans"
             />
