@@ -1,61 +1,66 @@
-import { router } from '@inertiajs/react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
-    compactTableQuery,
     DEFAULT_PAGE_SIZE,
     SEARCH_DEBOUNCE_MS,
 } from './tableQuery';
+import { isCancelledRequest, jsonRequest } from '@/Utils/jsonRequest';
 
 export function useServerTable({
-    filters,
-    resource,
-    routeName,
+    initialFilters,
+    initialResource,
+    queryRouteName,
     debounceMs = SEARCH_DEBOUNCE_MS,
 }) {
-    const [search, setSearch] = useState(filters.search ?? '');
+    const [resource, setResource] = useState(initialResource);
+    const [filters, setFilters] = useState(initialFilters);
+    const [search, setSearch] = useState(initialFilters.search ?? '');
     const [loading, setLoading] = useState(false);
-    const cancelTokenRef = useRef(null);
+    const [error, setError] = useState(null);
+    const abortControllerRef = useRef(null);
 
-    useEffect(() => {
-        setSearch(filters.search ?? '');
-    }, [filters.search]);
+    const load = useCallback(
+        async (overrides = {}) => {
+            abortControllerRef.current?.abort();
 
-    const visit = useCallback(
-        (overrides = {}) => {
-            const previousCancelToken = cancelTokenRef.current;
-            cancelTokenRef.current = null;
-            previousCancelToken?.cancel();
+            const abortController = new AbortController();
+            abortControllerRef.current = abortController;
 
-            let currentCancelToken = null;
+            setLoading(true);
+            setError(null);
 
-            router.get(
-                route(routeName),
-                compactTableQuery({
-                    ...filters,
-                    ...overrides,
-                }),
-                {
-                    preserveState: true,
-                    preserveScroll: true,
-                    replace: true,
-                    only: [resource, 'filters'],
-                    onCancelToken: (cancelToken) => {
-                        currentCancelToken = cancelToken;
-                        cancelTokenRef.current = cancelToken;
+            try {
+                const payload = await jsonRequest({
+                    url: route(queryRouteName),
+                    method: 'POST',
+                    data: {
+                        ...filters,
+                        ...overrides,
                     },
-                    onStart: () => setLoading(true),
-                    onFinish: () => {
-                        if (cancelTokenRef.current !== currentCancelToken) {
-                            return;
-                        }
+                    signal: abortController.signal,
+                });
 
-                        cancelTokenRef.current = null;
-                        setLoading(false);
-                    },
-                },
-            );
+                if (abortController.signal.aborted) {
+                    return;
+                }
+
+                setResource({
+                    data: payload.data,
+                    links: payload.links,
+                    meta: payload.meta,
+                });
+                setFilters(payload.filters);
+            } catch (requestError) {
+                if (!isCancelledRequest(requestError)) {
+                    setError(requestError);
+                }
+            } finally {
+                if (abortControllerRef.current === abortController) {
+                    abortControllerRef.current = null;
+                    setLoading(false);
+                }
+            }
         },
-        [filters, resource, routeName],
+        [filters, queryRouteName],
     );
 
     useEffect(() => {
@@ -66,14 +71,14 @@ export function useServerTable({
         }
 
         const timeout = window.setTimeout(() => {
-            visit({
+            void load({
                 page: 1,
                 search: normalizedSearch,
             });
         }, debounceMs);
 
         return () => window.clearTimeout(timeout);
-    }, [debounceMs, filters.search, search, visit]);
+    }, [debounceMs, filters.search, load, search]);
 
     const handlePageChange = useCallback(
         (page, pageSize) => {
@@ -81,13 +86,13 @@ export function useServerTable({
                 filters.per_page ?? DEFAULT_PAGE_SIZE,
             );
 
-            visit({
+            void load({
                 page: pageSize === currentPageSize ? page : 1,
                 per_page: pageSize,
                 search: search.trim(),
             });
         },
-        [filters.per_page, search, visit],
+        [filters.per_page, search, load],
     );
 
     const handleTableChange = useCallback(
@@ -100,7 +105,7 @@ export function useServerTable({
                 ? sorter[0]
                 : sorter;
 
-            visit({
+            void load({
                 page: 1,
                 search: search.trim(),
                 sort: activeSorter.order
@@ -110,41 +115,40 @@ export function useServerTable({
                     activeSorter.order === 'ascend'
                         ? 'asc'
                         : activeSorter.order === 'descend'
-                          ? 'desc'
-                          : undefined,
+                            ? 'desc'
+                            : undefined,
             });
         },
-        [search, visit],
+        [load, search],
     );
 
     const setFilter = useCallback(
         (name, value) => {
-            visit({
+            void load({
+                [name]: value,
                 page: 1,
                 search: search.trim(),
-                [name]: value,
             });
         },
-        [search, visit],
+        [load, search],
     );
 
     useEffect(
-        () => () => {
-            const activeCancelToken = cancelTokenRef.current;
-            cancelTokenRef.current = null;
-            activeCancelToken?.cancel();
-        },
+        () => () => abortControllerRef.current?.abort(),
         [],
     );
 
     return {
+        error,
+        filters,
         handlePageChange,
         handleTableChange,
         loading,
+        refresh: load,
+        resource,
         search,
         setFilter,
         setSearch,
-        visit,
     };
 }
 

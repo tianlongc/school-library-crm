@@ -6,8 +6,9 @@ import StaffLayout from '@/Layouts/StaffLayout';
 import { jsonRequest } from '@/Utils/jsonRequest';
 import { getRequestErrorMessage } from '@/Utils/requestErrorMessage';
 import PlusOutlined from '@ant-design/icons/PlusOutlined';
-import { Head, router, usePage, usePoll } from '@inertiajs/react';
+import { Head, usePage } from '@inertiajs/react';
 import { App as AntdApp, Card, Flex, Select } from 'antd';
+import { useEffect } from 'react';
 import LoanTable from './Components/LoanTable';
 
 const statusOptions = [
@@ -18,23 +19,46 @@ const statusOptions = [
     { value: 'returned', label: 'Returned' },
 ];
 
-export default function Index({ filters, loans }) {
+export default function Index({ filters: initialFilters, loans: initialLoans }) {
     const { auth } = usePage().props;
     const { message, modal } = AntdApp.useApp();
     const {
+        error,
+        filters,
         handlePageChange,
         handleTableChange,
         loading,
+        refresh,
+        resource: loans,
         search,
         setFilter,
         setSearch,
     } = useServerTable({
-        filters,
-        resource: 'loans',
-        routeName: 'staff.loans.index',
+        initialFilters,
+        initialResource: initialLoans,
+        queryRouteName: 'staff.loans.query',
     });
 
-    usePoll(10000, { only: ['loans'] });
+    useEffect(() => {
+        const interval = window.setInterval(() => {
+            if (!loading && document.visibilityState === 'visible') {
+                void refresh();
+            }
+        }, 10000);
+
+        return () => window.clearInterval(interval);
+    }, [loading, refresh]);
+
+    useEffect(() => {
+        if (error) {
+            message.error(
+                getRequestErrorMessage(
+                    error,
+                    'The loan table could not be refreshed. Try again.',
+                ),
+            );
+        }
+    }, [error, message]);
 
     const confirmReturn = (loan) => {
         const isReturnRequested = loan.status === 'return_requested';
@@ -56,7 +80,7 @@ export default function Index({ filters, loans }) {
                     });
 
                     message.success(payload.message);
-                    router.reload({ only: ['loans'] });
+                    await refresh();
                 } catch (error) {
                     message.error(
                         getRequestErrorMessage(

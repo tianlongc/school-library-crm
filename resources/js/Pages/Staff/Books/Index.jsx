@@ -6,23 +6,39 @@ import StaffLayout from '@/Layouts/StaffLayout';
 import { jsonRequest } from '@/Utils/jsonRequest';
 import { getRequestErrorMessage } from '@/Utils/requestErrorMessage';
 import PlusOutlined from '@ant-design/icons/PlusOutlined';
-import { Head, router } from '@inertiajs/react';
+import { Head } from '@inertiajs/react';
 import { App as AntdApp, Card } from 'antd';
+import { useEffect } from 'react';
 import BookTable from './Components/BookTable';
 
-export default function Index({ books, filters }) {
+export default function Index({ books: initialBooks, filters: initialFilters }) {
     const { message, modal } = AntdApp.useApp();
     const {
+        error,
+        filters,
         handlePageChange,
         handleTableChange,
         loading,
+        refresh,
+        resource: books,
         search,
         setSearch,
     } = useServerTable({
-        filters,
-        resource: 'books',
-        routeName: 'staff.books.index',
+        initialFilters,
+        initialResource: initialBooks,
+        queryRouteName: 'staff.books.query',
     });
+
+    useEffect(() => {
+        if (error) {
+            message.error(
+                getRequestErrorMessage(
+                    error,
+                    'The book table could not be refreshed. Try again.',
+                ),
+            );
+        }
+    }, [error, message]);
 
     const confirmDelete = (book) => {
         modal.confirm({
@@ -39,7 +55,7 @@ export default function Index({ books, filters }) {
                     });
 
                     message.success('Book deleted.');
-                    router.reload({ only: ['books'] });
+                    await refresh();
                 } catch (error) {
                     message.error(
                         getRequestErrorMessage(

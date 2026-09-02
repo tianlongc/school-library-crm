@@ -1,8 +1,9 @@
-import axios from "axios";
+import axios from 'axios';
 
 export const apiClient = axios.create({
     headers: {
-        Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest',
+        Accept: 'application/json',
+        'X-Requested-With': 'XMLHttpRequest',
     },
     withCredentials: true,
     withXSRFToken: true,
@@ -24,6 +25,10 @@ export async function jsonRequest(config) {
 
         return response.data;
     } catch (cause) {
+        if (axios.isCancel(cause)) {
+            throw cause;
+        }
+
         if (!axios.isAxiosError(cause)) {
             throw cause;
         }
@@ -31,9 +36,19 @@ export async function jsonRequest(config) {
         const status = cause.response?.status ?? null;
         const responseData = cause.response?.data;
 
-        const payload = responseData && typeof responseData === 'object' && !Array.isArray(responseData) ? responseData : {};
+        const payload =
+            responseData &&
+            typeof responseData === 'object' &&
+            !Array.isArray(responseData)
+                ? responseData
+                : {};
 
-        const message = typeof payload.message === 'string' ? payload.message : status ? `Request failed with status ${status}.` : 'Unable to reach the server.';
+        const message =
+            typeof payload.message === 'string'
+                ? payload.message
+                : status
+                  ? `Request failed with status ${status}.`
+                  : 'Unable to reach the server.';
 
         throw new JsonRequestError(message, {
             status,
@@ -41,4 +56,8 @@ export async function jsonRequest(config) {
             cause,
         });
     }
+}
+
+export function isCancelledRequest(error) {
+    return axios.isCancel(error);
 }

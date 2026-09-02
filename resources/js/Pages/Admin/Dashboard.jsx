@@ -4,7 +4,7 @@ import { useServerTable } from '@/Components/Tables/useServerTable';
 import AdminLayout from '@/Layouts/AdminLayout';
 import { jsonRequest } from '@/Utils/jsonRequest';
 import { getRequestErrorMessage } from '@/Utils/requestErrorMessage';
-import { Head, router } from '@inertiajs/react';
+import { Head } from '@inertiajs/react';
 import {
     App as AntdApp,
     Card,
@@ -13,26 +13,45 @@ import {
     Select,
     Typography,
 } from 'antd';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import UserTable from './Components/UserTable';
 
-export default function Dashboard({ users, filters, roles }) {
+export default function Dashboard({
+    users: initialUsers,
+    filters: initialFilters,
+    roles,
+}) {
     const [savingRole, setSavingRole] = useState(false);
     const [selectedRole, setSelectedRole] = useState('');
     const [selectedUser, setSelectedUser] = useState(null);
     const { message } = AntdApp.useApp();
     const {
+        error,
+        filters,
         handlePageChange,
         handleTableChange,
         loading,
+        refresh,
+        resource: users,
         search,
         setFilter,
         setSearch,
     } = useServerTable({
-        filters,
-        resource: 'users',
-        routeName: 'admin.dashboard',
+        initialFilters,
+        initialResource: initialUsers,
+        queryRouteName: 'admin.users.query',
     });
+
+    useEffect(() => {
+        if (error) {
+            message.error(
+                getRequestErrorMessage(
+                    error,
+                    'The user table could not be refreshed. Try again.',
+                ),
+            );
+        }
+    }, [error, message]);
 
     const openRoleModal = (user) => {
         setSelectedUser(user);
@@ -65,7 +84,7 @@ export default function Dashboard({ users, filters, roles }) {
             message.success(response.message);
             setSelectedUser(null);
             setSelectedRole('');
-            router.reload({ only: ['users'] });
+            await refresh();
         } catch (error) {
             message.error(
                 error.errors?.role?.[0] ??

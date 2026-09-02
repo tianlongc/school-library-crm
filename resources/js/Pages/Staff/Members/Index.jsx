@@ -4,8 +4,9 @@ import { useServerTable } from '@/Components/Tables/useServerTable';
 import StaffLayout from '@/Layouts/StaffLayout';
 import { jsonRequest } from '@/Utils/jsonRequest';
 import { getRequestErrorMessage } from '@/Utils/requestErrorMessage';
-import { Head, router } from '@inertiajs/react';
+import { Head } from '@inertiajs/react';
 import { App as AntdApp, Card, Flex, Select } from 'antd';
+import { useEffect } from 'react';
 import MemberTable from './Components/MemberTable';
 
 const transitionDetails = {
@@ -26,20 +27,40 @@ const transitionDetails = {
     },
 };
 
-export default function Index({ members, filters, statuses, can }) {
+export default function Index({
+    members: initialMembers,
+    filters: initialFilters,
+    statuses,
+    can,
+}) {
     const { message, modal } = AntdApp.useApp();
     const {
+        error,
+        filters,
+        resource: members,
         handlePageChange,
         handleTableChange,
         loading,
+        refresh,
         search,
         setFilter,
         setSearch,
     } = useServerTable({
-        filters,
-        resource: 'members',
-        routeName: 'staff.members.index',
+        initialFilters,
+        initialResource: initialMembers,
+        queryRouteName: 'staff.members.query',
     });
+
+    useEffect(() => {
+        if (error) {
+            message.error(
+                getRequestErrorMessage(
+                    error,
+                    'The member table could not be refreshed. Try again.',
+                ),
+            );
+        }
+    }, [error, message]);
 
     const confirmTransition = (member, transition) => {
         const details = transitionDetails[transition];
@@ -63,7 +84,7 @@ export default function Index({ members, filters, statuses, can }) {
                     });
 
                     message.success(response.message);
-                    router.reload({ only: ['members'] });
+                    await refresh();
                 } catch (error) {
                     message.error(
                         getRequestErrorMessage(

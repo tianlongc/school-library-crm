@@ -6,23 +6,42 @@ import StaffLayout from '@/Layouts/StaffLayout';
 import { jsonRequest } from '@/Utils/jsonRequest';
 import { getRequestErrorMessage } from '@/Utils/requestErrorMessage';
 import PlusOutlined from '@ant-design/icons/PlusOutlined';
-import { Head, router } from '@inertiajs/react';
+import { Head } from '@inertiajs/react';
 import { App as AntdApp, Card } from 'antd';
+import { useEffect } from 'react';
 import CategoryTable from './Components/CategoryTable';
 
-export default function Index({ categories, filters }) {
+export default function Index({
+    categories: initialCategories,
+    filters: initialFilters,
+}) {
     const { message, modal } = AntdApp.useApp();
     const {
+        error,
+        filters,
         handlePageChange,
         handleTableChange,
         loading,
+        refresh,
+        resource: categories,
         search,
         setSearch,
     } = useServerTable({
-        filters,
-        resource: 'categories',
-        routeName: 'staff.categories.index',
+        initialFilters,
+        initialResource: initialCategories,
+        queryRouteName: 'staff.categories.query',
     });
+
+    useEffect(() => {
+        if (error) {
+            message.error(
+                getRequestErrorMessage(
+                    error,
+                    'The category table could not be refreshed. Try again.',
+                ),
+            );
+        }
+    }, [error, message]);
 
     const confirmDelete = (category) => {
         modal.confirm({
@@ -39,7 +58,7 @@ export default function Index({ categories, filters }) {
                     });
 
                     message.success('Category deleted.');
-                    router.reload({ only: ['categories'] });
+                    await refresh();
                 } catch (error) {
                     message.error(
                         getRequestErrorMessage(
