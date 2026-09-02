@@ -89,6 +89,7 @@ Route::middleware(['auth', 'can:workspace.access'])
             ->name('books.')
             ->group(function () {
                 Route::get('/', 'index')->middleware('can:books.view')->name('index');
+                Route::post('/query', 'query')->middleware('can:books.view')->name('query');
                 Route::get('/create', 'create')->middleware('can:books.create')->name('create');
                 Route::post('/', 'store')->middleware('can:books.create')->name('store');
                 Route::get('/{book}/edit', 'edit')->middleware('can:books.update')->name('edit');

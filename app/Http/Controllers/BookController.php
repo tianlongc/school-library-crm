@@ -7,6 +7,8 @@ use App\Domain\Book\Actions\DeleteBookAction;
 use App\Domain\Book\Actions\UpdateBookAction;
 use App\Domain\Book\Models\Book;
 use App\Domain\Book\Queries\BookQuery;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use App\Domain\Category\Queries\CategoryQuery;
 use App\Http\Requests\BookIndexRequest;
 use App\Http\Requests\StoreBookRequest;
@@ -25,15 +27,30 @@ class BookController extends Controller
     {
         return Inertia::render('Staff/Books/Index', [
             'books' => fn () => BookResource::collection(
-                $query->getBookList(
-                    search: $request->search(),
-                    perPage: $request->perPage(),
-                    sort: $request->sort(),
-                    direction: $request->direction(),
-                ),
+                $this->bookList($request, $query)
             ),
             'filters' => $request->filters(),
         ]);
+    }
+
+    public function query(BookIndexRequest $request, BookQuery $query): AnonymousResourceCollection
+    {
+        return BookResource::collection(
+            $this->bookList($request, $query),
+        )->additional([
+            'filters' => $request->filters(),
+        ]);
+    }
+
+    private function bookList(BookIndexRequest $request, BookQuery $query): LengthAwarePaginator
+    {
+        return $query->getBookList(
+            search: $request->search(),
+            page: $request->page(),
+            perPage: $request->perPage(),
+            sort: $request->sort(),
+            direction: $request->direction(),
+        );
     }
 
     /**

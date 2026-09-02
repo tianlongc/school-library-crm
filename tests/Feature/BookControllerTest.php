@@ -28,12 +28,26 @@ it('redirects guests away from book management', function () {
         ->assertRedirect(route('login'));
 });
 
+it('rejects unauthenticated book table queries', function () {
+    $this->postJson(route('staff.books.query'))
+        ->assertUnauthorized();
+});
+
 it('forbids members from the staff book workspace', function () {
     $member = User::factory()->create();
     $member->assignRole('member');
 
     $this->actingAs($member)
         ->get(route('staff.books.index'))
+        ->assertForbidden();
+});
+
+it('forbids members from querying the staff book table', function () {
+    $member = User::factory()->create();
+    $member->assignRole('member');
+
+    $this->actingAs($member)
+        ->postJson(route('staff.books.query'))
         ->assertForbidden();
 });
 
@@ -63,6 +77,7 @@ describe('authenticated book management', function () {
                 ->component('Staff/Books/Index')
                 ->has('books.data', 1)
                 ->where('filters.search', '')
+                ->where('filters.page', 1)
             );
     });
 
@@ -85,15 +100,13 @@ describe('authenticated book management', function () {
     it('supports the allowed book page sizes', function (int $perPage) {
         Book::factory()->count($perPage + 1)->create();
 
-        $this->get(route('staff.books.index', [
+        $this->postJson(route('staff.books.query'), [
             'per_page' => $perPage,
-        ]))
+        ])
             ->assertSuccessful()
-            ->assertInertia(fn (Assert $page) => $page
-                ->has('books.data', $perPage)
-                ->where('books.meta.per_page', $perPage)
-                ->where('filters.per_page', $perPage)
-            );
+            ->assertJsonCount($perPage, 'data')
+            ->assertJsonPath('meta.per_page', $perPage)
+            ->assertJsonPath('filters.per_page', $perPage);
     })->with([
         'five' => 5,
         'ten' => 10,
@@ -104,17 +117,17 @@ describe('authenticated book management', function () {
     it('normalizes invalid book table parameters', function () {
         Book::factory()->create();
 
-        $this->get(route('staff.books.index', [
+        $this->postJson(route('staff.books.query'), [
+            'page' => 0,
             'per_page' => 999,
             'sort' => 'unsafe-column',
             'direction' => 'sideways',
-        ]))
+        ])
             ->assertSuccessful()
-            ->assertInertia(fn (Assert $page) => $page
-                ->where('filters.per_page', 10)
-                ->where('filters.sort', 'created_at')
-                ->where('filters.direction', 'desc')
-            );
+            ->assertJsonPath('filters.page', 1)
+            ->assertJsonPath('filters.per_page', 10)
+            ->assertJsonPath('filters.sort', 'created_at')
+            ->assertJsonPath('filters.direction', 'desc');
     });
 
     it('lists the newest books first', function () {
@@ -147,16 +160,14 @@ describe('authenticated book management', function () {
             'isbn' => '9780000000002',
         ]);
 
-        $this->get(route('staff.books.index', [
+        $this->postJson(route('staff.books.query'), [
             'sort' => 'title',
             'direction' => $direction,
-        ]))
+        ])
             ->assertSuccessful()
-            ->assertInertia(fn (Assert $page) => $page
-                ->where('books.data.0.title', $expectedTitle)
-                ->where('filters.sort', 'title')
-                ->where('filters.direction', $direction)
-            );
+            ->assertJsonPath('data.0.title', $expectedTitle)
+            ->assertJsonPath('filters.sort', 'title')
+            ->assertJsonPath('filters.direction', $direction);
     })->with([
         'ascending' => ['asc', 'Alpha Book'],
         'descending' => ['desc', 'Zulu Book'],
@@ -178,29 +189,34 @@ describe('authenticated book management', function () {
             'isbn' => '9780000000002',
         ]);
 
-        $this->get(route('staff.books.index', ['search' => $search]))
+        $this->postJson(route('staff.books.query'), ['search' => $search])
             ->assertSuccessful()
-            ->assertInertia(fn (Assert $page) => $page
-                ->has('books.data', 1)
-                ->where('books.data.0.id', $matchingBook->id)
-                ->where('filters.search', $search)
-            );
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.id', $matchingBook->id)
+            ->assertJsonPath('filters.search', $search);
     })->with([
         'title' => ['title', 'The Searchable Atlas', 'Searchable'],
         'author' => ['author', 'Distinctive Writer', 'Distinctive'],
         'isbn' => ['isbn', '9781234567890', '345678'],
     ]);
 
-    it('preserves search parameters during pagination', function () {
+    it('accepts search and page state without query-string pagination', function () {
         Book::factory()->count(13)->create([
             'author' => 'Indexable Writer',
         ]);
 
-        $this->get(route('staff.books.index', ['search' => 'Indexable']))
-            ->assertInertia(fn (Assert $page) => $page
-                ->where('books.links.next', fn (?string $url) => $url !== null && str_contains($url, 'search=Indexable')
-                )
-            );
+        $this->postJson(route('staff.books.query'), [
+            'search' => 'Indexable',
+            'page' => 2,
+            'per_page' => 5,
+        ])
+            ->assertSuccessful()
+            ->assertJsonCount(5, 'data')
+            ->assertJsonPath('meta.current_page', 2)
+            ->assertJsonPath('meta.per_page', 5)
+            ->assertJsonPath('meta.total', 13)
+            ->assertJsonPath('filters.search', 'Indexable')
+            ->assertJsonPath('filters.page', 2);
     });
 
     it('renders the create page', function () {
