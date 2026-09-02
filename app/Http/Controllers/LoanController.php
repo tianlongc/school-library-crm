@@ -3,15 +3,18 @@
 namespace App\Http\Controllers;
 
 use App\Domain\Loan\Actions\IssueLoanAction;
+use App\Domain\Loan\Actions\RequestLoanReturnAction;
 use App\Domain\Loan\Actions\ReturnLoanAction;
-use App\Domain\Loan\Enums\LoanStatus;
 use App\Domain\Loan\Models\Loan;
 use App\Domain\Loan\Queries\LoanQuery;
 use App\Http\Requests\IssueLoanRequest;
+use App\Http\Requests\LoanIndexRequest;
 use App\Http\Resources\LoanResource;
 use Carbon\CarbonImmutable;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -21,28 +24,39 @@ class LoanController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index(Request $request, LoanQuery $loanQuery): Response
+    public function index(LoanIndexRequest $request, LoanQuery $loanQuery): Response
     {
         Gate::authorize('viewAny', Loan::class);
 
-        $search = (string) $request->string('search')->trim();
-        $status = LoanStatus::tryFrom(
-            (string) $request->string('status'),
-        );
-
-        $loans = $loanQuery->paginate(
-            search: $search,
-            status: $status?->value,
-        );
-
         return Inertia::render('Staff/Loans/Index', [
-            'loans' => LoanResource::collection($loans),
-
-            'filters' => [
-                'search' => $search,
-                'status' => $status?->value ?? '',
-            ],
+            'loans' => fn () => LoanResource::collection(
+                $this->loanList($request, $loanQuery)
+            ),
+            'filters' => $request->filters(),
         ]);
+    }
+
+    public function query(LoanIndexRequest $request, LoanQuery $loanQuery): AnonymousResourceCollection
+    {
+        Gate::authorize('viewAny', Loan::class);
+
+        return LoanResource::collection(
+            $this->loanList($request, $loanQuery)
+        )->additional([
+            'filters' => $request->filters(),
+        ]);
+    }
+
+    private function loanList(LoanIndexRequest $request, LoanQuery $loanQuery): LengthAwarePaginator
+    {
+        return $loanQuery->paginate(
+            search: $request->search(),
+            status: $request->status(),
+            page: $request->page(),
+            perPage: $request->perPage(),
+            sort: $request->sort(),
+            direction: $request->direction(),
+        );
     }
 
     /**
@@ -92,8 +106,22 @@ class LoanController extends Controller
         $returnedLoan->load(['member.user', 'book', 'issuedBy', 'returnedBy']);
 
         return response()->json([
-            'message' => 'Loan returned successfully.',
+            'message' => 'Book received and loan completed.',
             'loan' => LoanResource::make($returnedLoan)->resolve($request),
+        ]);
+    }
+
+    public function requestReturn(Loan $loan, Request $request, RequestLoanReturnAction $action): JsonResponse
+    {
+        Gate::authorize('requestReturn', $loan);
+
+        $requestedLoan = $action->execute($loan);
+
+        $requestedLoan->load(['member.user', 'book', 'issuedBy', 'returnedBy']);
+
+        return response()->json([
+            'message' => 'Return request submitted. Staff must confirm the book was received.',
+            'loan' => LoanResource::make($requestedLoan)->resolve($request),
         ]);
     }
 }

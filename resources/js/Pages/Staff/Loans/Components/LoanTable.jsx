@@ -1,10 +1,21 @@
+import ServerDataTable from '@/Components/Tables/ServerDataTable';
+import { getSortOrder } from '@/Components/Tables/tableQuery';
 import CheckOutlined from '@ant-design/icons/CheckOutlined';
-import { Button, Empty, Flex, Pagination, Space, Table, Tag, Tooltip, Typography } from 'antd';
+import { Button, Space, Tag, Tooltip, Typography } from 'antd';
+import { useMemo } from 'react';
 
 const statusColors = {
     active: 'processing',
     overdue: 'error',
+    return_requested: 'warning',
     returned: 'default',
+};
+
+const statusLabels = {
+    active: 'Active',
+    overdue: 'Overdue',
+    return_requested: 'Return requested',
+    returned: 'Returned',
 };
 
 const dateFormatter = new Intl.DateTimeFormat('en-MY', {
@@ -22,9 +33,6 @@ const formatDate = (value) =>
 const formatDateTime = (value) =>
     value ? dateTimeFormatter.format(new Date(value)) : '—';
 
-const titleCase = (value) =>
-    value.charAt(0).toUpperCase() + value.slice(1);
-
 function LoanAction({ canReturn, loan, onReturn }) {
     if (loan.returned_at) {
         return <Typography.Text type="secondary">Complete</Typography.Text>;
@@ -34,16 +42,28 @@ function LoanAction({ canReturn, loan, onReturn }) {
         return <Typography.Text type="secondary">—</Typography.Text>;
     }
 
+    const isReturnRequested = loan.status === 'return_requested';
+
     return (
-        <Tooltip title="Record this book as returned">
+        <Tooltip
+            title={
+                isReturnRequested
+                    ? 'Confirm the returned book was received'
+                    : 'Record this book as returned'
+            }
+        >
             <Button
-                aria-label={`Return ${loan.book.title} from ${loan.member.name}`}
+                aria-label={
+                    isReturnRequested
+                        ? `Confirm receipt of ${loan.book.title} from ${loan.member.name}`
+                        : `Return ${loan.book.title} from ${loan.member.name}`
+                }
                 icon={<CheckOutlined />}
                 onClick={() => onReturn(loan)}
                 size="small"
-                type="link"
+                type={isReturnRequested ? 'primary' : 'link'}
             >
-                Return
+                {isReturnRequested ? 'Confirm received' : 'Return'}
             </Button>
         </Tooltip>
     );
@@ -51,18 +71,20 @@ function LoanAction({ canReturn, loan, onReturn }) {
 
 export default function LoanTable({
     canReturn,
+    filters,
     loading,
     loans,
     meta,
     onPageChange,
     onReturn,
-    search,
-    status,
+    onTableChange,
 }) {
-    const columns = [
+    const columns = useMemo(() => [
         {
             title: 'Member',
-            key: 'member',
+            key: 'member_name',
+            sorter: true,
+            sortOrder: getSortOrder(filters, 'member_name'),
             width: 230,
             render: (_, loan) => (
                 <div className="min-w-0 py-1">
@@ -80,7 +102,9 @@ export default function LoanTable({
         },
         {
             title: 'Book',
-            key: 'book',
+            key: 'book_title',
+            sorter: true,
+            sortOrder: getSortOrder(filters, 'book_title'),
             width: 280,
             render: (_, loan) => (
                 <div className="min-w-0 py-1">
@@ -100,6 +124,8 @@ export default function LoanTable({
             title: 'Issued',
             dataIndex: 'issued_at',
             key: 'issued_at',
+            sorter: true,
+            sortOrder: getSortOrder(filters, 'issued_at'),
             width: 175,
             render: (issuedAt, loan) => (
                 <div>
@@ -118,21 +144,28 @@ export default function LoanTable({
         {
             title: 'Due / status',
             key: 'due_at',
+            sorter: true,
+            sortOrder: getSortOrder(filters, 'due_at'),
             width: 175,
             render: (_, loan) => (
                 <Space orientation="vertical" size={4}>
-                    <Typography.Text strong={loan.status === 'overdue'}>
+                    <Typography.Text
+                        strong={loan.is_overdue}
+                        type={loan.is_overdue ? 'danger' : undefined}
+                    >
                         {formatDate(loan.due_at)}
                     </Typography.Text>
                     <Tag color={statusColors[loan.status]}>
-                        {titleCase(loan.status)}
+                        {statusLabels[loan.status] ?? 'Unknown'}
                     </Tag>
                 </Space>
             ),
         },
         {
-            title: 'Returned',
+            title: 'Return activity',
             key: 'returned_at',
+            sorter: true,
+            sortOrder: getSortOrder(filters, 'returned_at'),
             width: 175,
             render: (_, loan) =>
                 loan.returned_at ? (
@@ -147,6 +180,18 @@ export default function LoanTable({
                             by {loan.returned_by ?? 'Unknown staff'}
                         </Typography.Text>
                     </div>
+                ) : loan.return_requested_at ? (
+                    <div>
+                        <Typography.Text>
+                            {formatDateTime(loan.return_requested_at)}
+                        </Typography.Text>
+                        <Typography.Text
+                            className="table-secondary-line"
+                            type="secondary"
+                        >
+                            Awaiting staff confirmation
+                        </Typography.Text>
+                    </div>
                 ) : (
                     <Typography.Text type="secondary">—</Typography.Text>
                 ),
@@ -156,7 +201,7 @@ export default function LoanTable({
             key: 'action',
             align: 'center',
             fixed: 'right',
-            width: 110,
+            width: 160,
             render: (_, loan) => (
                 <LoanAction
                     canReturn={canReturn}
@@ -165,57 +210,27 @@ export default function LoanTable({
                 />
             ),
         },
-    ];
+    ], [canReturn, filters, onReturn]);
 
-    const isFiltered = Boolean(search?.trim() || status);
+    const isFiltered = Boolean(filters.search?.trim() || filters.status);
 
     return (
-        <>
-            <Table
-                columns={columns}
-                dataSource={loans}
-                loading={loading}
-                locale={{
-                    emptyText: (
-                        <Empty
-                            description={
-                                isFiltered
-                                    ? 'No loans match these filters.'
-                                    : 'No loan records were found.'
-                            }
-                            image={Empty.PRESENTED_IMAGE_SIMPLE}
-                        />
-                    ),
-                }}
-                pagination={false}
-                rowClassName={(loan) => `loan-row loan-row-${loan.status}`}
-                rowKey="id"
-                scroll={{ x: 1145 }}
-                size="middle"
-            />
-
-            {meta.total > 0 && (
-                <Flex
-                    align="center"
-                    className="table-pagination"
-                    gap={16}
-                    justify="space-between"
-                    wrap
-                >
-                    <Typography.Text type="secondary">
-                        {meta.total} {meta.total === 1 ? 'loan' : 'loans'}
-                    </Typography.Text>
-
-                    <Pagination
-                        current={meta.current_page}
-                        onChange={onPageChange}
-                        pageSize={meta.per_page}
-                        showSizeChanger={false}
-                        showTitle
-                        total={meta.total}
-                    />
-                </Flex>
-            )}
-        </>
+        <ServerDataTable
+            columns={columns}
+            data={loans}
+            emptyText={
+                isFiltered
+                    ? 'No loans match these filters.'
+                    : 'No loan records were found.'
+            }
+            loading={loading}
+            meta={meta}
+            pluralName="loans"
+            rowClassName={(loan) => `loan-row loan-row-${loan.status}`}
+            scrollX={1220}
+            singularName="loan"
+            onPageChange={onPageChange}
+            onTableChange={onTableChange}
+        />
     );
 }

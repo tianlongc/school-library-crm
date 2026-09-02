@@ -7,11 +7,13 @@ use App\Domain\Category\Actions\DeleteCategoryAction;
 use App\Domain\Category\Actions\UpdateCategoryAction;
 use App\Domain\Category\Models\Category;
 use App\Domain\Category\Queries\CategoryQuery;
+use App\Http\Requests\CategoryIndexRequest;
 use App\Http\Requests\StoreCategoryRequest;
 use App\Http\Requests\UpdateCategoryRequest;
 use App\Http\Resources\CategoryResource;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -20,18 +22,34 @@ class CategoryController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index(Request $request, CategoryQuery $query): Response
+    public function index(CategoryIndexRequest $request, CategoryQuery $query): Response
     {
-        $search = (string) $request->string('search')->trim();
-
         return Inertia::render('Staff/Categories/Index', [
-            'categories' => CategoryResource::collection(
-                $query->getCategoryList($search)
+            'categories' => fn () => CategoryResource::collection(
+                $this->categoryList($request, $query)
             ),
-            'filters' => [
-                'search' => $search,
-            ],
+            'filters' => $request->filters(),
         ]);
+    }
+
+    public function query(CategoryIndexRequest $request, CategoryQuery $query): AnonymousResourceCollection
+    {
+        return CategoryResource::collection(
+            $this->categoryList($request, $query),
+        )->additional([
+            'filters' => $request->filters(),
+        ]);
+    }
+
+    private function categoryList(CategoryIndexRequest $request, CategoryQuery $query): LengthAwarePaginator
+    {
+        return $query->getCategoryList(
+            search: $request->search(),
+            page: $request->page(),
+            perPage: $request->perPage(),
+            sort: $request->sort(),
+            direction: $request->direction(),
+        );
     }
 
     /**

@@ -1,11 +1,12 @@
 import PageHeader from '@/Components/PageHeader';
+import TableSearchInput from '@/Components/Tables/TableSearchInput';
+import { useServerTable } from '@/Components/Tables/useServerTable';
 import StaffLayout from '@/Layouts/StaffLayout';
 import { jsonRequest } from '@/Utils/jsonRequest';
 import { getRequestErrorMessage } from '@/Utils/requestErrorMessage';
-import SearchOutlined from '@ant-design/icons/SearchOutlined';
-import { Head, router } from '@inertiajs/react';
-import { App as AntdApp, Card, Flex, Input, Select, Typography } from 'antd';
-import { useState } from 'react';
+import { Head } from '@inertiajs/react';
+import { App as AntdApp, Card, Flex, Select } from 'antd';
+import { useEffect } from 'react';
 import MemberTable from './Components/MemberTable';
 
 const transitionDetails = {
@@ -26,37 +27,40 @@ const transitionDetails = {
     },
 };
 
-export default function Index({ members, filters, statuses, can }) {
-    const [search, setSearch] = useState(filters.search ?? '');
-    const [loading, setLoading] = useState(false);
+export default function Index({
+    members: initialMembers,
+    filters: initialFilters,
+    statuses,
+    can,
+}) {
     const { message, modal } = AntdApp.useApp();
+    const {
+        error,
+        filters,
+        resource: members,
+        handlePageChange,
+        handleTableChange,
+        loading,
+        refresh,
+        search,
+        setFilter,
+        setSearch,
+    } = useServerTable({
+        initialFilters,
+        initialResource: initialMembers,
+        queryRouteName: 'staff.members.query',
+    });
 
-    const visitMembers = ({
-        search: nextSearch = filters.search ?? '',
-        status: nextStatus = filters.status ?? '',
-        page,
-    } = {}) => {
-        const parameters = {};
-
-        if (nextSearch.trim()) {
-            parameters.search = nextSearch.trim();
+    useEffect(() => {
+        if (error) {
+            message.error(
+                getRequestErrorMessage(
+                    error,
+                    'The member table could not be refreshed. Try again.',
+                ),
+            );
         }
-
-        if (nextStatus) {
-            parameters.status = nextStatus;
-        }
-
-        if (page) {
-            parameters.page = page;
-        }
-
-        router.get(route('staff.members.index'), parameters, {
-            preserveState: true,
-            replace: true,
-            onStart: () => setLoading(true),
-            onFinish: () => setLoading(false),
-        });
-    };
+    }, [error, message]);
 
     const confirmTransition = (member, transition) => {
         const details = transitionDetails[transition];
@@ -80,7 +84,7 @@ export default function Index({ members, filters, statuses, can }) {
                     });
 
                     message.success(response.message);
-                    router.reload({ only: ['members'] });
+                    await refresh();
                 } catch (error) {
                     message.error(
                         getRequestErrorMessage(
@@ -110,12 +114,6 @@ export default function Index({ members, filters, statuses, can }) {
                 title={
                     <span>
                         Member directory
-                        <Typography.Text
-                            type="secondary"
-                            className="directory-count"
-                        >
-                            {members.meta.total} total
-                        </Typography.Text>
                     </span>
                 }
                 extra={
@@ -130,30 +128,15 @@ export default function Index({ members, filters, statuses, can }) {
                                 ...statuses,
                             ]}
                             value={filters.status ?? ''}
-                            onChange={(status) =>
-                                visitMembers({
-                                    search,
-                                    status,
-                                })
-                            }
+                            onChange={(status) => setFilter('status', status)}
                             style={{ minWidth: 150 }}
                         />
 
-                        <Input.Search
-                            allowClear
-                            aria-label="Search members"
-                            enterButton={<SearchOutlined />}
+                        <TableSearchInput
+                            ariaLabel="Search members"
                             placeholder="Name, email or member number"
                             value={search}
-                            onChange={(event) =>
-                                setSearch(event.target.value)
-                            }
-                            onSearch={(value) =>
-                                visitMembers({
-                                    search: value,
-                                    status: filters.status,
-                                })
-                            }
+                            onChange={setSearch}
                         />
                     </Flex>
                 }
@@ -161,18 +144,13 @@ export default function Index({ members, filters, statuses, can }) {
             >
                 <MemberTable
                     can={can}
+                    filters={filters}
                     loading={loading}
                     members={members.data}
                     meta={members.meta}
-                    search={filters.search}
                     onTransition={confirmTransition}
-                    onPageChange={(page) =>
-                        visitMembers({
-                            search: filters.search,
-                            status: filters.status,
-                            page,
-                        })
-                    }
+                    onPageChange={handlePageChange}
+                    onTableChange={handleTableChange}
                 />
             </Card>
         </StaffLayout>

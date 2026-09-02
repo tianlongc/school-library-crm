@@ -1,33 +1,47 @@
 import InertiaButton from '@/Components/InertiaButton';
 import PageHeader from '@/Components/PageHeader';
+import TableSearchInput from '@/Components/Tables/TableSearchInput';
+import { useServerTable } from '@/Components/Tables/useServerTable';
 import StaffLayout from '@/Layouts/StaffLayout';
 import { jsonRequest } from '@/Utils/jsonRequest';
 import { getRequestErrorMessage } from '@/Utils/requestErrorMessage';
 import PlusOutlined from '@ant-design/icons/PlusOutlined';
-import SearchOutlined from '@ant-design/icons/SearchOutlined';
-import { Head, router } from '@inertiajs/react';
-import { App as AntdApp, Card, Input, Typography } from 'antd';
-import { useState } from 'react';
+import { Head } from '@inertiajs/react';
+import { App as AntdApp, Card } from 'antd';
+import { useEffect } from 'react';
 import CategoryTable from './Components/CategoryTable';
 
-export default function Index({ categories, filters }) {
-    const [search, setSearch] = useState(filters.search ?? '');
-    const [loading, setLoading] = useState(false);
+export default function Index({
+    categories: initialCategories,
+    filters: initialFilters,
+}) {
     const { message, modal } = AntdApp.useApp();
+    const {
+        error,
+        filters,
+        handlePageChange,
+        handleTableChange,
+        loading,
+        refresh,
+        resource: categories,
+        search,
+        setSearch,
+    } = useServerTable({
+        initialFilters,
+        initialResource: initialCategories,
+        queryRouteName: 'staff.categories.query',
+    });
 
-    const visitCategories = (parameters) => {
-        router.get(route('staff.categories.index'), parameters, {
-            preserveState: true,
-            replace: true,
-            onStart: () => setLoading(true),
-            onFinish: () => setLoading(false),
-        });
-    };
-
-    const submitSearch = (value) => {
-        const normalizedSearch = value.trim();
-        visitCategories(normalizedSearch ? { search: normalizedSearch } : {});
-    };
+    useEffect(() => {
+        if (error) {
+            message.error(
+                getRequestErrorMessage(
+                    error,
+                    'The category table could not be refreshed. Try again.',
+                ),
+            );
+        }
+    }, [error, message]);
 
     const confirmDelete = (category) => {
         modal.confirm({
@@ -44,7 +58,7 @@ export default function Index({ categories, filters }) {
                     });
 
                     message.success('Category deleted.');
-                    router.reload({ only: ['categories'] });
+                    await refresh();
                 } catch (error) {
                     message.error(
                         getRequestErrorMessage(
@@ -82,36 +96,26 @@ export default function Index({ categories, filters }) {
                 title={
                     <span>
                         Category directory
-                        <Typography.Text type="secondary" className="directory-count">
-                            {categories.meta.total} total
-                        </Typography.Text>
                     </span>
                 }
                 extra={
-                    <Input.Search
-                        allowClear
-                        aria-label="Search categories"
-                        enterButton={<SearchOutlined />}
-                        onChange={(event) => setSearch(event.target.value)}
-                        onSearch={submitSearch}
+                    <TableSearchInput
+                        ariaLabel="Search categories"
                         placeholder="Search category name"
                         value={search}
+                        onChange={setSearch}
                     />
                 }
                 styles={{ body: { padding: 0 } }}
             >
                 <CategoryTable
                     categories={categories.data}
+                    filters={filters}
                     loading={loading}
-                    search={filters.search}
                     meta={categories.meta}
                     onDelete={confirmDelete}
-                    onPageChange={(page) =>
-                        visitCategories({
-                            ...(filters.search ? { search: filters.search } : {}),
-                            page,
-                        })
-                    }
+                    onPageChange={handlePageChange}
+                    onTableChange={handleTableChange}
                 />
             </Card>
         </StaffLayout>

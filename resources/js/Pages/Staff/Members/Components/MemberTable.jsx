@@ -1,7 +1,8 @@
 import CheckCircleOutlined from '@ant-design/icons/CheckCircleOutlined';
 import PauseCircleOutlined from '@ant-design/icons/PauseCircleOutlined';
 import StopOutlined from '@ant-design/icons/StopOutlined';
-import { Button, Empty, Flex, Pagination, Space, Table, Tag, Tooltip, Typography } from 'antd';
+import { Button, Space, Tag, Tooltip, Typography } from 'antd';
+import { useMemo } from 'react';
 
 const statusColors = {
     active: 'success',
@@ -74,17 +75,20 @@ function MemberActions({ member, can, onTransition }) {
 
 export default function MemberTable({
     can,
+    filters,
     loading,
     members,
     meta,
     onPageChange,
+    onTableChange,
     onTransition,
-    search,
 }) {
-    const columns = [
+    const columns = useMemo(() => [
         {
             title: 'Member',
-            key: 'member',
+            key: 'name',
+            sorter: true,
+            sortOrder: getSortOrder(filters, 'name'),
             width: 280,
             render: (_, member) => (
                 <div className="min-w-0 py-1">
@@ -102,6 +106,8 @@ export default function MemberTable({
             title: 'Member number',
             dataIndex: 'member_number',
             key: 'member_number',
+            sorter: true,
+            sortOrder: getSortOrder(filters, 'member_number'),
             width: 170,
             render: (memberNumber) => (
                 <Typography.Text code>{memberNumber}</Typography.Text>
@@ -123,6 +129,8 @@ export default function MemberTable({
             title: 'Joined',
             dataIndex: 'created_at',
             key: 'created_at',
+            sorter: true,
+            sortOrder: getSortOrder(filters, 'created_at'),
             width: 150,
             render: (createdAt) =>
                 createdAt
@@ -143,55 +151,27 @@ export default function MemberTable({
                 />
             ),
         },
-    ];
+    ], [can, filters, onTransition]);
+
+    const isFiltered = Boolean(filters.search?.trim() || filters.status);
 
     return (
-        <>
-            <Table
-                columns={columns}
-                dataSource={members}
-                loading={loading}
-                locale={{
-                    emptyText: (
-                        <Empty
-                            image={Empty.PRESENTED_IMAGE_SIMPLE}
-                            description={
-                                search?.trim()
-                                    ? 'No members match these filters.'
-                                    : 'No member accounts were found.'
-                            }
-                        />
-                    ),
-                }}
-                pagination={false}
-                rowKey="id"
-                scroll={{ x: 900 }}
-                size="middle"
-            />
-
-            {meta.total > 0 && (
-                <Flex
-                    className="table-pagination"
-                    align="center"
-                    justify="space-between"
-                    gap={16}
-                    wrap
-                >
-                    <Typography.Text type="secondary">
-                        {meta.total}{' '}
-                        {meta.total === 1 ? 'member' : 'members'}
-                    </Typography.Text>
-
-                    <Pagination
-                        current={meta.current_page}
-                        pageSize={meta.per_page}
-                        total={meta.total}
-                        showSizeChanger={false}
-                        showTitle
-                        onChange={onPageChange}
-                    />
-                </Flex>
-            )}
-        </>
+        <ServerDataTable
+            columns={columns}
+            data={members}
+            emptyText={
+                isFiltered
+                    ? 'No members match these filters.'
+                    : 'No member accounts were found.'
+            }
+            loading={loading}
+            meta={meta}
+            pluralName="members"
+            singularName="member"
+            onPageChange={onPageChange}
+            onTableChange={onTableChange}
+        />
     );
 }
+import ServerDataTable from '@/Components/Tables/ServerDataTable';
+import { getSortOrder } from '@/Components/Tables/tableQuery';

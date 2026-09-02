@@ -1,60 +1,76 @@
 import InertiaButton from '@/Components/InertiaButton';
 import PageHeader from '@/Components/PageHeader';
+import TableSearchInput from '@/Components/Tables/TableSearchInput';
+import { useServerTable } from '@/Components/Tables/useServerTable';
 import StaffLayout from '@/Layouts/StaffLayout';
 import { jsonRequest } from '@/Utils/jsonRequest';
 import { getRequestErrorMessage } from '@/Utils/requestErrorMessage';
 import PlusOutlined from '@ant-design/icons/PlusOutlined';
-import SearchOutlined from '@ant-design/icons/SearchOutlined';
-import { Head, router, usePage } from '@inertiajs/react';
-import { App as AntdApp, Card, Flex, Input, Select, Typography } from 'antd';
-import { useState } from 'react';
+import { Head, usePage } from '@inertiajs/react';
+import { App as AntdApp, Card, Flex, Select } from 'antd';
+import { useEffect } from 'react';
 import LoanTable from './Components/LoanTable';
 
 const statusOptions = [
     { value: '', label: 'All loans' },
     { value: 'active', label: 'Active' },
     { value: 'overdue', label: 'Overdue' },
+    { value: 'return_requested', label: 'Return requested' },
     { value: 'returned', label: 'Returned' },
 ];
 
-export default function Index({ filters, loans }) {
+export default function Index({ filters: initialFilters, loans: initialLoans }) {
     const { auth } = usePage().props;
-    const [search, setSearch] = useState(filters.search ?? '');
-    const [loading, setLoading] = useState(false);
     const { message, modal } = AntdApp.useApp();
+    const {
+        error,
+        filters,
+        handlePageChange,
+        handleTableChange,
+        loading,
+        refresh,
+        resource: loans,
+        search,
+        setFilter,
+        setSearch,
+    } = useServerTable({
+        initialFilters,
+        initialResource: initialLoans,
+        queryRouteName: 'staff.loans.query',
+    });
 
-    const visitLoans = ({
-        search: nextSearch = filters.search ?? '',
-        status: nextStatus = filters.status ?? '',
-        page,
-    } = {}) => {
-        const parameters = {};
+    useEffect(() => {
+        const interval = window.setInterval(() => {
+            if (!loading && document.visibilityState === 'visible') {
+                void refresh();
+            }
+        }, 10000);
 
-        if (nextSearch.trim()) {
-            parameters.search = nextSearch.trim();
+        return () => window.clearInterval(interval);
+    }, [loading, refresh]);
+
+    useEffect(() => {
+        if (error) {
+            message.error(
+                getRequestErrorMessage(
+                    error,
+                    'The loan table could not be refreshed. Try again.',
+                ),
+            );
         }
-
-        if (nextStatus) {
-            parameters.status = nextStatus;
-        }
-
-        if (page) {
-            parameters.page = page;
-        }
-
-        router.get(route('staff.loans.index'), parameters, {
-            onFinish: () => setLoading(false),
-            onStart: () => setLoading(true),
-            preserveState: true,
-            replace: true,
-        });
-    };
+    }, [error, message]);
 
     const confirmReturn = (loan) => {
+        const isReturnRequested = loan.status === 'return_requested';
+
         modal.confirm({
-            title: 'Return this book?',
-            content: `${loan.book.title} will be checked in from ${loan.member.name}.`,
-            okText: 'Return book',
+            title: isReturnRequested
+                ? 'Confirm book received?'
+                : 'Record this book as returned?',
+            content: isReturnRequested
+                ? `Confirm staff has physically received ${loan.book.title} from ${loan.member.name}.`
+                : `${loan.book.title} will be checked in from ${loan.member.name}.`,
+            okText: isReturnRequested ? 'Confirm received' : 'Record return',
             cancelText: 'Cancel',
             async onOk() {
                 try {
@@ -64,12 +80,12 @@ export default function Index({ filters, loans }) {
                     });
 
                     message.success(payload.message);
-                    router.reload({ only: ['loans'] });
+                    await refresh();
                 } catch (error) {
                     message.error(
                         getRequestErrorMessage(
                             error,
-                            'The book could not be returned. Try again.',
+                            'The return could not be confirmed. Try again.',
                         ),
                     );
 
@@ -95,7 +111,7 @@ export default function Index({ filters, loans }) {
                         </InertiaButton>
                     ) : undefined
                 }
-                description="Issue books, watch due dates, and record returns from one circulation ledger."
+                description="Issue books, watch due dates, and confirm received returns from one circulation ledger."
                 eyebrow="Circulation"
                 title="Loans"
             />
@@ -106,25 +122,15 @@ export default function Index({ filters, loans }) {
                     <Flex gap={8} wrap>
                         <Select
                             aria-label="Filter loans by status"
-                            onChange={(status) =>
-                                visitLoans({ search, status })
-                            }
+                            onChange={(status) => setFilter('status', status)}
                             options={statusOptions}
                             style={{ minWidth: 140 }}
                             value={filters.status ?? ''}
                         />
 
-                        <Input.Search
-                            allowClear
-                            aria-label="Search loans"
-                            enterButton={<SearchOutlined />}
-                            onChange={(event) => setSearch(event.target.value)}
-                            onSearch={(value) =>
-                                visitLoans({
-                                    search: value,
-                                    status: filters.status,
-                                })
-                            }
+                        <TableSearchInput
+                            ariaLabel="Search loans"
+                            onChange={setSearch}
                             placeholder="Member, book or ISBN"
                             value={search}
                         />
@@ -134,30 +140,18 @@ export default function Index({ filters, loans }) {
                 title={
                     <span>
                         Circulation ledger
-                        <Typography.Text
-                            className="directory-count"
-                            type="secondary"
-                        >
-                            {loans.meta.total} total
-                        </Typography.Text>
                     </span>
                 }
             >
                 <LoanTable
                     canReturn={auth.can.returnLoans}
+                    filters={filters}
                     loading={loading}
                     loans={loans.data}
                     meta={loans.meta}
-                    onPageChange={(page) =>
-                        visitLoans({
-                            page,
-                            search: filters.search,
-                            status: filters.status,
-                        })
-                    }
+                    onPageChange={handlePageChange}
                     onReturn={confirmReturn}
-                    search={filters.search}
-                    status={filters.status}
+                    onTableChange={handleTableChange}
                 />
             </Card>
         </StaffLayout>

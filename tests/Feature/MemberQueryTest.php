@@ -13,7 +13,7 @@ beforeEach(function () {
 });
 
 describe('member query', function () {
-    it('returns 12 members per page', function () {
+    it('returns 10 members per page by default', function () {
         Member::factory()
             ->count(13)
             ->create();
@@ -21,11 +21,27 @@ describe('member query', function () {
         $members = $this->memberQuery->getMemberList();
 
         expect($members->perPage())
-            ->toBe(12)
+            ->toBe(10)
+            ->and($members->currentPage())
+            ->toBe(1)
             ->and($members->count())
-            ->toBe(12)
+            ->toBe(10)
             ->and($members->total())
             ->toBe(13);
+    });
+
+    it('sorts members by user name', function () {
+        $zara = User::factory()->create(['name' => 'Zara Lim']);
+        $amy = User::factory()->create(['name' => 'Amy Tan']);
+        Member::factory()->for($zara)->create();
+        $alphabeticalFirst = Member::factory()->for($amy)->create();
+
+        $members = $this->memberQuery->getMemberList(
+            sort: 'name',
+            direction: 'asc',
+        );
+
+        expect($members->first()->id)->toBe($alphabeticalFirst->id);
     });
 
     it('returns newest members first', function () {
@@ -261,35 +277,27 @@ describe('member query', function () {
             ->toBeTrue();
     });
 
-    it('preserves search and status in pagination links', function () {
+    it('uses explicit page state without reading request query parameters', function () {
         Member::factory()
             ->count(20)
             ->create([
                 'status' => MemberStatus::Active,
             ]);
 
-        request()->query->replace([
-            'search' => 'MEM',
-            'status' => MemberStatus::Active->value,
-        ]);
-
         $members = $this->memberQuery->getMemberList(
             search: 'MEM',
             status: MemberStatus::Active,
+            page: 2,
+            perPage: 5,
         );
 
-        $pageTwoUrl = $members->url(2);
-
-        parse_str(
-            parse_url($pageTwoUrl, PHP_URL_QUERY),
-            $queryParameters
-        );
-
-        expect($queryParameters['search'])
-            ->toBe('MEM')
-            ->and($queryParameters['status'])
-            ->toBe(MemberStatus::Active->value)
-            ->and($queryParameters['page'])
-            ->toBe('2');
+        expect($members->currentPage())
+            ->toBe(2)
+            ->and($members->perPage())
+            ->toBe(5)
+            ->and($members->count())
+            ->toBe(5)
+            ->and($members->total())
+            ->toBe(20);
     });
 });

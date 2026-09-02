@@ -4,4 +4,5 @@ Before planning or editing, find the row whose globs match the file's path and r
 
 | Applies to | Rule file |
 | --- | --- |
+| app/Domain/Loan/** | .ai/rules/loan.md |
 | app/Domain/Member/** | .ai/rules/member.md |

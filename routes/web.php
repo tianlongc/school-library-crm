@@ -55,8 +55,8 @@ Route::middleware('auth')
                 Route::post('/{book}/borrow', 'borrow')->name('borrow');
             });
 
-        Route::post('/loans/{loan}/return', [LoanController::class, 'returnLoan'])
-            ->name('loans.return');
+        Route::post('/loans/{loan}/return-request', [LoanController::class, 'requestReturn'])
+            ->name('loans.request-return');
     });
 
 /**
@@ -69,6 +69,7 @@ Route::middleware(['auth', 'can:admin.dashboard.view'])
         Route::controller(UserManagementController::class)
             ->group(function (): void {
                 Route::get('/', 'index')->middleware('can:users.view')->name('dashboard');
+                Route::post('/users/query', 'query')->middleware('can:users.view')->name('users.query');
                 Route::post('/{user}/role', 'updateRole')->name('users.role.update');
             });
     });
@@ -89,6 +90,7 @@ Route::middleware(['auth', 'can:workspace.access'])
             ->name('books.')
             ->group(function () {
                 Route::get('/', 'index')->middleware('can:books.view')->name('index');
+                Route::post('/query', 'query')->middleware('can:books.view')->name('query');
                 Route::get('/create', 'create')->middleware('can:books.create')->name('create');
                 Route::post('/', 'store')->middleware('can:books.create')->name('store');
                 Route::get('/{book}/edit', 'edit')->middleware('can:books.update')->name('edit');
@@ -102,6 +104,7 @@ Route::middleware(['auth', 'can:workspace.access'])
             ->name('categories.')
             ->group(function () {
                 Route::get('/', 'index')->middleware('can:categories.view')->name('index');
+                Route::post('/query', 'query')->middleware('can:categories.view')->name('query');
                 Route::get('/create', 'create')->middleware('can:categories.create')->name('create');
                 Route::post('/', 'store')->middleware('can:categories.create')->name('store');
                 Route::get('/{category}/edit', 'edit')->middleware('can:categories.update')->name('edit');
@@ -114,6 +117,7 @@ Route::middleware(['auth', 'can:workspace.access'])
             ->name('members.')
             ->group(function (): void {
                 Route::get('/', 'index')->name('index');
+                Route::post('/query', 'query')->name('query');
                 Route::post('/{member}/suspend', 'suspend')->name('suspend');
                 Route::post('/{member}/reactivate', 'reactivate')->name('reactivate');
                 Route::post('/{member}/deactivate', 'deactivate')->name('deactivate');
@@ -124,6 +128,7 @@ Route::middleware(['auth', 'can:workspace.access'])
             ->name('loans.')
             ->group(function (): void {
                 Route::get('/', 'index')->name('index');
+                Route::post('/query', 'query')->name('query');
                 Route::get('/create', 'create')->name('create');
                 Route::post('/', 'store')->name('store');
                 Route::post('/{loan}/return', 'returnLoan')->name('return');

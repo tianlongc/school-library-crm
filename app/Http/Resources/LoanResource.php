@@ -29,8 +29,10 @@ class LoanResource extends JsonResource
             ],
             'issued_at' => $this->issued_at?->toIso8601String(),
             'due_at' => $this->due_at?->toIso8601String(),
+            'return_requested_at' => $this->return_requested_at?->toIso8601String(),
             'returned_at' => $this->returned_at?->toIso8601String(),
             'status' => LoanStatus::fromLoan($this->resource)->value,
+            'is_overdue' => $this->returned_at === null && $this->due_at->isPast(),
             'issued_by' => $this->issuedBy?->name,
             'returned_by' => $this->returnedBy?->name,
         ];

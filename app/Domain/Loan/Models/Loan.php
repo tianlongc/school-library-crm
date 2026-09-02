@@ -16,7 +16,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 #[UseFactory(LoanFactory::class)]
 #[UsePolicy(LoanPolicy::class)]
-#[Fillable('member_id', 'book_id', 'issued_by_user_id', 'returned_by_user_id', 'issued_at', 'due_at', 'returned_at')]
+#[Fillable('member_id', 'book_id', 'issued_by_user_id', 'returned_by_user_id', 'issued_at', 'due_at', 'return_requested_at', 'returned_at')]
 class Loan extends Model
 {
     /** @use HasFactory<LoanFactory> */
@@ -27,6 +27,7 @@ class Loan extends Model
         return [
             'issued_at' => 'datetime',
             'due_at' => 'datetime',
+            'return_requested_at' => 'datetime',
             'returned_at' => 'datetime',
         ];
     }

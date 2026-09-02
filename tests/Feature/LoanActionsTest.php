@@ -2,6 +2,7 @@
 
 use App\Domain\Book\Models\Book;
 use App\Domain\Loan\Actions\IssueLoanAction;
+use App\Domain\Loan\Actions\RequestLoanReturnAction;
 use App\Domain\Loan\Actions\ReturnLoanAction;
 use App\Domain\Loan\Models\Loan;
 use App\Domain\Member\Enums\MemberStatus;
@@ -381,6 +382,51 @@ describe('issue loan', function () {
         ))->toThrow(ValidationException::class);
 
         $this->assertDatabaseCount('loans', 0);
+    });
+});
+
+describe('request loan return', function () {
+    it('records a return request without completing the loan', function () {
+        $loan = Loan::factory()->create([
+            'return_requested_at' => null,
+            'returned_at' => null,
+            'returned_by_user_id' => null,
+        ]);
+
+        $requestedLoan = app(RequestLoanReturnAction::class)->execute($loan);
+
+        expect($requestedLoan->return_requested_at)
+            ->not->toBeNull()
+            ->and($requestedLoan->returned_at)
+            ->toBeNull()
+            ->and($requestedLoan->returned_by_user_id)
+            ->toBeNull();
+    });
+
+    it('rejects requesting an already requested return', function () {
+        $requestedAt = now()->subMinute()->startOfSecond();
+        $loan = Loan::factory()->create([
+            'return_requested_at' => $requestedAt,
+            'returned_at' => null,
+        ]);
+
+        expect(fn () => app(RequestLoanReturnAction::class)->execute($loan))
+            ->toThrow(ValidationException::class);
+
+        expect($loan->fresh()->return_requested_at->equalTo($requestedAt))
+            ->toBeTrue();
+    });
+
+    it('rejects requesting a return for a completed loan', function () {
+        $loan = Loan::factory()->create([
+            'return_requested_at' => null,
+            'returned_at' => now()->subDay(),
+        ]);
+
+        expect(fn () => app(RequestLoanReturnAction::class)->execute($loan))
+            ->toThrow(ValidationException::class);
+
+        expect($loan->fresh()->return_requested_at)->toBeNull();
     });
 });
 

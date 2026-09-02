@@ -109,9 +109,9 @@ it('keeps inactive members signed in to review and return loans while blocking t
             ->where('currentLoans.0.id', $loan->id)
         );
 
-    $this->postJson(route('member.loans.return', $loan))
+    $this->postJson(route('member.loans.request-return', $loan))
         ->assertSuccessful()
-        ->assertJsonPath('loan.status', 'returned');
+        ->assertJsonPath('loan.status', 'return_requested');
 
     $this->assertAuthenticatedAs($user);
 });
@@ -205,55 +205,81 @@ it('rejects a duplicate active loan for the same member and book', function () {
         ->assertJsonValidationErrors('isbn');
 });
 
-it('allows a member to return their own loan', function () {
+it('allows a member to request returning their own loan without completing it', function () {
     [$user, $member] = memberCirculationAccount();
-    $loan = Loan::factory()->for($member)->create([
+    $book = Book::factory()->create(['total_copies' => 1]);
+    $loan = Loan::factory()->for($member)->for($book)->create([
+        'return_requested_at' => null,
         'returned_at' => null,
         'returned_by_user_id' => null,
     ]);
 
     $this->actingAs($user)
-        ->postJson(route('member.loans.return', $loan))
+        ->postJson(route('member.loans.request-return', $loan))
         ->assertSuccessful()
-        ->assertJsonPath('message', 'Loan returned successfully.')
-        ->assertJsonPath('loan.status', 'returned')
-        ->assertJsonPath('loan.returned_by', $user->name);
+        ->assertJsonPath('message', 'Return request submitted. Staff must confirm the book was received.')
+        ->assertJsonPath('loan.status', 'return_requested')
+        ->assertJsonPath('loan.returned_at', null)
+        ->assertJsonPath('loan.returned_by', null);
 
     $loan->refresh();
 
-    expect($loan->returned_by_user_id)
-        ->toBe($user->id)
+    expect($loan->return_requested_at)
+        ->not->toBeNull()
         ->and($loan->returned_at)
-        ->not->toBeNull();
+        ->toBeNull()
+        ->and($loan->returned_by_user_id)
+        ->toBeNull();
+
+    $this->get(route('member.dashboard'))
+        ->assertSuccessful()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('currentLoans.0.id', $loan->id)
+            ->where('currentLoans.0.status', 'return_requested')
+            ->where('currentLoans.0.returned_at', null)
+        );
+
+    $this->get(route('member.books.index'))
+        ->assertSuccessful()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('books.data.0.id', $book->id)
+            ->where('books.data.0.available_copies', 0)
+            ->where('books.data.0.has_active_loan', true)
+        );
 });
 
-it('forbids a member from returning another members loan', function () {
+it('forbids a member from requesting another members return', function () {
     [$user] = memberCirculationAccount();
     [, $otherMember] = memberCirculationAccount();
     $loan = Loan::factory()->for($otherMember)->create(['returned_at' => null]);
 
     $this->actingAs($user)
-        ->postJson(route('member.loans.return', $loan))
+        ->postJson(route('member.loans.request-return', $loan))
         ->assertForbidden();
 
-    expect($loan->fresh()->returned_at)->toBeNull();
+    $loan->refresh();
+
+    expect($loan->return_requested_at)
+        ->toBeNull()
+        ->and($loan->returned_at)
+        ->toBeNull();
 });
 
-it('rejects returning the same member loan twice', function () {
+it('rejects requesting the same member return twice', function () {
     [$user, $member] = memberCirculationAccount();
     $loan = Loan::factory()->for($member)->create(['returned_at' => null]);
 
     $this->actingAs($user)
-        ->postJson(route('member.loans.return', $loan))
+        ->postJson(route('member.loans.request-return', $loan))
         ->assertSuccessful();
 
     $this->actingAs($user)
-        ->postJson(route('member.loans.return', $loan))
+        ->postJson(route('member.loans.request-return', $loan))
         ->assertUnprocessable()
         ->assertJsonValidationErrors('loan');
 });
 
-it('removes the overdue borrowing block after the overdue loan is returned', function () {
+it('keeps the overdue block until staff confirms the requested return', function () {
     [$user, $member] = memberCirculationAccount();
     $overdueLoan = Loan::factory()->for($member)->create([
         'due_at' => now()->subDay(),
@@ -266,7 +292,18 @@ it('removes the overdue borrowing block after the overdue loan is returned', fun
         ->assertUnprocessable();
 
     $this->actingAs($user)
-        ->postJson(route('member.loans.return', $overdueLoan))
+        ->postJson(route('member.loans.request-return', $overdueLoan))
+        ->assertSuccessful();
+
+    $this->actingAs($user)
+        ->postJson(route('member.books.borrow', $nextBook))
+        ->assertUnprocessable();
+
+    $staff = User::factory()->create();
+    $staff->assignRole('librarian');
+
+    $this->actingAs($staff)
+        ->postJson(route('staff.loans.return', $overdueLoan))
         ->assertSuccessful();
 
     $this->actingAs($user)

@@ -7,32 +7,51 @@ use App\Domain\User\Enums\UserRole;
 use App\Domain\User\Models\User;
 use App\Domain\User\Queries\UserQuery;
 use App\Http\Requests\UpdateUserRoleRequest;
+use App\Http\Requests\UserIndexRequest;
 use App\Http\Resources\UserResource;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class UserManagementController extends Controller
 {
-    public function index(Request $request, UserQuery $query): Response
+    public function index(UserIndexRequest $request, UserQuery $query): Response
     {
         Gate::authorize('viewAny', User::class);
 
-        $search = (string) $request->string('search')->trim();
-        $role = UserRole::tryFrom((string) $request->string('role'));
-
         return Inertia::render('Admin/Dashboard', [
-            'users' => UserResource::collection(
-                $query->getUserList($search, $role)
+            'users' => fn () => UserResource::collection(
+                $this->userList($request, $query)
             ),
-            'filters' => [
-                'search' => $search,
-                'role' => $role?->value ?? '',
-            ],
+            'filters' => $request->filters(),
             'roles' => UserRole::options(),
         ]);
+    }
+
+    public function query(UserIndexRequest $request, UserQuery $query): AnonymousResourceCollection
+    {
+        Gate::authorize('viewAny', User::class);
+
+        return UserResource::collection(
+            $this->userList($request, $query)
+        )->additional([
+            'filters' => $request->filters(),
+        ]);
+    }
+
+    private function userList(UserIndexRequest $request, UserQuery $query): LengthAwarePaginator
+    {
+        return $query->getUserList(
+            search: $request->search(),
+            role: $request->role(),
+            page: $request->page(),
+            perPage: $request->perPage(),
+            sort: $request->sort(),
+            direction: $request->direction(),
+        );
     }
 
     public function updateRole(

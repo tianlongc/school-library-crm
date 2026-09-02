@@ -23,11 +23,24 @@ test('guest is redirected from user management', function () {
         ->assertRedirect(route('login'));
 });
 
+test('guest cannot query user management', function () {
+    $this->postJson(route('admin.users.query'))
+        ->assertUnauthorized();
+});
+
 test('only administrators can view user management', function () {
     $librarian = managedAccount('librarian');
 
     $this->actingAs($librarian)
         ->get(route('admin.dashboard'))
+        ->assertForbidden();
+});
+
+test('only administrators can query user management', function () {
+    $librarian = managedAccount('librarian');
+
+    $this->actingAs($librarian)
+        ->postJson(route('admin.users.query'))
         ->assertForbidden();
 });
 
@@ -46,6 +59,10 @@ test('administrator can review the account directory', function () {
             ->has('users.links')
             ->where('filters.search', '')
             ->where('filters.role', '')
+            ->where('filters.page', 1)
+            ->where('filters.per_page', 10)
+            ->where('filters.sort', 'created_at')
+            ->where('filters.direction', 'desc')
             ->has('roles', 3)
             ->where('users.data.0.id', $memberUser->id)
             ->where('users.data.0.member.member_number', $member->member_number)
@@ -66,28 +83,24 @@ test('administrator can search by member number and filter by role', function ()
     managedAccount('librarian');
 
     $this->actingAs($admin)
-        ->get(route('admin.dashboard', [
+        ->postJson(route('admin.users.query'), [
             'search' => '654321',
             'role' => 'member',
-        ]))
+        ])
         ->assertOk()
-        ->assertInertia(fn (Assert $page) => $page
-            ->where('filters.search', '654321')
-            ->where('filters.role', 'member')
-            ->has('users.data', 1)
-            ->where('users.data.0.id', $matchingUser->id)
-        );
+        ->assertJsonPath('filters.search', '654321')
+        ->assertJsonPath('filters.role', 'member')
+        ->assertJsonCount(1, 'data')
+        ->assertJsonPath('data.0.id', $matchingUser->id);
 });
 
 test('invalid role filter is normalized', function () {
     $admin = managedAccount('admin');
 
     $this->actingAs($admin)
-        ->get(route('admin.dashboard', ['role' => 'invalid']))
+        ->postJson(route('admin.users.query'), ['role' => 'invalid'])
         ->assertOk()
-        ->assertInertia(fn (Assert $page) => $page
-            ->where('filters.role', '')
-        );
+        ->assertJsonPath('filters.role', '');
 });
 
 test('account directory is paginated', function () {
@@ -98,10 +111,45 @@ test('account directory is paginated', function () {
         ->get(route('admin.dashboard'))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
-            ->has('users.data', 12)
+            ->has('users.data', 10)
             ->where('users.meta.total', 13)
-            ->where('users.meta.per_page', 12)
+            ->where('users.meta.per_page', 10)
         );
+});
+
+test('administrator can sort accounts by name', function () {
+    $admin = managedAccount('admin');
+    $admin->update(['name' => 'Middle Admin']);
+    managedAccount('librarian')->update(['name' => 'Zara Lim']);
+    $alphabeticalFirst = managedAccount('librarian');
+    $alphabeticalFirst->update(['name' => 'Amy Tan']);
+
+    $this->actingAs($admin)
+        ->postJson(route('admin.users.query'), [
+            'sort' => 'name',
+            'direction' => 'asc',
+        ])
+        ->assertOk()
+        ->assertJsonPath('data.0.id', $alphabeticalFirst->id)
+        ->assertJsonPath('filters.sort', 'name')
+        ->assertJsonPath('filters.direction', 'asc');
+});
+
+test('user management accepts explicit page state without query strings', function () {
+    $admin = managedAccount('admin');
+    User::factory()->count(12)->create();
+
+    $this->actingAs($admin)
+        ->postJson(route('admin.users.query'), [
+            'page' => 2,
+            'per_page' => 5,
+        ])
+        ->assertOk()
+        ->assertJsonCount(5, 'data')
+        ->assertJsonPath('meta.current_page', 2)
+        ->assertJsonPath('meta.per_page', 5)
+        ->assertJsonPath('meta.total', 13)
+        ->assertJsonPath('filters.page', 2);
 });
 
 test('administrator can change another users role', function () {
