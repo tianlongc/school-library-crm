@@ -69,6 +69,7 @@ Route::middleware(['auth', 'can:admin.dashboard.view'])
         Route::controller(UserManagementController::class)
             ->group(function (): void {
                 Route::get('/', 'index')->middleware('can:users.view')->name('dashboard');
+                Route::post('/users/query', 'query')->middleware('can:users.view')->name('users.query');
                 Route::post('/{user}/role', 'updateRole')->name('users.role.update');
             });
     });
@@ -116,6 +117,7 @@ Route::middleware(['auth', 'can:workspace.access'])
             ->name('members.')
             ->group(function (): void {
                 Route::get('/', 'index')->name('index');
+                Route::post('/query', 'query')->name('query');
                 Route::post('/{member}/suspend', 'suspend')->name('suspend');
                 Route::post('/{member}/reactivate', 'reactivate')->name('reactivate');
                 Route::post('/{member}/deactivate', 'deactivate')->name('deactivate');
@@ -126,6 +128,7 @@ Route::middleware(['auth', 'can:workspace.access'])
             ->name('loans.')
             ->group(function (): void {
                 Route::get('/', 'index')->name('index');
+                Route::post('/query', 'query')->name('query');
                 Route::get('/create', 'create')->name('create');
                 Route::post('/', 'store')->name('store');
                 Route::post('/{loan}/return', 'returnLoan')->name('return');

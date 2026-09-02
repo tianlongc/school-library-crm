@@ -7,14 +7,14 @@ use App\Domain\Book\Actions\DeleteBookAction;
 use App\Domain\Book\Actions\UpdateBookAction;
 use App\Domain\Book\Models\Book;
 use App\Domain\Book\Queries\BookQuery;
-use Illuminate\Contracts\Pagination\LengthAwarePaginator;
-use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use App\Domain\Category\Queries\CategoryQuery;
 use App\Http\Requests\BookIndexRequest;
 use App\Http\Requests\StoreBookRequest;
 use App\Http\Requests\UpdateBookRequest;
 use App\Http\Resources\BookResource;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Inertia\Inertia;
 use Inertia\Response;
 

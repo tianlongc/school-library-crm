@@ -11,8 +11,10 @@ use App\Http\Requests\IssueLoanRequest;
 use App\Http\Requests\LoanIndexRequest;
 use App\Http\Resources\LoanResource;
 use Carbon\CarbonImmutable;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -28,16 +30,33 @@ class LoanController extends Controller
 
         return Inertia::render('Staff/Loans/Index', [
             'loans' => fn () => LoanResource::collection(
-                $loanQuery->paginate(
-                    search: $request->search(),
-                    status: $request->status(),
-                    perPage: $request->perPage(),
-                    sort: $request->sort(),
-                    direction: $request->direction(),
-                ),
+                $this->loanList($request, $loanQuery)
             ),
             'filters' => $request->filters(),
         ]);
+    }
+
+    public function query(LoanIndexRequest $request, LoanQuery $loanQuery): AnonymousResourceCollection
+    {
+        Gate::authorize('viewAny', Loan::class);
+
+        return LoanResource::collection(
+            $this->loanList($request, $loanQuery)
+        )->additional([
+            'filters' => $request->filters(),
+        ]);
+    }
+
+    private function loanList(LoanIndexRequest $request, LoanQuery $loanQuery): LengthAwarePaginator
+    {
+        return $loanQuery->paginate(
+            search: $request->search(),
+            status: $request->status(),
+            page: $request->page(),
+            perPage: $request->perPage(),
+            sort: $request->sort(),
+            direction: $request->direction(),
+        );
     }
 
     /**

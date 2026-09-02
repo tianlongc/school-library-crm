@@ -4,11 +4,13 @@ namespace App\Domain\Member\Queries;
 
 use App\Domain\Member\Enums\MemberStatus;
 use App\Domain\Member\Models\Member;
+use App\Domain\Shared\Queries\TableQuery;
 use App\Domain\User\Models\User;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
+use Override;
 
-class MemberQuery
+class MemberQuery extends TableQuery
 {
     /**
      * @var array<string, string>
@@ -42,30 +44,40 @@ class MemberQuery
     public function getMemberList(
         string $search = '',
         ?MemberStatus $status = null,
+        int $page = 1,
         int $perPage = 10,
         string $sort = 'created_at',
         string $direction = 'desc',
     ): LengthAwarePaginator {
-        $direction = $direction === 'asc' ? 'asc' : 'desc';
-        $query = $this->buildQuery($search, $status);
+        return $this->paginateTable(
+            query: $this->buildQuery($search, $status),
+            page: $page,
+            perPage: $perPage,
+            sort: $sort,
+            direction: $direction,
+        );
+    }
 
+    #[Override]
+    protected function applySorting(Builder $query, string $sort, string $direction): Builder
+    {
         if ($sort === 'name') {
-            $query->orderBy(
+            return $query->orderBy(
                 User::query()
                     ->select('name')
                     ->whereColumn('users.id', 'members.user_id'),
                 $direction,
             );
-        } else {
-            $query->orderBy(
-                self::SORT_COLUMNS[$sort] ?? self::SORT_COLUMNS['created_at'],
-                $direction,
-            );
         }
 
-        return $query
-            ->orderBy('members.id', $direction)
-            ->paginate($perPage)
-            ->withQueryString();
+        $sortColumn = self::SORT_COLUMNS[$sort] ?? self::SORT_COLUMNS['created_at'];
+
+        return $query->orderBy($sortColumn, $direction);
+    }
+
+    #[Override]
+    protected function tieBreaker(): string
+    {
+        return 'members.id';
     }
 }

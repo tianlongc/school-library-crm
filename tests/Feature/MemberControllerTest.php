@@ -26,11 +26,24 @@ test('guest is redirected to login', function () {
         ->assertRedirect(route('login'));
 });
 
+test('guest cannot query the member directory', function () {
+    $this->postJson(route('staff.members.query'))
+        ->assertUnauthorized();
+});
+
 test('member cannot view member directory', function () {
     $user = userWithRole('member');
 
     $this->actingAs($user)
         ->get(route('staff.members.index'))
+        ->assertForbidden();
+});
+
+test('member cannot query the member directory', function () {
+    $user = userWithRole('member');
+
+    $this->actingAs($user)
+        ->postJson(route('staff.members.query'))
         ->assertForbidden();
 });
 
@@ -49,6 +62,7 @@ test('librarian can view member directory', function () {
             ->has('members.links')
             ->has('filters.search')
             ->has('filters.status')
+            ->where('filters.page', 1)
             ->where('filters.per_page', 10)
             ->where('filters.sort', 'created_at')
             ->where('filters.direction', 'desc')
@@ -73,49 +87,62 @@ test('admin can view member directory', function () {
         );
 });
 
-test('filters are returned to inertia', function () {
+test('member filters are returned from the table query endpoint', function () {
     $user = userWithRole('librarian');
 
     $this->actingAs($user)
-        ->get(route('staff.members.index', [
+        ->postJson(route('staff.members.query'), [
             'search' => 'John',
             'status' => 'active',
-        ]))
+        ])
         ->assertOk()
-        ->assertInertia(fn (Assert $page) => $page
-            ->where('filters.search', 'John')
-            ->where('filters.status', 'active')
-        );
+        ->assertJsonPath('filters.search', 'John')
+        ->assertJsonPath('filters.status', 'active');
 });
 
 test('invalid status is normalized to empty status', function () {
     $user = userWithRole('librarian');
 
     $this->actingAs($user)
-        ->get(route('staff.members.index', [
+        ->postJson(route('staff.members.query'), [
             'status' => 'something-invalid',
-        ]))
+        ])
         ->assertOk()
-        ->assertInertia(fn (Assert $page) => $page
-            ->where('filters.status', '')
-        );
+        ->assertJsonPath('filters.status', '');
 });
 
 test('invalid member table parameters are normalized', function () {
     $user = userWithRole('librarian');
 
     $this->actingAs($user)
-        ->get(route('staff.members.index', [
+        ->postJson(route('staff.members.query'), [
+            'page' => 0,
             'per_page' => 999,
             'sort' => 'status',
             'direction' => 'sideways',
-        ]))
+        ])
         ->assertOk()
-        ->assertInertia(fn (Assert $page) => $page
-            ->where('filters.per_page', 10)
-            ->where('filters.sort', 'created_at')
-            ->where('filters.direction', 'desc')
-        );
+        ->assertJsonPath('filters.page', 1)
+        ->assertJsonPath('filters.per_page', 10)
+        ->assertJsonPath('filters.sort', 'created_at')
+        ->assertJsonPath('filters.direction', 'desc');
+});
+
+test('member directory accepts explicit page state without query strings', function () {
+    $user = userWithRole('librarian');
+    Member::factory()->count(13)->create();
+
+    $this->actingAs($user)
+        ->postJson(route('staff.members.query'), [
+            'page' => 2,
+            'per_page' => 5,
+        ])
+        ->assertOk()
+        ->assertJsonCount(5, 'data')
+        ->assertJsonPath('meta.current_page', 2)
+        ->assertJsonPath('meta.per_page', 5)
+        ->assertJsonPath('meta.total', 13)
+        ->assertJsonPath('filters.page', 2);
 });
 
 test('librarian can suspend an active member', function () {

@@ -22,6 +22,8 @@ describe('member query', function () {
 
         expect($members->perPage())
             ->toBe(10)
+            ->and($members->currentPage())
+            ->toBe(1)
             ->and($members->count())
             ->toBe(10)
             ->and($members->total())
@@ -275,35 +277,27 @@ describe('member query', function () {
             ->toBeTrue();
     });
 
-    it('preserves search and status in pagination links', function () {
+    it('uses explicit page state without reading request query parameters', function () {
         Member::factory()
             ->count(20)
             ->create([
                 'status' => MemberStatus::Active,
             ]);
 
-        request()->query->replace([
-            'search' => 'MEM',
-            'status' => MemberStatus::Active->value,
-        ]);
-
         $members = $this->memberQuery->getMemberList(
             search: 'MEM',
             status: MemberStatus::Active,
+            page: 2,
+            perPage: 5,
         );
 
-        $pageTwoUrl = $members->url(2);
-
-        parse_str(
-            parse_url($pageTwoUrl, PHP_URL_QUERY),
-            $queryParameters
-        );
-
-        expect($queryParameters['search'])
-            ->toBe('MEM')
-            ->and($queryParameters['status'])
-            ->toBe(MemberStatus::Active->value)
-            ->and($queryParameters['page'])
-            ->toBe('2');
+        expect($members->currentPage())
+            ->toBe(2)
+            ->and($members->perPage())
+            ->toBe(5)
+            ->and($members->count())
+            ->toBe(5)
+            ->and($members->total())
+            ->toBe(20);
     });
 });

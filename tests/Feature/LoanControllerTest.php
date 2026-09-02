@@ -25,11 +25,24 @@ test('guest is redirected away from loan management', function () {
         ->assertRedirect(route('login'));
 });
 
+test('guest cannot query the loan table', function () {
+    $this->postJson(route('staff.loans.query'))
+        ->assertUnauthorized();
+});
+
 test('member cannot access loan management', function () {
     $member = loanStaffWithRole('member');
 
     $this->actingAs($member)
         ->get(route('staff.loans.index'))
+        ->assertForbidden();
+});
+
+test('member cannot query loan management', function () {
+    $member = loanStaffWithRole('member');
+
+    $this->actingAs($member)
+        ->postJson(route('staff.loans.query'))
         ->assertForbidden();
 });
 
@@ -50,6 +63,7 @@ describe('authenticated loan management', function () {
                 ->has('loans.meta')
                 ->where('filters.search', '')
                 ->where('filters.status', '')
+                ->where('filters.page', 1)
                 ->where('filters.per_page', 10)
                 ->where('filters.sort', 'issued_at')
                 ->where('filters.direction', 'desc')
@@ -66,36 +80,47 @@ describe('authenticated loan management', function () {
             'returned_at' => null,
         ]);
 
-        $this->get(route('staff.loans.index', ['status' => 'return_requested']))
+        $this->postJson(route('staff.loans.query'), ['status' => 'return_requested'])
             ->assertSuccessful()
-            ->assertInertia(fn (Assert $page) => $page
-                ->has('loans.data', 1)
-                ->where('loans.data.0.id', $requestedLoan->id)
-                ->where('loans.data.0.status', 'return_requested')
-                ->where('filters.status', 'return_requested')
-            );
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.id', $requestedLoan->id)
+            ->assertJsonPath('data.0.status', 'return_requested')
+            ->assertJsonPath('filters.status', 'return_requested');
     });
 
     it('normalizes invalid loan table parameters', function () {
-        $this->get(route('staff.loans.index', [
+        $this->postJson(route('staff.loans.query'), [
+            'page' => 0,
             'per_page' => 999,
             'sort' => 'status',
             'direction' => 'sideways',
-        ]))
+        ])
             ->assertSuccessful()
-            ->assertInertia(fn (Assert $page) => $page
-                ->where('filters.per_page', 10)
-                ->where('filters.sort', 'issued_at')
-                ->where('filters.direction', 'desc')
-            );
+            ->assertJsonPath('filters.page', 1)
+            ->assertJsonPath('filters.per_page', 10)
+            ->assertJsonPath('filters.sort', 'issued_at')
+            ->assertJsonPath('filters.direction', 'desc');
     });
 
     it('normalizes an invalid status filter', function () {
-        $this->get(route('staff.loans.index', ['status' => 'invalid']))
+        $this->postJson(route('staff.loans.query'), ['status' => 'invalid'])
             ->assertSuccessful()
-            ->assertInertia(fn (Assert $page) => $page
-                ->where('filters.status', '')
-            );
+            ->assertJsonPath('filters.status', '');
+    });
+
+    it('accepts explicit loan page state without query-string pagination', function () {
+        Loan::factory()->count(13)->create();
+
+        $this->postJson(route('staff.loans.query'), [
+            'page' => 2,
+            'per_page' => 5,
+        ])
+            ->assertSuccessful()
+            ->assertJsonCount(5, 'data')
+            ->assertJsonPath('meta.current_page', 2)
+            ->assertJsonPath('meta.per_page', 5)
+            ->assertJsonPath('meta.total', 13)
+            ->assertJsonPath('filters.page', 2);
     });
 
     it('renders the issue loan page', function () {

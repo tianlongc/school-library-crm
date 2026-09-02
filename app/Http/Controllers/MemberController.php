@@ -10,7 +10,9 @@ use App\Domain\Member\Models\Member;
 use App\Domain\Member\Queries\MemberQuery;
 use App\Http\Requests\MemberIndexRequest;
 use App\Http\Resources\MemberResource;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -23,13 +25,7 @@ class MemberController extends Controller
 
         return Inertia::render('Staff/Members/Index', [
             'members' => fn () => MemberResource::collection(
-                $query->getMemberList(
-                    search: $request->search(),
-                    status: $request->status(),
-                    perPage: $request->perPage(),
-                    sort: $request->sort(),
-                    direction: $request->direction(),
-                ),
+                $this->memberList($request, $query)
             ),
             'filters' => $request->filters(),
             'statuses' => MemberStatus::options(),
@@ -39,6 +35,29 @@ class MemberController extends Controller
                 'reactivate' => $request->user()->can('members.reactivate'),
             ],
         ]);
+    }
+
+    public function query(MemberIndexRequest $request, MemberQuery $query): AnonymousResourceCollection
+    {
+        Gate::authorize('viewAny', Member::class);
+
+        return MemberResource::collection(
+            $this->memberList($request, $query)
+        )->additional([
+            'filters' => $request->filters(),
+        ]);
+    }
+
+    private function memberList(MemberIndexRequest $request, MemberQuery $query): LengthAwarePaginator
+    {
+        return $query->getMemberList(
+            search: $request->search(),
+            status: $request->status(),
+            page: $request->page(),
+            perPage: $request->perPage(),
+            sort: $request->sort(),
+            direction: $request->direction(),
+        );
     }
 
     public function suspend(Member $member, SuspendMemberAction $action): JsonResponse

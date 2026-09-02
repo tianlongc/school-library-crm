@@ -19,8 +19,28 @@ describe('loan query', function () {
 
         expect($loans->perPage())
             ->toBe(10)
+            ->and($loans->currentPage())
+            ->toBe(1)
             ->and($loans->count())
             ->toBe(10)
+            ->and($loans->total())
+            ->toBe(13);
+    });
+
+    it('uses explicit page state without reading request query parameters', function () {
+        Loan::factory()->count(13)->create();
+
+        $loans = $this->loanQuery->paginate(
+            page: 2,
+            perPage: 5,
+        );
+
+        expect($loans->currentPage())
+            ->toBe(2)
+            ->and($loans->perPage())
+            ->toBe(5)
+            ->and($loans->count())
+            ->toBe(5)
             ->and($loans->total())
             ->toBe(13);
     });

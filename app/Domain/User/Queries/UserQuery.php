@@ -3,12 +3,14 @@
 namespace App\Domain\User\Queries;
 
 use App\Domain\Member\Models\Member;
+use App\Domain\Shared\Queries\TableQuery;
 use App\Domain\User\Enums\UserRole;
 use App\Domain\User\Models\User;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
+use Override;
 
-class UserQuery
+class UserQuery extends TableQuery
 {
     protected function buildQuery(string $search, ?UserRole $role): Builder
     {
@@ -41,31 +43,41 @@ class UserQuery
     public function getUserList(
         string $search = '',
         ?UserRole $role = null,
+        int $page = 1,
         int $perPage = 10,
         string $sort = 'created_at',
         string $direction = 'desc',
     ): LengthAwarePaginator {
-        $direction = $direction === 'asc' ? 'asc' : 'desc';
-        $query = $this->buildQuery($search, $role);
+        return $this->paginateTable(
+            query: $this->buildQuery($search, $role),
+            page: $page,
+            perPage: $perPage,
+            sort: $sort,
+            direction: $direction,
+        );
+    }
 
+    #[Override]
+    protected function applySorting(Builder $query, string $sort, string $direction): Builder
+    {
         if ($sort === 'member_number') {
-            $query->orderBy(
+            return $query->orderBy(
                 Member::query()
                     ->select('member_number')
                     ->whereColumn('members.user_id', 'users.id')
                     ->limit(1),
                 $direction,
             );
-        } else {
-            $query->orderBy(
-                $sort === 'name' ? 'users.name' : 'users.created_at',
-                $direction,
-            );
         }
 
-        return $query
-            ->orderBy('users.id', $direction)
-            ->paginate($perPage)
-            ->withQueryString();
+        $sortColumn = $sort === 'name' ? 'users.name' : 'users.created_at';
+
+        return $query->orderBy($sortColumn, $direction);
+    }
+
+    #[Override]
+    protected function tieBreaker(): string
+    {
+        return 'users.id';
     }
 }

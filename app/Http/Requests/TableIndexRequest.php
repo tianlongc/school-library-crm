@@ -112,6 +112,7 @@ abstract class TableIndexRequest extends FormRequest
     /**
      * @return array{
      *      search: string,
+     *      page: int,
      *      per_page: int,
      *      sort: string,
      *      direction: string
