@@ -16,9 +16,10 @@ const transitionDetails = {
         fallback: 'The member could not be suspended.',
     },
     deactivate: {
-        title: 'Deactivate member?',
-        confirmation: 'Deactivate member',
-        fallback: 'The member could not be deactivated.',
+        title: 'Deactivate membership?',
+        confirmation: 'Deactivate membership',
+        description: 'This blocks catalogue access and borrowing. The account can still sign in to review current loans and request returns.',
+        fallback: 'The membership could not be deactivated.',
     },
     reactivate: {
         title: 'Reactivate member?',
@@ -67,7 +68,7 @@ export default function Index({
 
         modal.confirm({
             title: details.title,
-            content: `${details.confirmation} for ${member.name}?`,
+            content: [`${details.confirmation} for ${member.name}?`, details.description].filter(Boolean).join(' '),
             okText: details.confirmation,
             cancelText: 'Cancel',
             okButtonProps: {

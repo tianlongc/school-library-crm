@@ -1,5 +1,6 @@
 <?php
 
+use App\Domain\Member\Enums\MemberStatus;
 use App\Domain\Member\Models\Member;
 use App\Domain\User\Models\User;
 use Database\Seeders\RolesAndPermissionsSeeder;
@@ -239,3 +240,45 @@ test('librarian cannot change user roles', function () {
 
     expect($user->fresh()->hasRole('member'))->toBeTrue();
 });
+
+test(
+    'inactive membership does not restrict an assigned staff role',
+    function (string $role, string $routeName) {
+        $admin = managedAccount('admin');
+        $user = managedAccount('member');
+
+        $member = Member::factory()
+            ->for($user)
+            ->inactive()
+            ->create();
+
+        $this->actingAs($admin)
+            ->postJson(route('admin.users.role.update', $user), [
+                'role' => $role,
+            ])
+            ->assertSuccessful()
+            ->assertJsonPath('user.roles.0', $role);
+
+        $user->refresh();
+
+        expect($user->hasRole($role))
+            ->toBeTrue()
+            ->and($user->hasRole('member'))
+            ->toBeFalse()
+            ->and($member->fresh()->status)
+            ->toBe(MemberStatus::Inactive);
+
+        $this->actingAs($user)
+            ->get(route($routeName))
+            ->assertSuccessful();
+    },
+)->with([
+    'librarian workspace access' => [
+        'librarian',
+        'staff.dashboard',
+    ],
+    'administrator workspace access' => [
+        'admin',
+        'admin.dashboard',
+    ],
+]);

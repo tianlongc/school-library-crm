@@ -181,7 +181,7 @@ test('librarian can deactivate an active member', function () {
         ->assertOk()
         ->assertJsonPath(
             'message',
-            'Member deactivated successfully',
+            'Membership deactivated successfully',
         )
         ->assertJsonPath('member.id', $member->id)
         ->assertJsonPath(

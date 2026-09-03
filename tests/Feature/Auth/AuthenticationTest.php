@@ -1,6 +1,8 @@
 <?php
 
+use App\Domain\Member\Models\Member;
 use App\Domain\User\Models\User;
+use Database\Seeders\RolesAndPermissionsSeeder;
 
 test('login screen can be rendered', function () {
     $response = $this->get('/login');
@@ -38,4 +40,27 @@ test('users can logout', function () {
 
     $this->assertGuest();
     $response->assertRedirect('/');
+});
+
+test('inactive members can authenticate to manage existing loans', function () {
+    $this->seed(RolesAndPermissionsSeeder::class);
+
+    $user = User::factory()->create();
+    Member::factory()
+        ->for($user)
+        ->inactive()
+        ->create();
+
+    $user->assignRole('member');
+
+    $response = $this->post('/login', [
+        'email' => $user->email,
+        'password' => 'password',
+    ]);
+
+    $this->assertAuthenticatedAs($user);
+
+    $response->assertRedirect(
+        route('dashboard', absolute: false),
+    );
 });

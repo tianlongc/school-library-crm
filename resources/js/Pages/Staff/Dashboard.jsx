@@ -6,8 +6,9 @@ import { Head } from '@inertiajs/react';
 import { Card, Col, Flex, Row, Tag, Typography } from 'antd';
 
 const plannedWorkflows = [
-    { name: 'Circulation', detail: 'Issue, renew, and return books' },
+    { name: 'Loan renewal', detail: 'Extend eligible active loans under a defined renewal policy' },
     { name: 'Reporting', detail: 'Availability, overdue, and activity insights' },
+    { name: 'Account security', detail: 'Disable user accounts independently from membership status'},
 ];
 
 export default function Dashboard() {
@@ -18,7 +19,7 @@ export default function Dashboard() {
             <PageHeader
                 eyebrow="Workspace"
                 title="Library dashboard"
-                description="Manage the live catalogue and member accounts now. Circulation and reporting workflows are planned next."
+                description="Core issue and return workflows are live. Renewal, reporting, and account controls are planned next."
             />
 
             <Card
