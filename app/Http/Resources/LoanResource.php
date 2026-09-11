@@ -35,6 +35,7 @@ class LoanResource extends JsonResource
             'is_overdue' => $this->returned_at === null && $this->due_at->isPast(),
             'issued_by' => $this->issuedBy?->name,
             'returned_by' => $this->returnedBy?->name,
+            'renewal_count' => $this->whenCounted('renewals'),
         ];
     }
 }

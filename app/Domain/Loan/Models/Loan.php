@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\Attributes\UsePolicy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 #[UseFactory(LoanFactory::class)]
 #[UsePolicy(LoanPolicy::class)]
@@ -50,5 +51,10 @@ class Loan extends Model
     public function returnedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'returned_by_user_id');
+    }
+
+    public function renewals(): HasMany
+    {
+        return $this->hasMany(LoanRenewal::class);
     }
 }

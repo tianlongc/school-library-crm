@@ -45,6 +45,7 @@ class HandleInertiaRequests extends Middleware
                     'viewLoans' => $user?->can('loans.view') ?? false,
                     'issueLoans' => $user?->can('loans.issue') ?? false,
                     'returnLoans' => $user?->can('loans.return') ?? false,
+                    'renewLoans' => $user?->can('loans.renew') ?? false,
                 ],
             ],
         ];

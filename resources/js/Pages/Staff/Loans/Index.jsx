@@ -19,6 +19,13 @@ const statusOptions = [
     { value: 'returned', label: 'Returned' },
 ];
 
+const dateFormatter = new Intl.DateTimeFormat('en-MY', {
+    dateStyle: 'medium',
+});
+
+const formatDate = (value) =>
+    value ? dateFormatter.format(new Date(value)) : '—';
+
 export default function Index({ filters: initialFilters, loans: initialLoans }) {
     const { auth } = usePage().props;
     const { message, modal } = AntdApp.useApp();
@@ -59,6 +66,37 @@ export default function Index({ filters: initialFilters, loans: initialLoans }) 
             );
         }
     }, [error, message]);
+
+    const confirmRenew = (loan) => {
+        modal.confirm({
+            title: 'Renew this loan?',
+            content: `${loan.book.title} for ${loan.member.name} is currently due ${formatDate(
+                loan.due_at,
+            )}. Renewal adds 14 days to the current due date and can only be used once.`,
+            okText: 'Renew for 14 days',
+            cancelText: 'Keep current due date',
+            async onOk() {
+                try {
+                    const payload = await jsonRequest({
+                        url: route('staff.loans.renew', loan.id),
+                        method: 'POST',
+                    });
+
+                    message.success(payload.message);
+                    await refresh();
+                } catch (error) {
+                    message.error(
+                        getRequestErrorMessage(
+                            error,
+                            'The loan could not be renewed. Try again.',
+                        ),
+                    );
+
+                    throw error;
+                }
+            },
+        });
+    };
 
     const confirmReturn = (loan) => {
         const isReturnRequested = loan.status === 'return_requested';
@@ -144,12 +182,14 @@ export default function Index({ filters: initialFilters, loans: initialLoans }) 
                 }
             >
                 <LoanTable
+                    canRenew={auth.can.renewLoans}
                     canReturn={auth.can.returnLoans}
                     filters={filters}
                     loading={loading}
                     loans={loans.data}
                     meta={loans.meta}
                     onPageChange={handlePageChange}
+                    onRenew={confirmRenew}
                     onReturn={confirmReturn}
                     onTableChange={handleTableChange}
                 />

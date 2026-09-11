@@ -20,6 +20,12 @@ function loanStaffWithRole(string $role = 'librarian'): User
     return $user;
 }
 
+/*
+|--------------------------------------------------------------------------
+| Guest authorization
+|--------------------------------------------------------------------------
+*/
+
 test('guest is redirected away from loan management', function () {
     $this->get(route('staff.loans.index'))
         ->assertRedirect(route('login'));
@@ -29,6 +35,23 @@ test('guest cannot query the loan table', function () {
     $this->postJson(route('staff.loans.query'))
         ->assertUnauthorized();
 });
+
+test('guest cannot renew a loan', function () {
+    $loan = Loan::factory()->create([
+        'due_at' => now()->addDays(7)->endOfDay(),
+        'returned_at' => null,
+        'return_requested_at' => null,
+    ]);
+
+    $this->postJson(route('staff.loans.renew', $loan))
+        ->assertUnauthorized();
+});
+
+/*
+|--------------------------------------------------------------------------
+| Member authorization
+|--------------------------------------------------------------------------
+*/
 
 test('member cannot access loan management', function () {
     $member = loanStaffWithRole('member');
@@ -46,11 +69,60 @@ test('member cannot query loan management', function () {
         ->assertForbidden();
 });
 
+test('member cannot renew a loan', function () {
+    $member = loanStaffWithRole('member');
+
+    $loan = Loan::factory()->create([
+        'due_at' => now()->addDays(7)->endOfDay(),
+        'returned_at' => null,
+        'return_requested_at' => null,
+    ]);
+
+    $this->actingAs($member)
+        ->postJson(route('staff.loans.renew', $loan))
+        ->assertForbidden();
+});
+
+/*
+|--------------------------------------------------------------------------
+| Administrator authorization
+|--------------------------------------------------------------------------
+*/
+
+test('administrator can renew an eligible loan', function () {
+    $administrator = loanStaffWithRole('admin');
+
+    $loan = Loan::factory()->create([
+        'due_at' => now()->addDays(7)->endOfDay(),
+        'returned_at' => null,
+        'return_requested_at' => null,
+    ]);
+
+    $this->actingAs($administrator)
+        ->postJson(route('staff.loans.renew', $loan))
+        ->assertSuccessful();
+
+    expect($loan->renewals()->count())
+        ->toBe(1);
+});
+
+/*
+|--------------------------------------------------------------------------
+| Authenticated librarian loan management
+|--------------------------------------------------------------------------
+*/
+
 describe('authenticated loan management', function () {
     beforeEach(function () {
         $this->staff = loanStaffWithRole();
         $this->actingAs($this->staff);
     });
+
+    /*
+    |--------------------------------------------------------------------------
+    | Loan table
+    |--------------------------------------------------------------------------
+    */
 
     it('renders the loan index with filters and pagination metadata', function () {
         Loan::factory()->count(2)->create();
@@ -75,12 +147,15 @@ describe('authenticated loan management', function () {
             'return_requested_at' => now(),
             'returned_at' => null,
         ]);
+
         Loan::factory()->create([
             'return_requested_at' => null,
             'returned_at' => null,
         ]);
 
-        $this->postJson(route('staff.loans.query'), ['status' => 'return_requested'])
+        $this->postJson(route('staff.loans.query'), [
+            'status' => 'return_requested',
+        ])
             ->assertSuccessful()
             ->assertJsonCount(1, 'data')
             ->assertJsonPath('data.0.id', $requestedLoan->id)
@@ -103,7 +178,9 @@ describe('authenticated loan management', function () {
     });
 
     it('normalizes an invalid status filter', function () {
-        $this->postJson(route('staff.loans.query'), ['status' => 'invalid'])
+        $this->postJson(route('staff.loans.query'), [
+            'status' => 'invalid',
+        ])
             ->assertSuccessful()
             ->assertJsonPath('filters.status', '');
     });
@@ -123,6 +200,12 @@ describe('authenticated loan management', function () {
             ->assertJsonPath('filters.page', 2);
     });
 
+    /*
+    |--------------------------------------------------------------------------
+    | Issue loan
+    |--------------------------------------------------------------------------
+    */
+
     it('renders the issue loan page', function () {
         $this->get(route('staff.loans.create'))
             ->assertSuccessful()
@@ -133,7 +216,10 @@ describe('authenticated loan management', function () {
 
     it('issues a loan from valid json', function () {
         $member = Member::factory()->create();
-        $book = Book::factory()->create(['total_copies' => 1]);
+
+        $book = Book::factory()->create([
+            'total_copies' => 1,
+        ]);
 
         $this->postJson(route('staff.loans.store'), [
             'member_number' => $member->member_number,
@@ -169,6 +255,12 @@ describe('authenticated loan management', function () {
             ]);
     });
 
+    /*
+    |--------------------------------------------------------------------------
+    | Return loan
+    |--------------------------------------------------------------------------
+    */
+
     it('returns an active loan', function () {
         $loan = Loan::factory()->create([
             'returned_at' => null,
@@ -177,10 +269,16 @@ describe('authenticated loan management', function () {
 
         $this->postJson(route('staff.loans.return', $loan))
             ->assertSuccessful()
-            ->assertJsonPath('message', 'Book received and loan completed.')
+            ->assertJsonPath(
+                'message',
+                'Book received and loan completed.',
+            )
             ->assertJsonPath('loan.id', $loan->id)
             ->assertJsonPath('loan.status', 'returned')
-            ->assertJsonPath('loan.returned_by', $this->staff->name);
+            ->assertJsonPath(
+                'loan.returned_by',
+                $this->staff->name,
+            );
 
         $returnedLoan = $loan->fresh();
 
@@ -191,7 +289,10 @@ describe('authenticated loan management', function () {
     });
 
     it('confirms a member requested return', function () {
-        $requestedAt = now()->subMinute()->startOfSecond();
+        $requestedAt = now()
+            ->subMinute()
+            ->startOfSecond();
+
         $loan = Loan::factory()->create([
             'return_requested_at' => $requestedAt,
             'returned_at' => null,
@@ -200,13 +301,21 @@ describe('authenticated loan management', function () {
 
         $this->postJson(route('staff.loans.return', $loan))
             ->assertSuccessful()
-            ->assertJsonPath('message', 'Book received and loan completed.')
+            ->assertJsonPath(
+                'message',
+                'Book received and loan completed.',
+            )
             ->assertJsonPath('loan.status', 'returned')
-            ->assertJsonPath('loan.returned_by', $this->staff->name);
+            ->assertJsonPath(
+                'loan.returned_by',
+                $this->staff->name,
+            );
 
         $loan->refresh();
 
-        expect($loan->return_requested_at->equalTo($requestedAt))
+        expect(
+            $loan->return_requested_at->equalTo($requestedAt)
+        )
             ->toBeTrue()
             ->and($loan->returned_at)
             ->not->toBeNull()
@@ -223,5 +332,101 @@ describe('authenticated loan management', function () {
         $this->postJson(route('staff.loans.return', $loan))
             ->assertUnprocessable()
             ->assertJsonValidationErrors('loan');
+    });
+
+    /*
+    |--------------------------------------------------------------------------
+    | Renew loan
+    |--------------------------------------------------------------------------
+    */
+
+    it('librarian can renew an eligible loan', function () {
+        $originalDueAt = now()
+            ->addDays(7)
+            ->endOfDay()
+            ->startOfSecond();
+
+        $loan = Loan::factory()->create([
+            'due_at' => $originalDueAt,
+            'returned_at' => null,
+            'return_requested_at' => null,
+        ]);
+
+        $this->postJson(route('staff.loans.renew', $loan))
+            ->assertSuccessful()
+            ->assertJsonPath('message', 'Loan renewed successfully.')
+            ->assertJsonPath('loan.id', $loan->id)
+            ->assertJsonPath('loan.renewal_count', 1);
+
+        $loan->refresh();
+
+        $expectedDueAt = $originalDueAt
+            ->copy()
+            ->addDays(14)
+            ->endOfDay()
+            ->startOfSecond();
+
+        expect($loan->due_at->equalTo($expectedDueAt))
+            ->toBeTrue()
+            ->and($loan->renewals()->count())
+            ->toBe(1);
+    });
+
+    it('renewal response exposes the new due date and renewal count', function () {
+        $originalDueAt = now()
+            ->addDays(7)
+            ->endOfDay()
+            ->startOfSecond();
+
+        $expectedDueAt = $originalDueAt
+            ->copy()
+            ->addDays(14)
+            ->endOfDay()
+            ->startOfSecond();
+
+        $loan = Loan::factory()->create([
+            'due_at' => $originalDueAt,
+            'returned_at' => null,
+            'return_requested_at' => null,
+        ]);
+
+        $response = $this->postJson(
+            route('staff.loans.renew', $loan)
+        );
+
+        $response
+            ->assertSuccessful()
+            ->assertJsonPath('message', 'Loan renewed successfully.')
+            ->assertJsonPath('loan.id', $loan->id)
+            ->assertJsonPath('loan.due_at', $expectedDueAt->toIso8601String())
+            ->assertJsonPath('loan.renewal_count', 1);
+
+        expect(
+            $loan->fresh()->due_at->equalTo($expectedDueAt)
+        )->toBeTrue();
+    });
+
+    it('invalid renewal returns 422 and preserves the original due date', function () {
+        $originalDueAt = now()
+            ->addDays(7)
+            ->endOfDay()
+            ->startOfSecond();
+
+        $loan = Loan::factory()->create([
+            'due_at' => $originalDueAt,
+            'returned_at' => now(),
+            'return_requested_at' => null,
+        ]);
+
+        $this->postJson(route('staff.loans.renew', $loan))
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('loan');
+
+        $loan->refresh();
+
+        expect($loan->due_at->equalTo($originalDueAt))
+            ->toBeTrue()
+            ->and($loan->renewals()->count())
+            ->toBe(0);
     });
 });

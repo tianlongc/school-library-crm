@@ -9,8 +9,8 @@ A role-based school library circulation system built with Laravel and Inertia Re
 - Manage books and categories.
 - See total and currently available copies for each title.
 - Search the book catalogue by title, author, or ISBN.
-- Issue and return loans.
-- View active, overdue, and returned loans.
+- Issue, renew, and return loans.
+- View active, overdue, return-requested, and returned loans.
 - Search and manage member records.
 - Suspend, deactivate, and reactivate memberships according to role permissions.
 
@@ -20,7 +20,7 @@ A role-based school library circulation system built with Laravel and Inertia Re
 - Browse and search the available catalogue.
 - Borrow an available book.
 - Review current loans and due dates.
-- Return their own active loans.
+- Request returns for their own active loans.
 - See borrowing restrictions caused by membership status or overdue loans.
 
 ### Administrators
@@ -46,6 +46,10 @@ Authentication and borrowing status are intentionally separate. `User` represent
 - A member cannot borrow the same title twice concurrently.
 - Members with an overdue loan cannot borrow another book until the overdue loan is returned.
 - Overdue status is derived from an unreturned loan whose due date has passed.
+- Staff can renew an eligible active loan once, adding 14 days from its current due date.
+- Returned, return-requested, and overdue loans cannot be renewed.
+- Suspended or inactive members, members with another overdue loan, and archived books are not eligible for renewal.
+- Each renewal records the staff actor and the previous and new due dates.
 - Books with active loans cannot be removed, and their copy count cannot be reduced below the number of active loans.
 
 ## Technology
@@ -133,7 +137,7 @@ npm run build
 
 The current MVP does not yet include monetary penalty calculation, automated notifications, scheduled overdue processing, or spreadsheet exports. Overdue status is calculated dynamically from loan dates, so a daily task is not required for the current circulation workflow.
 
-Recommended post-MVP additions include configurable loan policies, notification delivery, penalty or fine management, reporting and spreadsheet export, audit history, and deployment-specific account provisioning.
+Recommended post-MVP additions include configurable loan policies, notification delivery, reporting and spreadsheet export, broader audit history, administrator-managed account disabling, and deployment-specific account provisioning.
 
 ## License
 

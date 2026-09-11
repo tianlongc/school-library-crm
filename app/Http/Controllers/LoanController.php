@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Domain\Loan\Actions\IssueLoanAction;
+use App\Domain\Loan\Actions\RenewLoanAction;
 use App\Domain\Loan\Actions\RequestLoanReturnAction;
 use App\Domain\Loan\Actions\ReturnLoanAction;
 use App\Domain\Loan\Models\Loan;
@@ -122,6 +123,28 @@ class LoanController extends Controller
         return response()->json([
             'message' => 'Return request submitted. Staff must confirm the book was received.',
             'loan' => LoanResource::make($requestedLoan)->resolve($request),
+        ]);
+    }
+
+    public function renew(Request $request, Loan $loan, RenewLoanAction $action): JsonResponse
+    {
+        Gate::authorize('renew', $loan);
+
+        $renewedLoan = $action->execute(
+            loan: $loan,
+            renewedBy: $request->user(),
+        );
+
+        $renewedLoan->load([
+            'member.user',
+            'book',
+            'issuedBy',
+            'returnedBy',
+        ])->loadCount('renewals');
+
+        return response()->json([
+            'message' => 'Loan renewed successfully.',
+            'loan' => LoanResource::make($renewedLoan)->resolve($request),
         ]);
     }
 }

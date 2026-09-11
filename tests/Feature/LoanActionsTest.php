@@ -2,9 +2,11 @@
 
 use App\Domain\Book\Models\Book;
 use App\Domain\Loan\Actions\IssueLoanAction;
+use App\Domain\Loan\Actions\RenewLoanAction;
 use App\Domain\Loan\Actions\RequestLoanReturnAction;
 use App\Domain\Loan\Actions\ReturnLoanAction;
 use App\Domain\Loan\Models\Loan;
+use App\Domain\Loan\Models\LoanRenewal;
 use App\Domain\Member\Enums\MemberStatus;
 use App\Domain\Member\Models\Member;
 use App\Domain\User\Models\User;
@@ -532,5 +534,205 @@ describe('return loan', function () {
             ->not->toBeNull()
             ->and($returnedLoan->returned_by_user_id)
             ->toBe($staff->id);
+    });
+});
+describe('renew loan', function () {
+    it('extends the current due date by fourteen days and records an audit entry', function () {
+        $renewedBy = User::factory()->create();
+        $member = Member::factory()->create();
+        $book = Book::factory()->create();
+        $issuedAt = now()->subWeek()->startOfSecond();
+        $previousDueAt = now()->addWeek()->endOfDay()->startOfSecond();
+
+        $loan = Loan::factory()
+            ->for($member)
+            ->for($book)
+            ->create([
+                'issued_at' => $issuedAt,
+                'due_at' => $previousDueAt,
+                'return_requested_at' => null,
+                'returned_at' => null,
+                'returned_by_user_id' => null,
+            ]);
+
+        $renewedLoan = app(RenewLoanAction::class)->execute(
+            loan: $loan,
+            renewedBy: $renewedBy,
+        );
+
+        $expectedDueAt = $previousDueAt->copy()->addDays(14)->endOfDay()->startOfSecond();
+        $renewal = LoanRenewal::query()->sole();
+
+        expect($renewedLoan->due_at->equalTo($expectedDueAt))
+            ->toBeTrue()
+            ->and($renewedLoan->issued_at->equalTo($issuedAt))
+            ->toBeTrue()
+            ->and($renewedLoan->return_requested_at)
+            ->toBeNull()
+            ->and($renewedLoan->returned_at)
+            ->toBeNull()
+            ->and($renewedLoan->returned_by_user_id)
+            ->toBeNull()
+            ->and($renewal->loan_id)
+            ->toBe($loan->id)
+            ->and($renewal->renewed_by_user_id)
+            ->toBe($renewedBy->id)
+            ->and($renewal->previous_due_at->equalTo($previousDueAt))
+            ->toBeTrue()
+            ->and($renewal->new_due_at->equalTo($expectedDueAt))
+            ->toBeTrue();
+    });
+
+    it('rejects an overdue loan without changing its due date', function () {
+        $renewedBy = User::factory()->create();
+        $previousDueAt = now()->subDay()->endOfDay()->startOfSecond();
+        $loan = Loan::factory()->create([
+            'due_at' => $previousDueAt,
+            'return_requested_at' => null,
+            'returned_at' => null,
+        ]);
+
+        expect(fn () => app(RenewLoanAction::class)->execute($loan, $renewedBy))
+            ->toThrow(ValidationException::class, 'Overdue loans cannot be renewed.');
+
+        expect($loan->fresh()->due_at->equalTo($previousDueAt))
+            ->toBeTrue()
+            ->and(LoanRenewal::query()->count())
+            ->toBe(0);
+    });
+
+    it('rejects a loan with a pending return request', function () {
+        $renewedBy = User::factory()->create();
+        $previousDueAt = now()->addWeek()->endOfDay()->startOfSecond();
+        $loan = Loan::factory()->create([
+            'due_at' => $previousDueAt,
+            'return_requested_at' => now(),
+            'returned_at' => null,
+        ]);
+
+        expect(fn () => app(RenewLoanAction::class)->execute($loan, $renewedBy))
+            ->toThrow(
+                ValidationException::class,
+                'A loan with a pending return request cannot be renewed.',
+            );
+
+        expect($loan->fresh()->due_at->equalTo($previousDueAt))
+            ->toBeTrue()
+            ->and(LoanRenewal::query()->count())
+            ->toBe(0);
+    });
+
+    it('rejects a returned loan', function () {
+        $renewedBy = User::factory()->create();
+        $previousDueAt = now()->addWeek()->endOfDay()->startOfSecond();
+        $loan = Loan::factory()->create([
+            'due_at' => $previousDueAt,
+            'return_requested_at' => null,
+            'returned_at' => now(),
+        ]);
+
+        expect(fn () => app(RenewLoanAction::class)->execute($loan, $renewedBy))
+            ->toThrow(ValidationException::class, 'Returned loans cannot be renewed.');
+
+        expect($loan->fresh()->due_at->equalTo($previousDueAt))
+            ->toBeTrue()
+            ->and(LoanRenewal::query()->count())
+            ->toBe(0);
+    });
+
+    it('rejects renewal when the member is not active', function (MemberStatus $status) {
+        $renewedBy = User::factory()->create();
+        $member = Member::factory()->create(['status' => $status]);
+        $previousDueAt = now()->addWeek()->endOfDay()->startOfSecond();
+        $loan = Loan::factory()->for($member)->create([
+            'due_at' => $previousDueAt,
+            'return_requested_at' => null,
+            'returned_at' => null,
+        ]);
+
+        expect(fn () => app(RenewLoanAction::class)->execute($loan, $renewedBy))
+            ->toThrow(
+                ValidationException::class,
+                'This member is not eligible to renew loans.',
+            );
+
+        expect($loan->fresh()->due_at->equalTo($previousDueAt))
+            ->toBeTrue()
+            ->and(LoanRenewal::query()->count())
+            ->toBe(0);
+    })->with([
+        'suspended member' => MemberStatus::Suspended,
+        'inactive member' => MemberStatus::Inactive,
+    ]);
+
+    it('rejects renewal when the member has another overdue loan', function () {
+        $renewedBy = User::factory()->create();
+        $member = Member::factory()->create();
+        $previousDueAt = now()->addWeek()->endOfDay()->startOfSecond();
+        $loan = Loan::factory()->for($member)->create([
+            'due_at' => $previousDueAt,
+            'return_requested_at' => null,
+            'returned_at' => null,
+        ]);
+
+        Loan::factory()->for($member)->create([
+            'due_at' => now()->subDay(),
+            'return_requested_at' => null,
+            'returned_at' => null,
+        ]);
+
+        expect(fn () => app(RenewLoanAction::class)->execute($loan, $renewedBy))
+            ->toThrow(ValidationException::class, 'This member has another overdue loan.');
+
+        expect($loan->fresh()->due_at->equalTo($previousDueAt))
+            ->toBeTrue()
+            ->and(LoanRenewal::query()->count())
+            ->toBe(0);
+    });
+
+    it('rejects renewal for an archived book', function () {
+        $renewedBy = User::factory()->create();
+        $book = Book::factory()->create();
+        $previousDueAt = now()->addWeek()->endOfDay()->startOfSecond();
+        $loan = Loan::factory()->for($book)->create([
+            'due_at' => $previousDueAt,
+            'return_requested_at' => null,
+            'returned_at' => null,
+        ]);
+        $book->delete();
+
+        expect(fn () => app(RenewLoanAction::class)->execute($loan, $renewedBy))
+            ->toThrow(ValidationException::class, 'Archived books cannot be renewed.');
+
+        expect($loan->fresh()->due_at->equalTo($previousDueAt))
+            ->toBeTrue()
+            ->and(LoanRenewal::query()->count())
+            ->toBe(0);
+    });
+
+    it('allows only one renewal per loan', function () {
+        $renewedBy = User::factory()->create();
+        $previousDueAt = now()->addWeek()->endOfDay()->startOfSecond();
+        $firstNewDueAt = $previousDueAt->copy()->addDays(14)->endOfDay()->startOfSecond();
+        $loan = Loan::factory()->create([
+            'due_at' => $firstNewDueAt,
+            'return_requested_at' => null,
+            'returned_at' => null,
+        ]);
+
+        LoanRenewal::query()->forceCreate([
+            'loan_id' => $loan->id,
+            'renewed_by_user_id' => $renewedBy->id,
+            'previous_due_at' => $previousDueAt,
+            'new_due_at' => $firstNewDueAt,
+        ]);
+
+        expect(fn () => app(RenewLoanAction::class)->execute($loan, $renewedBy))
+            ->toThrow(ValidationException::class, 'This loan has already been renewed.');
+
+        expect($loan->fresh()->due_at->equalTo($firstNewDueAt))
+            ->toBeTrue()
+            ->and($loan->renewals()->count())
+            ->toBe(1);
     });
 });

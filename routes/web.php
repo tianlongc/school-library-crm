@@ -131,6 +131,7 @@ Route::middleware(['auth', 'can:workspace.access'])
                 Route::post('/query', 'query')->name('query');
                 Route::get('/create', 'create')->name('create');
                 Route::post('/', 'store')->name('store');
+                Route::post('/{loan}/renew', 'renew')->name('renew');
                 Route::post('/{loan}/return', 'returnLoan')->name('return');
             });
     });

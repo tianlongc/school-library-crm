@@ -1,6 +1,7 @@
 import ServerDataTable from '@/Components/Tables/ServerDataTable';
 import { getSortOrder } from '@/Components/Tables/tableQuery';
 import CheckOutlined from '@ant-design/icons/CheckOutlined';
+import RedoOutlined from '@ant-design/icons/RedoOutlined';
 import { Button, Space, Tag, Tooltip, Typography } from 'antd';
 import { useMemo } from 'react';
 
@@ -33,49 +34,73 @@ const formatDate = (value) =>
 const formatDateTime = (value) =>
     value ? dateTimeFormatter.format(new Date(value)) : '—';
 
-function LoanAction({ canReturn, loan, onReturn }) {
+function LoanAction({ canRenew, canReturn, loan, onRenew, onReturn }) {
     if (loan.returned_at) {
         return <Typography.Text type="secondary">Complete</Typography.Text>;
     }
 
-    if (!canReturn) {
+    const isReturnRequested = loan.status === 'return_requested';
+    const isRenewable =
+        canRenew &&
+        loan.status === 'active' &&
+        (loan.renewal_count ?? 0) === 0;
+
+    if (!isRenewable && !canReturn) {
         return <Typography.Text type="secondary">—</Typography.Text>;
     }
 
-    const isReturnRequested = loan.status === 'return_requested';
-
     return (
-        <Tooltip
-            title={
-                isReturnRequested
-                    ? 'Confirm the returned book was received'
-                    : 'Record this book as returned'
-            }
-        >
-            <Button
-                aria-label={
-                    isReturnRequested
-                        ? `Confirm receipt of ${loan.book.title} from ${loan.member.name}`
-                        : `Return ${loan.book.title} from ${loan.member.name}`
-                }
-                icon={<CheckOutlined />}
-                onClick={() => onReturn(loan)}
-                size="small"
-                type={isReturnRequested ? 'primary' : 'link'}
-            >
-                {isReturnRequested ? 'Confirm received' : 'Return'}
-            </Button>
-        </Tooltip>
+        <Space size={4} wrap>
+            {isRenewable ? (
+                <Tooltip title="Extend the current due date by 14 days">
+                    <Button
+                        aria-label={`Renew ${loan.book.title} for ${loan.member.name}`}
+                        icon={<RedoOutlined />}
+                        onClick={() => onRenew(loan)}
+                        size="small"
+                        type="link"
+                    >
+                        Renew
+                    </Button>
+                </Tooltip>
+            ) : null}
+
+            {canReturn ? (
+                <Tooltip
+                    title={
+                        isReturnRequested
+                            ? 'Confirm the returned book was received'
+                            : 'Record this book as returned'
+                    }
+                >
+                    <Button
+                        aria-label={
+                            isReturnRequested
+                                ? `Confirm receipt of ${loan.book.title} from ${loan.member.name}`
+                                : `Return ${loan.book.title} from ${loan.member.name}`
+                        }
+                        icon={<CheckOutlined />}
+                        onClick={() => onReturn(loan)}
+                        size="small"
+                        type={isReturnRequested ? 'primary' : 'link'}
+                    >
+                        {isReturnRequested ? 'Confirm received' : 'Return'}
+                    </Button>
+                </Tooltip>
+            ) : null}
+        </Space>
     );
 }
 
 export default function LoanTable({
+    canRenew,
     canReturn,
     filters,
     loading,
     loans,
     meta,
     onPageChange,
+    onRenew,
     onReturn,
     onTableChange,
 }) {
@@ -155,9 +180,14 @@ export default function LoanTable({
                     >
                         {formatDate(loan.due_at)}
                     </Typography.Text>
-                    <Tag color={statusColors[loan.status]}>
-                        {statusLabels[loan.status] ?? 'Unknown'}
-                    </Tag>
+                    <Space size={[0, 4]} wrap>
+                        <Tag color={statusColors[loan.status]}>
+                            {statusLabels[loan.status] ?? 'Unknown'}
+                        </Tag>
+                        {loan.renewal_count > 0 ? (
+                            <Tag color="blue">Renewed once</Tag>
+                        ) : null}
+                    </Space>
                 </Space>
             ),
         },
@@ -201,16 +231,18 @@ export default function LoanTable({
             key: 'action',
             align: 'center',
             fixed: 'right',
-            width: 160,
+            width: 230,
             render: (_, loan) => (
                 <LoanAction
+                    canRenew={canRenew}
                     canReturn={canReturn}
                     loan={loan}
+                    onRenew={onRenew}
                     onReturn={onReturn}
                 />
             ),
         },
-    ], [canReturn, filters, onReturn]);
+    ], [canRenew, canReturn, filters, onRenew, onReturn]);
 
     const isFiltered = Boolean(filters.search?.trim() || filters.status);
 
@@ -227,7 +259,7 @@ export default function LoanTable({
             meta={meta}
             pluralName="loans"
             rowClassName={(loan) => `loan-row loan-row-${loan.status}`}
-            scrollX={1220}
+            scrollX={1290}
             singularName="loan"
             onPageChange={onPageChange}
             onTableChange={onTableChange}
