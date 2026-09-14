@@ -4,7 +4,7 @@ namespace App\Domain\Book\Queries;
 
 use App\Domain\Book\Models\Book;
 use App\Domain\Member\Models\Member;
-use App\Domain\Shared\Queries\TableQuery;
+use App\Shared\Queries\TableQuery;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Override;

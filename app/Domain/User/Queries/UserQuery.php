@@ -3,7 +3,7 @@
 namespace App\Domain\User\Queries;
 
 use App\Domain\Member\Models\Member;
-use App\Domain\Shared\Queries\TableQuery;
+use App\Shared\Queries\TableQuery;
 use App\Domain\User\Enums\UserRole;
 use App\Domain\User\Models\User;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;

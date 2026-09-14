@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Domain\Shared\Queries;
+namespace App\Shared\Queries;
 
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
