@@ -134,6 +134,7 @@ it('shares the navigation capabilities used by account settings', function (
     bool $viewLoans,
     bool $issueLoans,
     bool $returnLoans,
+    bool $renewLoans,
     bool $borrowBooks,
 ) {
     $user = User::factory()->create();
@@ -154,10 +155,11 @@ it('shares the navigation capabilities used by account settings', function (
             ->where('auth.can.viewLoans', $viewLoans)
             ->where('auth.can.issueLoans', $issueLoans)
             ->where('auth.can.returnLoans', $returnLoans)
+            ->where('auth.can.renewLoans', $renewLoans)
             ->where('auth.can.borrowBooks', $borrowBooks)
         );
 })->with([
-    'member' => ['member', false, false, true, false, false, false, true],
-    'librarian' => ['librarian', false, true, false, true, true, true, false],
-    'administrator' => ['admin', true, true, false, true, true, true, false],
+    'member' => ['member', false, false, true, false, false, false, false, true],
+    'librarian' => ['librarian', false, true, false, true, true, true, true, false],
+    'administrator' => ['admin', true, true, false, true, true, true, true, false],
 ]);

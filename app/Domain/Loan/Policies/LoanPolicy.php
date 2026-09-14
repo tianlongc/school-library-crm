@@ -69,4 +69,9 @@ class LoanPolicy
     {
         return $user->can('loans.borrow') && $user->member()->exists();
     }
+
+    public function renew(User $user, Loan $loan): bool
+    {
+        return $user->can('loans.renew');
+    }
 }
