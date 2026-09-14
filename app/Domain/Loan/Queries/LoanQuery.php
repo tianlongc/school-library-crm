@@ -71,7 +71,8 @@ class LoanQuery extends TableQuery
                 fn (Builder $query) => $query
                     ->whereNull('returned_at')
                     ->whereNotNull('return_requested_at'),
-            );
+            )
+            ->withCount('renewals');
 
         return $this->paginateTable(
             query: $query,

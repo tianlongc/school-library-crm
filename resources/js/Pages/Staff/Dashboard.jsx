@@ -6,8 +6,11 @@ import { Head } from '@inertiajs/react';
 import { Card, Col, Flex, Row, Tag, Typography } from 'antd';
 
 const plannedWorkflows = [
-    { name: 'Circulation', detail: 'Issue, renew, and return books' },
     { name: 'Reporting', detail: 'Availability, overdue, and activity insights' },
+    {
+        name: 'Account security',
+        detail: 'Disable user accounts independently from membership status',
+    },
 ];
 
 export default function Dashboard() {
@@ -18,7 +21,7 @@ export default function Dashboard() {
             <PageHeader
                 eyebrow="Workspace"
                 title="Library dashboard"
-                description="Manage the live catalogue and member accounts now. Circulation and reporting workflows are planned next."
+                description="Issue, renewal, and return workflows are live. Reporting and account controls are planned next."
             />
 
             <Card
@@ -51,13 +54,42 @@ export default function Dashboard() {
             </Card>
 
             <Card
+                title="Circulation workspace"
+                extra={<Tag color="success">Active</Tag>}
+            >
+                <Flex className="dashboard-feature" align="center" justify="space-between" gap={24} wrap>
+                    <div className="dashboard-feature-copy">
+                        <Typography.Title level={3}>
+                            Manage every loan from issue through renewal and return.
+                        </Typography.Title>
+                        <Typography.Paragraph type="secondary">
+                            Review due dates, renew eligible loans once, and confirm
+                            returned books from the circulation ledger.
+                        </Typography.Paragraph>
+                    </div>
+                    <Flex gap={8} wrap>
+                        <InertiaButton href={route('staff.loans.index')}>
+                            View loans
+                        </InertiaButton>
+                        <InertiaButton
+                            href={route('staff.loans.create')}
+                            type="primary"
+                            icon={<PlusOutlined />}
+                        >
+                            Issue loan
+                        </InertiaButton>
+                    </Flex>
+                </Flex>
+            </Card>
+
+            <Card
                 title="Next workflows"
                 extra={<Typography.Text type="secondary">Planned</Typography.Text>}
                 className="dashboard-next-card"
             >
                 <Row gutter={[16, 16]}>
                     {plannedWorkflows.map((workflow) => (
-                        <Col xs={24} md={8} key={workflow.name}>
+                        <Col xs={24} md={12} key={workflow.name}>
                             <Card size="small" variant="outlined" className="planned-workflow-card">
                                 <Typography.Text strong>{workflow.name}</Typography.Text>
                                 <Typography.Paragraph type="secondary">

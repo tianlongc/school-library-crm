@@ -3,6 +3,8 @@ import PauseCircleOutlined from '@ant-design/icons/PauseCircleOutlined';
 import StopOutlined from '@ant-design/icons/StopOutlined';
 import { Button, Space, Tag, Tooltip, Typography } from 'antd';
 import { useMemo } from 'react';
+import ServerDataTable from '@/Components/Tables/ServerDataTable';
+import { getSortOrder } from '@/Components/Tables/tableQuery';
 
 const statusColors = {
     active: 'success',
@@ -33,13 +35,13 @@ function MemberActions({ member, can, onTransition }) {
 
     if (member.status !== 'inactive' && can.deactivate) {
         actions.push(
-            <Tooltip title="Deactivate member" key="deactivate">
+            <Tooltip title="Deactivate membership" key="deactivate">
                 <Button
                     danger
                     type="text"
                     size="small"
                     icon={<StopOutlined />}
-                    aria-label={`Deactivate ${member.name}`}
+                    aria-label={`Deactivate membership for ${member.name}`}
                     onClick={() => onTransition(member, 'deactivate')}
                 />
             </Tooltip>,
@@ -173,5 +175,3 @@ export default function MemberTable({
         />
     );
 }
-import ServerDataTable from '@/Components/Tables/ServerDataTable';
-import { getSortOrder } from '@/Components/Tables/tableQuery';

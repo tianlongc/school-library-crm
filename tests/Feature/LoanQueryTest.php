@@ -3,6 +3,7 @@
 use App\Domain\Book\Models\Book;
 use App\Domain\Loan\Enums\LoanStatus;
 use App\Domain\Loan\Models\Loan;
+use App\Domain\Loan\Models\LoanRenewal;
 use App\Domain\Loan\Queries\LoanQuery;
 use App\Domain\Member\Models\Member;
 use App\Domain\User\Models\User;
@@ -228,5 +229,14 @@ describe('loan query', function () {
             ->toBeTrue()
             ->and($loan->relationLoaded('returnedBy'))
             ->toBeTrue();
+    });
+
+    it('includes the renewal count required by the loan resource', function () {
+        $loan = Loan::factory()->create();
+        LoanRenewal::factory()->for($loan)->create();
+
+        $queriedLoan = $this->loanQuery->paginate()->first();
+
+        expect($queriedLoan->renewals_count)->toBe(1);
     });
 });

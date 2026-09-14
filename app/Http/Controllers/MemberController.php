@@ -83,7 +83,7 @@ class MemberController extends Controller
         $member->load('user.roles');
 
         return response()->json([
-            'message' => 'Member deactivated successfully',
+            'message' => 'Membership deactivated successfully',
             'member' => MemberResource::make($member),
         ]);
     }
