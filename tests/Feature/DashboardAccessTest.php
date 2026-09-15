@@ -1,5 +1,7 @@
 <?php
 
+use App\Domain\Book\Models\Book;
+use App\Domain\Cms\Models\CmsPage;
 use App\Domain\Loan\Models\Loan;
 use App\Domain\Member\Models\Member;
 use App\Domain\User\Models\User;
@@ -92,6 +94,76 @@ it('shows only the signed in members current loans', function () {
         );
 });
 
+it('shows members only the published student portal content', function () {
+    $user = User::factory()->create();
+    Member::factory()->for($user)->create();
+    $user->assignRole('member');
+
+    $featuredBook = Book::factory()->create();
+    $draftBook = Book::factory()->create();
+    $publishedContent = [
+        'schema_version' => 1,
+        'blocks' => [
+            [
+                'id' => 'published-announcement',
+                'type' => 'announcement',
+                'is_visible' => true,
+                'data' => [
+                    'heading' => 'Announcement',
+                    'body' => 'Welcome to the library.',
+                ],
+            ],
+            [
+                'id' => 'published-books',
+                'type' => 'book_collection',
+                'is_visible' => true,
+                'data' => [
+                    'heading' => 'Featured books',
+                    'body' => 'Chosen for students this week.',
+                    'book_ids' => [$featuredBook->id],
+                ],
+            ],
+            [
+                'id' => 'hidden-copy',
+                'type' => 'rich_text',
+                'is_visible' => false,
+                'data' => [
+                    'heading' => 'Hidden copy',
+                    'body' => 'This block should not render.',
+                ],
+            ],
+        ],
+    ];
+
+    CmsPage::query()->where('key', 'student_portal_homepage')->firstOrFail()->update([
+        'draft_content' => [
+            'schema_version' => 1,
+            'blocks' => [[
+                'id' => 'draft-books',
+                'type' => 'book_collection',
+                'is_visible' => true,
+                'data' => [
+                    'heading' => 'Draft books',
+                    'body' => 'Not published yet.',
+                    'book_ids' => [$draftBook->id],
+                ],
+            ]],
+        ],
+        'published_content' => $publishedContent,
+        'published_at' => now(),
+    ]);
+
+    $this->actingAs($user)
+        ->get(route('member.dashboard'))
+        ->assertSuccessful()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('Member/Dashboard')
+            ->where('cmsContent', $publishedContent)
+            ->has('homepageBooks', 1)
+            ->where('homepageBooks.0.id', $featuredBook->id)
+        );
+});
+
 it('renders the staff dashboard for authorized staff', function (string $role) {
     $staff = User::factory()->create();
     $staff->assignRole($role);
@@ -135,6 +207,7 @@ it('shares the navigation capabilities used by account settings', function (
     bool $issueLoans,
     bool $returnLoans,
     bool $renewLoans,
+    bool $viewCms,
     bool $borrowBooks,
 ) {
     $user = User::factory()->create();
@@ -156,10 +229,11 @@ it('shares the navigation capabilities used by account settings', function (
             ->where('auth.can.issueLoans', $issueLoans)
             ->where('auth.can.returnLoans', $returnLoans)
             ->where('auth.can.renewLoans', $renewLoans)
+            ->where('auth.can.viewCms', $viewCms)
             ->where('auth.can.borrowBooks', $borrowBooks)
         );
 })->with([
-    'member' => ['member', false, false, true, false, false, false, false, true],
-    'librarian' => ['librarian', false, true, false, true, true, true, true, false],
-    'administrator' => ['admin', true, true, false, true, true, true, true, false],
+    'member' => ['member', false, false, true, false, false, false, false, false, true],
+    'librarian' => ['librarian', false, true, false, true, true, true, true, false, false],
+    'administrator' => ['admin', true, true, false, true, true, true, true, true, false],
 ]);

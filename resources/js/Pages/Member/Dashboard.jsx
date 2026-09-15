@@ -1,4 +1,5 @@
 import InertiaButton from '@/Components/InertiaButton';
+import StudentPortalCmsContent from '@/Components/Cms/StudentPortalCmsContent';
 import MemberLayout from '@/Layouts/MemberLayout';
 import { jsonRequest } from '@/Utils/jsonRequest';
 import { getRequestErrorMessage } from '@/Utils/requestErrorMessage';
@@ -54,7 +55,13 @@ const memberStatusColor = {
 };
 
 export default function Dashboard() {
-    const { auth, currentLoans = [], member } = usePage().props;
+    const {
+        auth,
+        cmsContent,
+        currentLoans = [],
+        homepageBooks = [],
+        member,
+    } = usePage().props;
     const [requestingReturnLoanId, setRequestingReturnLoanId] = useState(null);
     const { message, modal } = AntdApp.useApp();
     const canBrowseCatalogue = member.status !== 'inactive';
@@ -178,6 +185,8 @@ export default function Dashboard() {
                     </Card>
                 </Col>
             </Row>
+
+            <StudentPortalCmsContent books={homepageBooks} content={cmsContent} />
 
             <Card
                 className="member-services-card"
