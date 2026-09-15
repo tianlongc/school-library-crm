@@ -46,6 +46,8 @@ class RolesAndPermissionsSeeder extends Seeder
             'members.reactivate',
             'users.view',
             'users.roles.update',
+            'cms.view',
+            'cms.update',
         ];
 
         foreach ([...$memberPermissions, ...$staffPermissions, ...$adminPermissions] as $permission) {
