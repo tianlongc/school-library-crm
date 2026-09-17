@@ -1,6 +1,8 @@
 <?php
 
-namespace App\Domain\Cms;
+namespace App\Domain\Cms\Documents;
+
+use App\Domain\Cms\Models\CmsPage;
 
 class CmsPageDocument
 {
@@ -17,6 +19,7 @@ class CmsPageDocument
         'book_collection',
         'rich_text',
         'call_to_action',
+        'image',
     ];
 
     /**
@@ -78,5 +81,38 @@ class CmsPageDocument
             ->unique()
             ->values()
             ->all();
+    }
+
+    /** @return list<string> */
+    public static function mediaUuids(array $content): array
+    {
+        return collect($content['blocks'] ?? [])
+            ->map(fn (mixed $block): mixed => is_array($block) ? ($block['data']['media_uuid'] ?? null) : null)
+            ->filter(fn (mixed $uuid): bool => is_string($uuid) && $uuid !== '')
+            ->unique()
+            ->values()
+            ->all();
+    }
+
+    /** @param array<string, mixed> $content */
+    public static function withMediaUrls(CmsPage $page, array $content): array
+    {
+        $mediaByUuid = $page->getMedia('builder_images')->keyBy('uuid');
+
+        $content['blocks'] = collect($content['blocks'] ?? [])->map(function (mixed $block) use ($mediaByUuid): mixed {
+            if (! is_array($block)) {
+                return $block;
+            }
+
+            $uuid = $block['data']['media_uuid'] ?? null;
+
+            if (is_string($uuid) && $mediaByUuid->has($uuid)) {
+                $block['data']['media_url'] = $mediaByUuid->get($uuid)->getUrl();
+            }
+
+            return $block;
+        })->all();
+
+        return $content;
     }
 }

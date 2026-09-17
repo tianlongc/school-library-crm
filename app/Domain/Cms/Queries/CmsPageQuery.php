@@ -2,7 +2,7 @@
 
 namespace App\Domain\Cms\Queries;
 
-use App\Domain\Cms\CmsPageDocument;
+use App\Domain\Cms\Documents\CmsPageDocument;
 use App\Domain\Cms\Models\CmsPage;
 
 class CmsPageQuery

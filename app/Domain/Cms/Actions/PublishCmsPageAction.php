@@ -8,6 +8,8 @@ use Illuminate\Support\Facades\DB;
 
 class PublishCmsPageAction
 {
+    public function __construct(private readonly CleanupCmsPageMediaAction $cleanupMedia) {}
+
     public function execute(CmsPage $cmsPage, User $updatedBy): CmsPage
     {
         return DB::transaction(function () use ($cmsPage, $updatedBy): CmsPage {
@@ -21,7 +23,10 @@ class PublishCmsPageAction
                 'updated_by_user_id' => $updatedBy->id,
             ]);
 
-            return $lockedPage->refresh();
+            $lockedPage->refresh();
+            $this->cleanupMedia->execute($lockedPage);
+
+            return $lockedPage;
         });
     }
 }

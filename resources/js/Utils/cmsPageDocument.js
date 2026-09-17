@@ -6,6 +6,7 @@ export const CMS_BLOCK_TYPES = [
     'book_collection',
     'rich_text',
     'call_to_action',
+    'image',
 ];
 
 export const CMS_BLOCK_DEFINITIONS = {
@@ -16,6 +17,7 @@ export const CMS_BLOCK_DEFINITIONS = {
             eyebrow: 'School library',
             heading: 'Your library, all in one place',
             body: 'Discover books, keep track of loans and make time for your next great read.',
+            media_uuid: null,
         },
     },
     announcement: {
@@ -51,6 +53,14 @@ export const CMS_BLOCK_DEFINITIONS = {
             body: 'Search the school catalogue and borrow when a copy is available.',
             label: 'Browse catalogue',
             target: 'catalogue',
+        },
+    },
+    image: {
+        label: 'Image',
+        description: 'Add a library image with accessible alternative text.',
+        data: {
+            media_uuid: null,
+            alt: '',
         },
     },
 };
@@ -170,4 +180,16 @@ export function moveCmsBlock(content, blockId, targetIndex) {
     document.blocks.splice(boundedTargetIndex, 0, block);
 
     return document;
+}
+
+export function resolveCanvasDropIndex(target, blockCount) {
+    return target?.data?.kind === 'canvas-slot'
+        ? target.data.index
+        : blockCount;
+}
+
+export function isCanvasBackgroundDropActive(source, target) {
+    return Boolean(
+        source && target?.data?.kind === 'canvas-background',
+    );
 }

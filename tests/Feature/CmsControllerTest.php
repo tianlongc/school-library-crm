@@ -4,6 +4,8 @@ use App\Domain\Book\Models\Book;
 use App\Domain\Cms\Models\CmsPage;
 use App\Domain\User\Models\User;
 use Database\Seeders\RolesAndPermissionsSeeder;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Testing\AssertableInertia as Assert;
 
 function cmsPageDocument(array $blocks = []): array
@@ -84,6 +86,181 @@ it('renders the student portal page builder for administrators', function () {
             ->where('bookOptions.0.value', $book->id)
             ->where('bookOptions.0.label', 'The Hobbit - J. R. R. Tolkien')
         );
+});
+
+it('uploads a page builder image for administrators', function () {
+    Storage::fake('public');
+
+    $admin = User::factory()->create();
+    $admin->assignRole('admin');
+    $page = createCmsPageForControllerTest();
+
+    $response = $this->actingAs($admin)
+        ->post(route('admin.cms.media.store'), [
+            'image' => UploadedFile::fake()->image('library.webp', 1200, 800),
+        ]);
+
+    $response
+        ->assertCreated()
+        ->assertJsonPath('media.uuid', fn (mixed $uuid): bool => is_string($uuid) && $uuid !== '')
+        ->assertJsonPath('media.url', fn (mixed $url): bool => is_string($url) && $url !== '');
+
+    $media = $page->refresh()->getFirstMedia('builder_images');
+
+    expect($media)->not->toBeNull()
+        ->and($media->file_name)->toBe('library.webp');
+    Storage::disk('public')->assertExists($media->getPathRelativeToRoot());
+});
+
+it('rejects an invalid page builder image', function () {
+    Storage::fake('public');
+
+    $admin = User::factory()->create();
+    $admin->assignRole('admin');
+    createCmsPageForControllerTest();
+
+    $this->actingAs($admin)
+        ->withHeader('Accept', 'application/json')
+        ->post(route('admin.cms.media.store'), [
+            'image' => UploadedFile::fake()->create('script.svg', 10, 'image/svg+xml'),
+        ])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors('image');
+});
+
+it('rejects a page builder image larger than five megabytes', function () {
+    Storage::fake('public');
+
+    $admin = User::factory()->create();
+    $admin->assignRole('admin');
+    createCmsPageForControllerTest();
+
+    $this->actingAs($admin)
+        ->withHeader('Accept', 'application/json')
+        ->post(route('admin.cms.media.store'), [
+            'image' => UploadedFile::fake()->image('library.jpg')->size(5121),
+        ])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors('image');
+});
+
+it('forbids librarians from uploading page builder images', function () {
+    $librarian = User::factory()->create();
+    $librarian->assignRole('librarian');
+    createCmsPageForControllerTest();
+
+    $this->actingAs($librarian)
+        ->post(route('admin.cms.media.store'), [
+            'image' => UploadedFile::fake()->image('library.jpg'),
+        ])
+        ->assertForbidden();
+});
+
+it('rejects page builder media that belongs to another cms page', function () {
+    Storage::fake('public');
+
+    $admin = User::factory()->create();
+    $admin->assignRole('admin');
+    createCmsPageForControllerTest();
+    $otherPage = CmsPage::factory()->create([
+        'key' => 'other-page',
+    ]);
+    $foreignMedia = $otherPage
+        ->addMedia(UploadedFile::fake()->image('foreign.jpg'))
+        ->toMediaCollection('builder_images');
+
+    $this->actingAs($admin)
+        ->postJson(route('admin.cms.content.update'), [
+            'content' => cmsPageDocument([
+                [
+                    'id' => 'foreign-image',
+                    'type' => 'image',
+                    'is_visible' => true,
+                    'data' => [
+                        'media_uuid' => $foreignMedia->uuid,
+                        'alt' => 'Foreign image',
+                    ],
+                ],
+            ]),
+        ])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors('content.blocks.0.data.media_uuid');
+});
+
+it('resolves page builder media urls for draft preview', function () {
+    Storage::fake('public');
+
+    $admin = User::factory()->create();
+    $admin->assignRole('admin');
+    $page = createCmsPageForControllerTest();
+    $media = $page
+        ->addMedia(UploadedFile::fake()->image('reading-room.jpg'))
+        ->toMediaCollection('builder_images');
+    $page->update([
+        'draft_content' => cmsPageDocument([
+            [
+                'id' => 'reading-room',
+                'type' => 'image',
+                'is_visible' => true,
+                'data' => [
+                    'media_uuid' => $media->uuid,
+                    'alt' => 'School reading room',
+                ],
+            ],
+        ]),
+    ]);
+
+    $this->actingAs($admin)
+        ->get(route('admin.cms.preview'))
+        ->assertSuccessful()
+        ->assertInertia(fn (Assert $inertia) => $inertia
+            ->where('content.blocks.0.data.media_uuid', $media->uuid)
+            ->where('content.blocks.0.data.media_url', $media->getUrl())
+        );
+});
+
+it('keeps published builder media until a draft without it is published', function () {
+    Storage::fake('public');
+
+    $admin = User::factory()->create();
+    $admin->assignRole('admin');
+    $page = createCmsPageForControllerTest();
+    $media = $page
+        ->addMedia(UploadedFile::fake()->image('published-hero.jpg'))
+        ->toMediaCollection('builder_images');
+    $publishedContent = cmsPageDocument([
+        [
+            'id' => 'published-hero',
+            'type' => 'hero',
+            'is_visible' => true,
+            'data' => [
+                'eyebrow' => 'School library',
+                'heading' => 'Published hero',
+                'body' => 'Students can still see this image.',
+                'media_uuid' => $media->uuid,
+            ],
+        ],
+    ]);
+    $page->update([
+        'draft_content' => $publishedContent,
+        'published_content' => $publishedContent,
+    ]);
+
+    $this->actingAs($admin)
+        ->postJson(route('admin.cms.content.update'), [
+            'content' => cmsPageDocument(),
+        ])
+        ->assertSuccessful();
+
+    expect($page->refresh()->getMedia('builder_images')->contains('uuid', $media->uuid))->toBeTrue();
+    Storage::disk('public')->assertExists($media->getPathRelativeToRoot());
+
+    $this->actingAs($admin)
+        ->postJson(route('admin.cms.publish'))
+        ->assertSuccessful();
+
+    expect($page->refresh()->getMedia('builder_images')->contains('uuid', $media->uuid))->toBeFalse();
+    Storage::disk('public')->assertMissing($media->getPathRelativeToRoot());
 });
 
 it('autosaves a private draft without changing published content', function () {

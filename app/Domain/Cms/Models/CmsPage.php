@@ -9,13 +9,22 @@ use Illuminate\Database\Eloquent\Attributes\UseFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
 
 #[Fillable(['key', 'title', 'draft_content', 'published_content', 'published_at', 'updated_by_user_id'])]
 #[UseFactory(CmsPageFactory::class)]
-class CmsPage extends Model
+class CmsPage extends Model implements HasMedia
 {
     /** @use HasFactory<CmsPageFactory> */
-    use HasFactory;
+    use HasFactory, InteractsWithMedia;
+
+    public function registerMediaCollections(): void
+    {
+        $this->addMediaCollection('builder_images')
+            ->useDisk('public')
+            ->acceptsMimeTypes(['image/jpeg', 'image/png', 'image/webp']);
+    }
 
     protected function casts(): array
     {
