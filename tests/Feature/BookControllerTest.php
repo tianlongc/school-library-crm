@@ -5,6 +5,8 @@ use App\Domain\Category\Models\Category;
 use App\Domain\Loan\Models\Loan;
 use App\Domain\User\Models\User;
 use Database\Seeders\RolesAndPermissionsSeeder;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Testing\AssertableInertia as Assert;
 
 function validBookData(array $overrides = []): array
@@ -264,6 +266,48 @@ describe('authenticated book management', function () {
         ]);
     });
 
+    it('creates a book with a cover image', function () {
+        Storage::fake('public');
+
+        $response = $this->post(route('staff.books.store'), validBookData([
+            'cover' => UploadedFile::fake()->image('cover.jpg', 600, 900),
+        ]));
+
+        $response
+            ->assertCreated()
+            ->assertJsonPath('book.title', 'Clean Code')
+            ->assertJsonPath('book.cover_url', fn (mixed $url): bool => is_string($url) && $url !== '');
+
+        $book = Book::query()->where('isbn', '9780132350884')->sole();
+        $cover = $book->getFirstMedia('cover');
+
+        expect($cover)->not->toBeNull()
+            ->and($cover->mime_type)->toBe('image/jpeg');
+        Storage::disk('public')->assertExists($cover->getPathRelativeToRoot());
+    });
+
+    it('rejects an invalid book cover', function () {
+        Storage::fake('public');
+
+        $this->withHeader('Accept', 'application/json')->post(route('staff.books.store'), validBookData([
+            'cover' => UploadedFile::fake()->create('cover.txt', 10, 'text/plain'),
+        ]))
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('cover');
+
+        expect(Book::query()->count())->toBe(0);
+    });
+
+    it('rejects a book cover larger than five megabytes', function () {
+        Storage::fake('public');
+
+        $this->withHeader('Accept', 'application/json')->post(route('staff.books.store'), validBookData([
+            'cover' => UploadedFile::fake()->image('cover.jpg')->size(5121),
+        ]))
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('cover');
+    });
+
     it('creates a book with a selected category', function () {
         $category = Category::factory()->create();
 
@@ -380,6 +424,43 @@ describe('authenticated book management', function () {
             ->and($book->author)->toBe('Martin Fowler')
             ->and($book->isbn)->toBe('9780201485677')
             ->and($book->total_copies)->toBe(8);
+    });
+
+    it('keeps the existing cover when updating without a replacement', function () {
+        Storage::fake('public');
+
+        $book = Book::factory()->create();
+        $cover = $book
+            ->addMedia(UploadedFile::fake()->image('original.jpg'))
+            ->toMediaCollection('cover');
+
+        $this->post(route('staff.books.update', $book), validBookData([
+            'isbn' => $book->isbn,
+        ]))->assertSuccessful();
+
+        expect($book->refresh()->getFirstMedia('cover')?->is($cover))->toBeTrue();
+        Storage::disk('public')->assertExists($cover->getPathRelativeToRoot());
+    });
+
+    it('replaces the existing cover when updating with a new image', function () {
+        Storage::fake('public');
+
+        $book = Book::factory()->create();
+        $originalCover = $book
+            ->addMedia(UploadedFile::fake()->image('original.jpg'))
+            ->toMediaCollection('cover');
+
+        $this->post(route('staff.books.update', $book), validBookData([
+            'isbn' => $book->isbn,
+            'cover' => UploadedFile::fake()->image('replacement.webp'),
+        ]))->assertSuccessful();
+
+        $replacementCover = $book->refresh()->getFirstMedia('cover');
+
+        expect($replacementCover)->not->toBeNull()
+            ->and($replacementCover->uuid)->not->toBe($originalCover->uuid)
+            ->and($replacementCover->file_name)->toBe('replacement.webp');
+        Storage::disk('public')->assertMissing($originalCover->getPathRelativeToRoot());
     });
 
     it('changes a books category', function () {

@@ -12,12 +12,22 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
 
 #[Fillable(['title', 'author', 'description', 'isbn', 'total_copies', 'category_id'])]
 #[UseFactory(BookFactory::class)]
-class Book extends Model
+class Book extends Model implements HasMedia
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, InteractsWithMedia, SoftDeletes;
+
+    public function registerMediaCollections(): void
+    {
+        $this->addMediaCollection('cover')
+            ->useDisk('public')
+            ->acceptsMimeTypes(['image/jpeg', 'image/png', 'image/webp'])
+            ->singleFile();
+    }
 
     public function category(): BelongsTo
     {

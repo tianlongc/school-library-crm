@@ -29,6 +29,7 @@ class StoreBookRequest extends FormRequest
             'isbn' => 'required|string|size:13|unique:books,isbn',
             'total_copies' => 'required|integer|min:1',
             'category_id' => 'nullable|integer|exists:categories,id',
+            'cover' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:5120',
         ];
     }
 }

@@ -1,9 +1,9 @@
 import InertiaButton from '@/Components/InertiaButton';
 import PageHeader from '@/Components/PageHeader';
 import StaffLayout from '@/Layouts/StaffLayout';
-import EditOutlined from '@ant-design/icons/EditOutlined';
+import { PictureOutlined, EditOutlined } from '@ant-design/icons';
 import { Head } from '@inertiajs/react';
-import { Card, Col, Descriptions, Row, Statistic, Typography } from 'antd';
+import { Card, Col, Descriptions, Flex, Image, Row, Statistic, Typography } from 'antd';
 
 function formatDate(value) {
     if (!value) {
@@ -19,19 +19,61 @@ function formatDate(value) {
     }).format(new Date(value));
 }
 
+function BookCover({ book }) {
+    if (!book.cover_url) {
+        return (
+            <Flex
+                className="book-cover-placeholder is-detail"
+                align="center"
+                justify="center"
+                vertical
+                gap={8}
+            >
+                <PictureOutlined />
+
+                <Typography.Text type="secondary">
+                    No cover available
+                </Typography.Text>
+            </Flex>
+        );
+    }
+
+    return (
+        <Image
+            src={book.cover_url}
+            alt={`Cover of ${book.title}`}
+            width={180}
+            height={270}
+            className="book-detail-cover is-thumbnail"
+            preview   
+        />
+    );
+}
+
 export default function Show({ book }) {
     const details = [
-        { key: 'title', label: 'Title', children: book.title },
-        { key: 'author', label: 'Author', children: book.author },
+        { 
+            key: 'title',
+            label: 'Title',
+            children: book.title
+        },
+        {
+            key: 'author',
+            label: 'Author',
+            children: book.author
+        },
         {
             key: 'isbn',
             label: 'ISBN',
-            children: <Typography.Text code>{book.isbn}</Typography.Text>,
+            children: (
+                <span className="table-meta-chip">
+                        {book.isbn}
+                </span>
+            ),
         },
         {
             key: 'description',
             label: 'Description',
-            span: 'filled',
             children: (
                 <Typography.Paragraph className="book-description">
                     {book.description || 'No description has been added for this book.'}
@@ -81,12 +123,22 @@ export default function Show({ book }) {
             <Row gutter={[24, 24]}>
                 <Col xs={24} xl={17}>
                     <Card title="Book details">
-                        <Descriptions
-                            bordered
-                            column={{ xs: 1, sm: 2 }}
-                            items={details}
-                            size="middle"
-                        />
+                        <Row gutter={[24, 24]}>
+                            <Col xs={24} md={6}>
+                                <Flex justify="center">
+                                    <BookCover book={book} />
+                                </Flex>
+                            </Col>
+
+                            <Col xs={24} md={18}>
+                                <Descriptions
+                                    bordered
+                                    column={1}
+                                    items={details}
+                                    size="middle"
+                                />
+                            </Col>
+                        </Row>
                     </Card>
                 </Col>
                 <Col xs={24} xl={7}>

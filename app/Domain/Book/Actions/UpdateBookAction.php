@@ -3,6 +3,7 @@
 namespace App\Domain\Book\Actions;
 
 use App\Domain\Book\Models\Book;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -18,9 +19,9 @@ class UpdateBookAction
      *      category_id: ?int
      * } $attributes
      */
-    public function execute(Book $book, array $attributes): Book
+    public function execute(Book $book, array $attributes, ?UploadedFile $cover = null): Book
     {
-        return DB::transaction(function () use ($book, $attributes): Book {
+        return DB::transaction(function () use ($book, $attributes, $cover): Book {
             $lockedBook = Book::query()
                 ->lockForUpdate()
                 ->findOrFail($book->id);
@@ -43,6 +44,10 @@ class UpdateBookAction
                 'total_copies' => $attributes['total_copies'],
                 'category_id' => $attributes['category_id'],
             ]);
+
+            if ($cover !== null) {
+                $lockedBook->addMedia($cover)->toMediaCollection('cover');
+            }
 
             return $lockedBook->refresh();
         });

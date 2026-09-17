@@ -37,7 +37,7 @@ class BookQuery extends TableQuery
                     );
                 },
             )
-            ->with('category:id,name');
+            ->with(['category:id,name', 'media']);
     }
 
     public function getBookList(
@@ -119,6 +119,7 @@ class BookQuery extends TableQuery
     {
         return Book::query()
             ->whereKey($bookIds)
+            ->with('media')
             ->get();
     }
 }

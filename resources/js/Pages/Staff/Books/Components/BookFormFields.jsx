@@ -1,4 +1,4 @@
-import { Col, Form, Input, InputNumber, Row, Select } from 'antd';
+import { Col, Form, Image, Input, InputNumber, Row, Select } from 'antd';
 
 const errorStatus = (message) => (message ? 'error' : undefined);
 
@@ -130,6 +130,33 @@ export default function BookFormFields({
                         value={data.total_copies}
                         onChange={(value) =>
                             updateField('total_copies', value ?? 1)
+                        }
+                    />
+                </Form.Item>
+            </Col>
+
+            <Col span={24}>
+                <Form.Item
+                    htmlFor="cover"
+                    label="Cover image"
+                    validateStatus={errorStatus(errors.cover)}
+                    help={errors.cover ?? 'JPEG, PNG or WebP. Maximum 5 MB.'}
+                >
+                    {data.cover_url && !data.cover && (
+                        <Image
+                            src={data.cover_url}
+                            alt="Current book cover"
+                            width={110}
+                            preview
+                            className="book-form-cover"
+                        />
+                    )}
+                    <input
+                        id="cover"
+                        accept="image/jpeg,image/png,image/webp"
+                        type="file"
+                        onChange={(event) =>
+                            updateField('cover', event.target.files?.[0] ?? null)
                         }
                     />
                 </Form.Item>

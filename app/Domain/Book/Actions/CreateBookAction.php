@@ -3,6 +3,7 @@
 namespace App\Domain\Book\Actions;
 
 use App\Domain\Book\Models\Book;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 
 class CreateBookAction
@@ -17,9 +18,9 @@ class CreateBookAction
      *      category_id: ?int
      * } $attributes
      */
-    public function execute(array $attributes): Book
+    public function execute(array $attributes, ?UploadedFile $cover = null): Book
     {
-        return DB::transaction(function () use ($attributes): Book {
+        return DB::transaction(function () use ($attributes, $cover): Book {
             $book = Book::create([
                 'title' => $attributes['title'],
                 'author' => $attributes['author'],
@@ -29,7 +30,11 @@ class CreateBookAction
                 'category_id' => $attributes['category_id'],
             ]);
 
-            return $book;
+            if ($cover !== null) {
+                $book->addMedia($cover)->toMediaCollection('cover');
+            }
+
+            return $book->refresh();
         });
     }
 }

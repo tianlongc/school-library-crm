@@ -43,6 +43,7 @@ class BookResource extends JsonResource
             ),
             'category_id' => $this->category_id,
             'category' => new CategoryResource($this->whenLoaded('category')),
+            'cover_url' => $this->getFirstMediaUrl('cover') ?: null,
             'created_at' => $this->created_at?->toISOString(),
             'updated_at' => $this->updated_at?->toISOString(),
         ];
