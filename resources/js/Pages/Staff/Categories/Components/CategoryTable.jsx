@@ -66,6 +66,7 @@ export default function CategoryTable({
             title: 'Created',
             dataIndex: 'created_at',
             key: 'created_at',
+            align: 'center',
             sorter: true,
             sortOrder: getSortOrder(filters, 'created_at'),
             width: 150,
@@ -81,7 +82,7 @@ export default function CategoryTable({
             align: 'center',
             width: 180,
             render: (count) => (
-                <Tag color="cyan">
+                <Tag className="table-status-tag" color="cyan">
                     {count} {count === 1 ? 'book' : 'books'}
                 </Tag>
             ),

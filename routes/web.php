@@ -81,6 +81,7 @@ Route::middleware(['auth', 'can:admin.dashboard.view'])
                 Route::get('/', 'index')->middleware('can:cms.view')->name('index');
                 Route::get('/preview', 'preview')->middleware('can:cms.view')->name('preview');
                 Route::post('/content', 'updateContent')->middleware('can:cms.update')->name('content.update');
+                Route::post('/media', 'storeMedia')->middleware('can:cms.update')->name('media.store');
                 Route::post('/publish', 'publish')->middleware('can:cms.update')->name('publish');
             });
     });
