@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Staff;
 
+use App\Http\Controllers\Controller;
 use App\Domain\Book\Actions\CreateBookAction;
 use App\Domain\Book\Actions\DeleteBookAction;
 use App\Domain\Book\Actions\UpdateBookAction;

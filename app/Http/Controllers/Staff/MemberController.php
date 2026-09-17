@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Staff;
 
+use App\Http\Controllers\Controller;
 use App\Domain\Member\Actions\DeactivateMemberAction;
 use App\Domain\Member\Actions\ReactivateMemberAction;
 use App\Domain\Member\Actions\SuspendMemberAction;

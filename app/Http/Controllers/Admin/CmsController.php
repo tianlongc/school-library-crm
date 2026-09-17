@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Admin;
 
+use App\Http\Controllers\Controller;
 use App\Domain\Book\Queries\BookQuery;
 use App\Domain\Cms\Actions\PublishCmsPageAction;
 use App\Domain\Cms\Actions\UpdateCmsPageDraftAction;

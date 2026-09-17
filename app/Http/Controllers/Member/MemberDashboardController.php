@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Member;
 
+use App\Http\Controllers\Controller;
 use App\Domain\Book\Queries\BookQuery;
 use App\Domain\Cms\Documents\CmsPageDocument;
 use App\Domain\Cms\Queries\CmsPageQuery;

@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Admin;
 
+use App\Http\Controllers\Controller;
 use App\Domain\User\Actions\UpdateUserRoleAction;
 use App\Domain\User\Enums\UserRole;
 use App\Domain\User\Models\User;

@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Staff;
 
+use App\Http\Controllers\Controller;
 use App\Domain\Category\Actions\CreateCategoryAction;
 use App\Domain\Category\Actions\DeleteCategoryAction;
 use App\Domain\Category\Actions\UpdateCategoryAction;

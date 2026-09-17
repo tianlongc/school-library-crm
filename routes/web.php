@@ -1,14 +1,14 @@
 <?php
 
-use App\Http\Controllers\BookController;
-use App\Http\Controllers\CategoryController;
-use App\Http\Controllers\CmsController;
-use App\Http\Controllers\LoanController;
-use App\Http\Controllers\MemberBookController;
-use App\Http\Controllers\MemberController;
-use App\Http\Controllers\MemberDashboardController;
+use App\Http\Controllers\Staff\BookController;
+use App\Http\Controllers\Staff\CategoryController;
+use App\Http\Controllers\Admin\CmsController;
+use App\Http\Controllers\Staff\LoanController;
+use App\Http\Controllers\Member\MemberBookController;
+use App\Http\Controllers\Staff\MemberController;
+use App\Http\Controllers\Member\MemberDashboardController;
 use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\UserManagementController;
+use App\Http\Controllers\Admin\UserManagementController;
 use Illuminate\Foundation\Application;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;

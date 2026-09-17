@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Staff;
 
+use App\Http\Controllers\Controller;
 use App\Domain\Loan\Actions\IssueLoanAction;
 use App\Domain\Loan\Actions\RenewLoanAction;
 use App\Domain\Loan\Actions\RequestLoanReturnAction;
