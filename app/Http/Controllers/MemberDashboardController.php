@@ -2,6 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Domain\Book\Queries\BookQuery;
+use App\Domain\Cms\CmsPageDocument;
+use App\Domain\Cms\Queries\CmsPageQuery;
+use App\Http\Resources\BookResource;
 use App\Http\Resources\LoanResource;
 use App\Http\Resources\MemberResource;
 use Illuminate\Http\Request;
@@ -14,8 +18,11 @@ class MemberDashboardController extends Controller
     /**
      * Handle the incoming request.
      */
-    public function __invoke(Request $request): Response
-    {
+    public function __invoke(
+        Request $request,
+        CmsPageQuery $cmsPageQuery,
+        BookQuery $bookQuery,
+    ): Response {
         $member = $request->user()->member()->with(['user.roles'])->first();
 
         abort_if($member === null, 403);
@@ -28,9 +35,17 @@ class MemberDashboardController extends Controller
             ->orderBy('due_at')
             ->get();
 
+        $cmsPage = $cmsPageQuery->getStudentPortalHomepage();
+        $cmsContent = $cmsPage->published_content;
+        $homepageBooks = $bookQuery->getCmsBooks(
+            CmsPageDocument::visibleBookIds($cmsContent),
+        );
+
         return Inertia::render('Member/Dashboard', [
             'member' => MemberResource::make($member)->resolve($request),
             'currentLoans' => LoanResource::collection($currentLoans)->resolve($request),
+            'cmsContent' => $cmsContent,
+            'homepageBooks' => BookResource::collection($homepageBooks)->resolve($request),
         ]);
     }
 }

@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\BookController;
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\CmsController;
 use App\Http\Controllers\LoanController;
 use App\Http\Controllers\MemberBookController;
 use App\Http\Controllers\MemberController;
@@ -71,6 +72,16 @@ Route::middleware(['auth', 'can:admin.dashboard.view'])
                 Route::get('/', 'index')->middleware('can:users.view')->name('dashboard');
                 Route::post('/users/query', 'query')->middleware('can:users.view')->name('users.query');
                 Route::post('/{user}/role', 'updateRole')->name('users.role.update');
+            });
+
+        Route::controller(CmsController::class)
+            ->prefix('cms')
+            ->name('cms.')
+            ->group(function (): void {
+                Route::get('/', 'index')->middleware('can:cms.view')->name('index');
+                Route::get('/preview', 'preview')->middleware('can:cms.view')->name('preview');
+                Route::post('/content', 'updateContent')->middleware('can:cms.update')->name('content.update');
+                Route::post('/publish', 'publish')->middleware('can:cms.update')->name('publish');
             });
     });
 

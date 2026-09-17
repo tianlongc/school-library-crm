@@ -4,9 +4,10 @@ namespace App\Domain\Book\Queries;
 
 use App\Domain\Book\Models\Book;
 use App\Domain\Member\Models\Member;
-use App\Domain\Shared\Queries\TableQuery;
+use App\Shared\Queries\TableQuery;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Override;
 
 class BookQuery extends TableQuery
@@ -94,5 +95,30 @@ class BookQuery extends TableQuery
             ->orderByDesc('books.id')
             ->paginate(12)
             ->withQueryString();
+    }
+
+    /**
+     * Return the small book payload needed by the CMS selector.
+     *
+     * @return Collection<int, Book>
+     */
+    public function getCmsOptions(): Collection
+    {
+        return Book::query()
+            ->select(['id', 'title', 'author'])
+            ->orderBy('title')
+            ->orderBy('id')
+            ->get();
+    }
+
+    /**
+     * @param  list<int>  $bookIds
+     * @return Collection<int, Book>
+     */
+    public function getCmsBooks(array $bookIds): Collection
+    {
+        return Book::query()
+            ->whereKey($bookIds)
+            ->get();
     }
 }

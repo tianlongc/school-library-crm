@@ -1,4 +1,5 @@
 import ApplicationLogo from '@/Components/ApplicationLogo';
+import { LayoutOutlined } from '@ant-design/icons';
 import BookOutlined from '@ant-design/icons/BookOutlined';
 import DashboardOutlined from '@ant-design/icons/DashboardOutlined';
 import LogoutOutlined from '@ant-design/icons/LogoutOutlined';
@@ -42,7 +43,7 @@ const adminNavigation = {
     key: 'admin.dashboard',
     label: 'User management',
     icon: <UserSwitchOutlined />,
-    active: 'admin.*',
+    active: 'admin.dashboard',
 };
 
 const memberNavigation = {
@@ -52,6 +53,13 @@ const memberNavigation = {
     active: 'staff.members.*',
 };
 
+const cmsNavigation = {
+    key: 'admin.cms.index',
+    label: 'Homepage CMS',
+    icon: <LayoutOutlined />,
+    active: 'admin.cms.*',
+};
+
 export default function StaffSidebar({ onNavigate }) {
     const { auth } = usePage().props;
     const navigation = [
@@ -59,6 +67,7 @@ export default function StaffSidebar({ onNavigate }) {
         ...(auth.can.viewLoans ? [loanNavigation] : []),
         ...(auth.can.viewMembers ? [memberNavigation] : []),
         ...(auth.can.viewAdminDashboard ? [adminNavigation] : []),
+        ...(auth.can.viewCms ? [cmsNavigation] : []),
     ];
     const selectedNavigation = navigation.find((item) =>
         route().current(item.active),

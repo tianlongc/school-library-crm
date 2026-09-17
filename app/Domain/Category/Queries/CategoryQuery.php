@@ -3,7 +3,7 @@
 namespace App\Domain\Category\Queries;
 
 use App\Domain\Category\Models\Category;
-use App\Domain\Shared\Queries\TableQuery;
+use App\Shared\Queries\TableQuery;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;

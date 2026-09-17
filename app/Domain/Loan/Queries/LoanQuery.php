@@ -6,7 +6,7 @@ use App\Domain\Book\Models\Book;
 use App\Domain\Loan\Enums\LoanStatus;
 use App\Domain\Loan\Models\Loan;
 use App\Domain\Member\Models\Member;
-use App\Domain\Shared\Queries\TableQuery;
+use App\Shared\Queries\TableQuery;
 use App\Domain\User\Models\User;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
