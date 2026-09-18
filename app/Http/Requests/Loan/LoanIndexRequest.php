@@ -1,18 +1,19 @@
 <?php
 
-namespace App\Http\Requests;
+namespace App\Http\Requests\Loan;
 
-use App\Domain\Member\Enums\MemberStatus;
+use App\Domain\Loan\Enums\LoanStatus;
+use App\Http\Requests\Table\TableIndexRequest;
 use Illuminate\Validation\Rule;
 
-class MemberIndexRequest extends TableIndexRequest
+class LoanIndexRequest extends TableIndexRequest
 {
     protected function prepareForValidation(): void
     {
         parent::prepareForValidation();
 
         $this->merge([
-            'status' => MemberStatus::tryFrom(
+            'status' => LoanStatus::tryFrom(
                 (string) $this->string('status'),
             )?->value ?? '',
         ]);
@@ -25,13 +26,13 @@ class MemberIndexRequest extends TableIndexRequest
     {
         return [
             ...parent::rules(),
-            'status' => ['nullable', Rule::enum(MemberStatus::class)],
+            'status' => ['nullable', Rule::enum(LoanStatus::class)],
         ];
     }
 
-    public function status(): ?MemberStatus
+    public function status(): ?LoanStatus
     {
-        return MemberStatus::tryFrom(
+        return LoanStatus::tryFrom(
             (string) $this->validated('status', ''),
         );
     }
@@ -52,11 +53,19 @@ class MemberIndexRequest extends TableIndexRequest
      */
     protected function allowedSorts(): array
     {
-        return ['name', 'member_number', 'created_at'];
+        return [
+            'member_name',
+            'member_number',
+            'book_title',
+            'isbn',
+            'issued_at',
+            'due_at',
+            'returned_at',
+        ];
     }
 
     protected function defaultSort(): string
     {
-        return 'created_at';
+        return 'issued_at';
     }
 }

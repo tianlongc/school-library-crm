@@ -1,19 +1,20 @@
 <?php
 
-namespace App\Http\Requests;
+namespace App\Http\Requests\User;
 
-use App\Domain\Loan\Enums\LoanStatus;
+use App\Domain\User\Enums\UserRole;
+use App\Http\Requests\Table\TableIndexRequest;
 use Illuminate\Validation\Rule;
 
-class LoanIndexRequest extends TableIndexRequest
+class UserIndexRequest extends TableIndexRequest
 {
     protected function prepareForValidation(): void
     {
         parent::prepareForValidation();
 
         $this->merge([
-            'status' => LoanStatus::tryFrom(
-                (string) $this->string('status'),
+            'role' => UserRole::tryFrom(
+                (string) $this->string('role'),
             )?->value ?? '',
         ]);
     }
@@ -25,14 +26,14 @@ class LoanIndexRequest extends TableIndexRequest
     {
         return [
             ...parent::rules(),
-            'status' => ['nullable', Rule::enum(LoanStatus::class)],
+            'role' => ['nullable', Rule::enum(UserRole::class)],
         ];
     }
 
-    public function status(): ?LoanStatus
+    public function role(): ?UserRole
     {
-        return LoanStatus::tryFrom(
-            (string) $this->validated('status', ''),
+        return UserRole::tryFrom(
+            (string) $this->validated('role', ''),
         );
     }
 
@@ -43,7 +44,7 @@ class LoanIndexRequest extends TableIndexRequest
     {
         return [
             ...parent::filters(),
-            'status' => $this->status()?->value ?? '',
+            'role' => $this->role()?->value ?? '',
         ];
     }
 
@@ -52,19 +53,11 @@ class LoanIndexRequest extends TableIndexRequest
      */
     protected function allowedSorts(): array
     {
-        return [
-            'member_name',
-            'member_number',
-            'book_title',
-            'isbn',
-            'issued_at',
-            'due_at',
-            'returned_at',
-        ];
+        return ['name', 'member_number', 'created_at'];
     }
 
     protected function defaultSort(): string
     {
-        return 'issued_at';
+        return 'created_at';
     }
 }

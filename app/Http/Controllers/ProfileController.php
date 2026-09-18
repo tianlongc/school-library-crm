@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Domain\User\Actions\DeleteUserAccountAction;
 use App\Domain\User\Actions\UpdateUserProfileAction;
-use App\Http\Requests\ProfileUpdateRequest;
+use App\Http\Requests\Profile\ProfileUpdateRequest;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;

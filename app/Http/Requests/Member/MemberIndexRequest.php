@@ -1,19 +1,20 @@
 <?php
 
-namespace App\Http\Requests;
+namespace App\Http\Requests\Member;
 
-use App\Domain\User\Enums\UserRole;
+use App\Domain\Member\Enums\MemberStatus;
+use App\Http\Requests\Table\TableIndexRequest;
 use Illuminate\Validation\Rule;
 
-class UserIndexRequest extends TableIndexRequest
+class MemberIndexRequest extends TableIndexRequest
 {
     protected function prepareForValidation(): void
     {
         parent::prepareForValidation();
 
         $this->merge([
-            'role' => UserRole::tryFrom(
-                (string) $this->string('role'),
+            'status' => MemberStatus::tryFrom(
+                (string) $this->string('status'),
             )?->value ?? '',
         ]);
     }
@@ -25,14 +26,14 @@ class UserIndexRequest extends TableIndexRequest
     {
         return [
             ...parent::rules(),
-            'role' => ['nullable', Rule::enum(UserRole::class)],
+            'status' => ['nullable', Rule::enum(MemberStatus::class)],
         ];
     }
 
-    public function role(): ?UserRole
+    public function status(): ?MemberStatus
     {
-        return UserRole::tryFrom(
-            (string) $this->validated('role', ''),
+        return MemberStatus::tryFrom(
+            (string) $this->validated('status', ''),
         );
     }
 
@@ -43,7 +44,7 @@ class UserIndexRequest extends TableIndexRequest
     {
         return [
             ...parent::filters(),
-            'role' => $this->role()?->value ?? '',
+            'status' => $this->status()?->value ?? '',
         ];
     }
 

@@ -1,13 +1,11 @@
 <?php
 
-namespace App\Http\Requests;
+namespace App\Http\Requests\Category;
 
-use App\Domain\User\Enums\UserRole;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
 
-class UpdateUserRoleRequest extends FormRequest
+class StoreCategoryRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -25,7 +23,7 @@ class UpdateUserRoleRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'role' => ['required', Rule::enum(UserRole::class)],
+            'name' => 'required|string|max:255|unique:categories,name',
         ];
     }
 }

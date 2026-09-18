@@ -9,7 +9,7 @@ use App\Domain\Member\Actions\SuspendMemberAction;
 use App\Domain\Member\Enums\MemberStatus;
 use App\Domain\Member\Models\Member;
 use App\Domain\Member\Queries\MemberQuery;
-use App\Http\Requests\MemberIndexRequest;
+use App\Http\Requests\Member\MemberIndexRequest;
 use App\Http\Resources\MemberResource;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\JsonResponse;

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Requests;
+namespace App\Http\Requests\Cms;
 
 use App\Domain\Cms\Documents\CmsPageDocument;
 use App\Domain\Cms\Models\CmsPage;

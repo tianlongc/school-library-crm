@@ -1,6 +1,8 @@
 <?php
 
-namespace App\Http\Requests;
+namespace App\Http\Requests\Book;
+
+use App\Http\Requests\Table\TableIndexRequest;
 
 class BookIndexRequest extends TableIndexRequest
 {

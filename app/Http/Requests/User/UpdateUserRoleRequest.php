@@ -1,11 +1,13 @@
 <?php
 
-namespace App\Http\Requests;
+namespace App\Http\Requests\User;
 
+use App\Domain\User\Enums\UserRole;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
-class IssueLoanRequest extends FormRequest
+class UpdateUserRoleRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -23,9 +25,7 @@ class IssueLoanRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'member_number' => 'required|string|max:255',
-            'isbn' => 'required|string|size:13',
-            'due_at' => 'required|date|after:now',
+            'role' => ['required', Rule::enum(UserRole::class)],
         ];
     }
 }

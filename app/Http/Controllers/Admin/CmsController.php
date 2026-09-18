@@ -8,7 +8,7 @@ use App\Domain\Cms\Actions\PublishCmsPageAction;
 use App\Domain\Cms\Actions\UpdateCmsPageDraftAction;
 use App\Domain\Cms\Documents\CmsPageDocument;
 use App\Domain\Cms\Queries\CmsPageQuery;
-use App\Http\Requests\UpdateCmsPageContentRequest;
+use App\Http\Requests\Cms\UpdateCmsPageContentRequest;
 use App\Http\Resources\BookResource;
 use App\Http\Resources\CmsPageResource;
 use Illuminate\Http\JsonResponse;
