@@ -5,15 +5,25 @@ namespace App\Http\Requests\Community;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Override;
 
-class StoreCommunityPostRequest extends FormRequest
+class CommunityFeedRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
      */
     public function authorize(): bool
     {
-        return $this->user()?->can('community.posts.create') ?? false;
+        return $this->user() !== null;
+    }
+
+    #[Override]
+    protected function prepareForValidation(): void
+    {
+        $this->merge([
+            'page' => $this->input('page', 1),
+            'per_page' => $this->input('per_page', 10),
+        ]);
     }
 
     /**
@@ -24,16 +34,15 @@ class StoreCommunityPostRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'body' => [
+            'page' => [
                 'required',
-                'string',
-                'max:2000',
-            ],
-            'book_id' => [
-                'nullable',
                 'integer',
-                Rule::exists('books', 'id')
-                    ->whereNull('deleted_at'),
+                'min:1',
+            ],
+            'per_page' => [
+                'required',
+                'integer',
+                Rule::in([10, 20]),
             ],
         ];
     }

@@ -4,16 +4,15 @@ namespace App\Http\Requests\Community;
 
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
 
-class StoreCommunityPostRequest extends FormRequest
+class UpdateCommunityPostRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
      */
     public function authorize(): bool
     {
-        return $this->user()?->can('community.posts.create') ?? false;
+        return true;
     }
 
     /**
@@ -32,8 +31,7 @@ class StoreCommunityPostRequest extends FormRequest
             'book_id' => [
                 'nullable',
                 'integer',
-                Rule::exists('books', 'id')
-                    ->whereNull('deleted_at'),
+                'exists:books,id',
             ],
         ];
     }

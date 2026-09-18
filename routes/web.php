@@ -1,14 +1,15 @@
 <?php
 
-use App\Http\Controllers\Staff\BookController;
-use App\Http\Controllers\Staff\CategoryController;
 use App\Http\Controllers\Admin\CmsController;
-use App\Http\Controllers\Staff\LoanController;
+use App\Http\Controllers\Admin\UserManagementController;
+use App\Http\Controllers\Member\CommunityPostController;
 use App\Http\Controllers\Member\MemberBookController;
-use App\Http\Controllers\Staff\MemberController;
 use App\Http\Controllers\Member\MemberDashboardController;
 use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\Admin\UserManagementController;
+use App\Http\Controllers\Staff\BookController;
+use App\Http\Controllers\Staff\CategoryController;
+use App\Http\Controllers\Staff\LoanController;
+use App\Http\Controllers\Staff\MemberController;
 use Illuminate\Foundation\Application;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -58,6 +59,17 @@ Route::middleware('auth')
 
         Route::post('/loans/{loan}/return-request', [LoanController::class, 'requestReturn'])
             ->name('loans.request-return');
+
+        Route::controller(CommunityPostController::class)
+            ->prefix('community')
+            ->name('community.')
+            ->group(function (): void {
+                Route::get('/', 'index')->name('index');
+                Route::post('/feed', 'feed')->name('feed');
+                Route::post('/posts', 'store')->middleware('can:community.posts.create')->name('posts.store');
+                Route::post('/posts/{post}/update', 'update')->middleware('can:community.posts.update')->name('posts.update');
+                Route::post('/posts/{post}/delete', 'destroy')->middleware('can:community.posts.delete')->name('posts.destroy');
+            });
     });
 
 /**
