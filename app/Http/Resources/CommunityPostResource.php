@@ -20,6 +20,8 @@ class CommunityPostResource extends JsonResource
             'body' => $this->body,
             'status' => $this->status->value,
             'created_at' => $this->created_at->toIso8601String(),
+            'updated_at' => $this->updated_at->toIso8601String(),
+            'updated_at' => $this->updated_at->toIso8601String(),
             'author' => [
                 'id' => $this->author->id,
                 'name' => $this->author->name,
@@ -47,9 +49,22 @@ class CommunityPostResource extends JsonResource
                 [],
             ),
 
+            'comments_count' => (int) ($this->comments_count ?? 0),
+            'likes_count' => (int) ($this->likes_count ?? 0),
+            'shares_count' => (int) ($this->shares_count ?? 0),
+            'liked_by_me' => (bool) ($this->liked_by_me ?? false),
+
             'can' => [
+                'update' => $request->user()
+                    ?->can('update', $this->resource)
+                    ?? false,
+
                 'delete' => $request->user()
                     ?->can('delete', $this->resource)
+                    ?? false,
+
+                'comment' => $request->user()
+                    ?->can('comment', $this->resource)
                     ?? false,
             ],
         ];

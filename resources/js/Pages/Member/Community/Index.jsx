@@ -102,7 +102,7 @@ export default function Index({
             <div className="mx-auto max-w-3xl space-y-5">
                 <PageHeader
                     title="Community"
-                    description="Share what you're reading and discover what other members recommend."
+                    description="Share a title, ask a question, or recommend your next read."
                 />
 
                 <CreatePostCard
@@ -119,6 +119,7 @@ export default function Index({
                 ) : (
                     <>
                         <CommunityFeed
+                            bookOptions={bookOptions}
                             posts={posts.data}
                             onDeleted={handlePostDeleted}
                         />

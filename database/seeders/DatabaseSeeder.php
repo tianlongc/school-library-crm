@@ -17,6 +17,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             RolesAndPermissionsSeeder::class,
             CmsPageSeeder::class,
+            CommunitySeeder::class,
         ]);
     }
 }

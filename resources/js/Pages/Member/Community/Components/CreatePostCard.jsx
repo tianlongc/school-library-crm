@@ -1,6 +1,7 @@
 import { jsonRequest } from '@/Utils/jsonRequest';
 import { getLaravelValidationErrors } from '@/Utils/laravelValidation';
 import { getRequestErrorMessage } from '@/Utils/requestErrorMessage';
+import { PictureOutlined, PlusOutlined } from '@ant-design/icons';
 import { useForm } from '@inertiajs/react';
 import {
     App as AntdApp,
@@ -10,8 +11,11 @@ import {
     Form,
     Image,
     Input,
-    Upload,
     Select,
+    Tag,
+    Tooltip,
+    Typography,
+    Upload,
 } from 'antd';
 import { useState } from 'react';
 
@@ -38,12 +42,28 @@ export default function CreatePostCard({
     const [fileList, setFileList] = useState([]);
     const [previewImage, setPreviewImage] = useState('');
     const [previewOpen, setPreviewOpen] = useState(false);
+    const [showBookPicker, setShowBookPicker] = useState(false);
+    const [showImagePicker, setShowImagePicker] = useState(false);
+
+    const selectedBook = bookOptions.find(
+        (book) => book.value === data.book_id,
+    );
 
     const imageError =
         errors.images ??
         Object.entries(errors).find(([field]) =>
             field.startsWith('images.'),
         )?.[1];
+
+    const clearImageErrors = () => {
+        clearErrors(
+            ...Object.keys(errors).filter(
+                (field) =>
+                    field === 'images' ||
+                    field.startsWith('images.'),
+            ),
+        );
+    };
 
     const handlePreview = async (file) => {
         if (!file.url && !file.preview) {
@@ -92,6 +112,8 @@ export default function CreatePostCard({
 
             reset();
             setFileList([]);
+            setShowBookPicker(false);
+            setShowImagePicker(false);
 
             message.success(
                 payload.message ??
@@ -118,11 +140,11 @@ export default function CreatePostCard({
     };
 
     return (
-        <Card title="Share with the community">
-            <Form
-                layout="vertical"
-                onFinish={submit}
-            >
+        <Card
+            className="overflow-hidden rounded-2xl shadow-sm"
+            variant="borderless"
+        >
+            <Form onFinish={submit}>
                 {requestError && (
                     <Alert
                         className="mb-4"
@@ -132,22 +154,16 @@ export default function CreatePostCard({
                     />
                 )}
 
-                <Form.Item
-                    label="What are you reading?"
-                    validateStatus={
-                        errors.body
-                            ? 'error'
-                            : undefined
-                    }
-                    help={errors.body}
-                    required
-                >
+                <div>
                     <Input.TextArea
+                        autoSize={{
+                            minRows: 3,
+                            maxRows: 8,
+                        }}
+                        className="text-base"
                         value={data.body}
-                        rows={4}
                         maxLength={2000}
-                        showCount
-                        placeholder="Share your thoughts, recommendation, or something interesting about a book..."
+                        placeholder="Share your thoughts ..."
                         onChange={(event) => {
                             setData(
                                 'body',
@@ -157,63 +173,72 @@ export default function CreatePostCard({
                             clearErrors('body');
                         }}
                     />
-                </Form.Item>
 
-                <Form.Item
-                    label="Related book"
-                    validateStatus={errors.book_id ? 'error' : undefined}
-                    help={errors.book_id}
-                >
-                    <Select
-                        value={data.book_id ?? undefined}
-                        options={bookOptions}
-                        placeholder="Select a book (optional)"
-                        allowClear
-                        showSearch={{ optionFilterProp: 'label' }}
-                        onChange={(value) => {
-                            setData(
-                                'book_id',
-                                value ?? null,
-                            );
+                    {errors.body && (
+                        <Typography.Text
+                            className="mt-1 block"
+                            type="danger"
+                        >
+                            {errors.body}
+                        </Typography.Text>
+                    )}
+                </div>
 
-                            clearErrors(
-                                'book_id',
-                            );
-                        }}
-                    />
-                </Form.Item>
+                {(showImagePicker || fileList.length > 0) && (
+                    <div className="mt-3">
+                        <Upload
+                            accept="image/jpeg,image/png,image/webp"
+                            beforeUpload={() => false}
+                            fileList={fileList}
+                            listType="picture-card"
+                            maxCount={4}
+                            multiple
+                            onChange={({ fileList: nextFileList }) => {
+                                setFileList(nextFileList);
+                                clearImageErrors();
+                            }}
+                            onPreview={handlePreview}
+                        >
+                            {fileList.length < 4 && '+ Add'}
+                        </Upload>
 
-                <Form.Item
-                    label="Images"
-                    extra="Add up to 4 JPG, PNG, or WebP images (5 MB each)."
-                    validateStatus={
-                        imageError ? 'error' : undefined
-                    }
-                    help={imageError}
-                >
-                    <Upload
-                        accept="image/jpeg,image/png,image/webp"
-                        beforeUpload={() => false}
-                        fileList={fileList}
-                        listType="picture-card"
-                        maxCount={4}
-                        multiple
-                        onChange={({ fileList: nextFileList }) => {
-                            setFileList(nextFileList);
+                        {imageError && (
+                            <Typography.Text type="danger">
+                                {imageError}
+                            </Typography.Text>
+                        )}
+                    </div>
+                )}
 
-                            clearErrors(
-                                ...Object.keys(errors).filter(
-                                    (field) =>
-                                        field === 'images' ||
-                                        field.startsWith('images.'),
-                                ),
-                            );
-                        }}
-                        onPreview={handlePreview}
-                    >
-                        {fileList.length < 4 && '+ Add'}
-                    </Upload>
-                </Form.Item>
+                {showBookPicker && (
+                    <div className="mt-3">
+                        <Select
+                            className="w-full"
+                            value={data.book_id ?? undefined}
+                            options={bookOptions}
+                            placeholder="Add a related book"
+                            allowClear
+                            showSearch={{ optionFilterProp: 'label' }}
+                            onChange={(value) => {
+                                setData(
+                                    'book_id',
+                                    value ?? null,
+                                );
+
+                                clearErrors('book_id');
+                            }}
+                        />
+
+                        {errors.book_id && (
+                            <Typography.Text
+                                className="mt-1 block"
+                                type="danger"
+                            >
+                                {errors.book_id}
+                            </Typography.Text>
+                        )}
+                    </div>
+                )}
 
                 {previewImage && (
                     <Image
@@ -237,16 +262,57 @@ export default function CreatePostCard({
                     />
                 )}
 
-                <div>
+                <div className="mt-3 flex flex-wrap items-center justify-between gap-3 border-t pt-3">
+                    <div className="flex items-center gap-1">
+                        <Tooltip title="Add images">
+                            <Button
+                                type="text"
+                                icon={<PictureOutlined />}
+                                aria-label="Add images"
+                                aria-expanded={showImagePicker}
+                                onClick={() =>
+                                    setShowImagePicker(
+                                        (current) => !current,
+                                    )
+                                }
+                            />
+                        </Tooltip>
+
+                        <Tooltip title="Add a related book">
+                            <Button
+                                type="text"
+                                icon={<PlusOutlined />}
+                                aria-label="Add a related book"
+                                aria-expanded={showBookPicker}
+                                onClick={() =>
+                                    setShowBookPicker(
+                                        (current) => !current,
+                                    )
+                                }
+                            />
+                        </Tooltip>
+
+                        {selectedBook && !showBookPicker && (
+                            <Tag
+                                closable
+                                className="m-0"
+                                onClose={() => {
+                                    setData('book_id', null);
+                                    clearErrors('book_id');
+                                }}
+                            >
+                                {selectedBook.label}
+                            </Tag>
+                        )}
+                    </div>
+
                     <Button
                         type="primary"
                         htmlType="submit"
                         loading={submitting}
-                        disabled={
-                            !data.body.trim()
-                        }
+                        disabled={!data.body.trim()}
                     >
-                        Publish
+                        Post
                     </Button>
                 </div>
             </Form>

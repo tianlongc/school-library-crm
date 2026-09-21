@@ -1,26 +1,39 @@
 import { jsonRequest } from '@/Utils/jsonRequest';
 import { getRequestErrorMessage } from '@/Utils/requestErrorMessage';
-import { DeleteOutlined } from '@ant-design/icons';
+import { EllipsisOutlined } from '@ant-design/icons';
 import {
     App as AntdApp,
     Avatar,
     Button,
     Card,
+    Dropdown,
     Image,
-    Popconfirm,
     Space,
     Tag,
     Typography,
 } from 'antd';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import CommunityPostActionBar from './CommunityPostActionBar';
+import EditCommunityPostModal from './EditCommunityPostModal';
+import {
+    formatCommunityDate,
+    formatCommunityTimestamp,
+} from '../Utils/formatCommunityDate';
 
 export default function CommunityPostCard({
+    bookOptions,
     post,
     onDeleted,
 }) {
-    const { message } = AntdApp.useApp();
+    const { message, modal } = AntdApp.useApp();
 
+    const [currentPost, setCurrentPost] = useState(post);
     const [deleting, setDeleting] = useState(false);
+    const [editing, setEditing] = useState(false);
+
+    useEffect(() => {
+        setCurrentPost(post);
+    }, [post]);
 
     const deletePost = async () => {
         setDeleting(true);
@@ -29,7 +42,7 @@ export default function CommunityPostCard({
             const payload = await jsonRequest({
                 url: route(
                     'member.community.posts.destroy',
-                    post.id,
+                    currentPost.id,
                 ),
                 method: 'POST',
             });
@@ -38,7 +51,7 @@ export default function CommunityPostCard({
                 payload.message ?? 'Post deleted successfully.',
             );
 
-            await onDeleted?.(post);
+            await onDeleted?.(currentPost);
         } catch (error) {
             message.error(
                 getRequestErrorMessage(
@@ -51,98 +64,178 @@ export default function CommunityPostCard({
         }
     };
 
-    const createdAt = new Intl.DateTimeFormat('en-MY', {
-        dateStyle: 'medium',
-        timeStyle: 'short',
-    }).format(
-        new Date(post.created_at),
-    );
+    const handlePostAction = ({ key }) => {
+        if (key === 'edit') {
+            setEditing(true);
+
+            return;
+        }
+
+        if (key === 'delete') {
+            modal.confirm({
+                title: 'Delete this post?',
+                content: 'This action cannot be undone.',
+                okText: 'Delete',
+                cancelText: 'Cancel',
+                okButtonProps: {
+                    danger: true,
+                },
+                onOk: deletePost,
+            });
+        }
+    };
+
+    const postActionItems = [
+        currentPost.can?.update && {
+            key: 'edit',
+            label: 'Edit post',
+        },
+        currentPost.can?.delete && {
+            key: 'delete',
+            danger: true,
+            label: 'Delete post',
+        },
+    ].filter(Boolean);
+
+    const handlePostSaved = async (updatedPost) => {
+        setCurrentPost((current) => ({
+            ...current,
+            ...updatedPost,
+            comments_count:
+                updatedPost.comments_count ?? current.comments_count,
+            likes_count:
+                updatedPost.likes_count ?? current.likes_count,
+            shares_count:
+                updatedPost.shares_count ?? current.shares_count,
+            liked_by_me:
+                updatedPost.liked_by_me ?? current.liked_by_me,
+            can: {
+                ...current.can,
+                ...updatedPost.can,
+            },
+        }));
+        setEditing(false);
+        message.success('Post updated successfully.');
+    };
 
     return (
-        <Card>
-            <div className="space-y-4">
-                <div className="flex items-start justify-between gap-4">
-                    <Space align="start">
-                        <Avatar>
-                            {post.author.name.charAt(0).toUpperCase()}
-                        </Avatar>
+        <div id={`post-${post.id}`}>
+            <Card className="overflow-hidden rounded-2xl shadow-sm">
+                <div className="space-y-4">
+                    <div className="flex items-start justify-between gap-4">
+                        <Space align="start">
+                            <Avatar>
+                                {currentPost.author.name.charAt(0).toUpperCase()}
+                            </Avatar>
 
-                        <div>
-                            <Typography.Text strong>
-                                {
-                                    post.author.name
-                                }
-                            </Typography.Text>
+                            <div className="flex flex-wrap items-baseline gap-x-2">
+                                <Typography.Text strong>
+                                    {currentPost.author.name}
+                                </Typography.Text>
 
-                            <div>
                                 <Typography.Text
                                     type="secondary"
                                     className="text-xs"
                                 >
-                                    {createdAt}
+                                    ·{' '}
+                                    <time
+                                        dateTime={currentPost.created_at}
+                                        title={formatCommunityDate(
+                                            currentPost.created_at,
+                                        )}
+                                    >
+                                        {formatCommunityTimestamp(
+                                            currentPost.created_at,
+                                        )}
+                                    </time>
                                 </Typography.Text>
+
+                                {currentPost.updated_at &&
+                                    new Date(
+                                        currentPost.updated_at,
+                                    ).getTime() >
+                                        new Date(
+                                            currentPost.created_at,
+                                        ).getTime() && (
+                                        <Tag
+                                            className="m-0 text-xs"
+                                            color="default"
+                                            title={formatCommunityDate(
+                                                currentPost.updated_at,
+                                            )}
+                                        >
+                                            Edited
+                                        </Tag>
+                                    )}
                             </div>
-                        </div>
-                    </Space>
+                        </Space>
 
-                    {post.can?.delete && (
-                        <Popconfirm
-                            title="Delete this post?"
-                            description="This action cannot be undone."
-                            okText="Delete"
-                            cancelText="Cancel"
-                            okButtonProps={{
-                                danger: true,
-                            }}
-                            onConfirm={deletePost}
-                        >
-                            <Button
-                                type="text"
-                                danger
-                                loading={deleting}
-                                icon={<DeleteOutlined aria-hidden="true" />}
-                                aria-label="Delete post"
-                            />
-                        </Popconfirm>
-                    )}
-                </div>
-
-                <Typography.Paragraph className="mb-0 whitespace-pre-wrap">
-                    {post.body}
-                </Typography.Paragraph>
-
-                {post.images?.length > 0 && (
-                    <Image.PreviewGroup>
-                        <div
-                            className={`grid gap-2 ${post.images.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}
-                        >
-                            {post.images.map((image, index) => (
-                                <Image
-                                    key={image.uuid}
-                                    alt={`Image ${index + 1} shared by ${post.author.name}`}
-                                    className="h-48 w-full rounded-lg object-cover"
-                                    height={post.images.length === 1 ? 320 : 192}
-                                    preview={{
-                                        mask: 'Open image',
-                                    }}
-                                    src={image.url}
-                                    width="100%"
+                        {postActionItems.length > 0 && (
+                            <Dropdown
+                                menu={{
+                                    items: postActionItems,
+                                    onClick: handlePostAction,
+                                }}
+                                placement="bottomRight"
+                                trigger={['click']}
+                            >
+                                <Button
+                                    type="text"
+                                    loading={deleting}
+                                    icon={<EllipsisOutlined aria-hidden="true" />}
+                                    aria-label="Post options"
                                 />
-                            ))}
-                        </div>
-                    </Image.PreviewGroup>
-                )}
-
-                {post.book && (
-                    <div>
-                        <Tag>
-                            {post.book.title}
-                            {' · '}
-                            {post.book.author}
-                        </Tag>
+                            </Dropdown>
+                        )}
                     </div>
-                )}
-            </div>
-        </Card>
+
+                    <Typography.Paragraph className="mb-0 whitespace-pre-wrap">
+                        {currentPost.body}
+                    </Typography.Paragraph>
+
+                    {currentPost.images?.length > 0 && (
+                        <Image.PreviewGroup>
+                            <div
+                                className={`grid gap-2 ${currentPost.images.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}
+                            >
+                                {currentPost.images.map((image, index) => (
+                                    <Image
+                                        key={image.uuid}
+                                        alt={`Image ${index + 1} shared by ${currentPost.author.name}`}
+                                        className="h-48 w-full rounded-lg object-cover"
+                                        height={currentPost.images.length === 1 ? 320 : 192}
+                                        preview={{
+                                            mask: 'Open image',
+                                        }}
+                                        src={image.url}
+                                        width="100%"
+                                    />
+                                ))}
+                            </div>
+                        </Image.PreviewGroup>
+                    )}
+
+                    {currentPost.book && (
+                        <div>
+                            <Tag>
+                                {currentPost.book.title}
+                                {' · '}
+                                {currentPost.book.author}
+                            </Tag>
+                        </div>
+                    )}
+
+                    <CommunityPostActionBar post={currentPost} />
+                </div>
+            </Card>
+
+            <EditCommunityPostModal
+                bookOptions={bookOptions}
+                open={editing}
+                post={currentPost}
+                onCancel={() => setEditing(false)}
+                onSaved={handlePostSaved}
+            />
+        </div>
     );
 }

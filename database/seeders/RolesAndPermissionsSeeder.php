@@ -23,6 +23,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'community.posts.create',
             'community.posts.update',
             'community.posts.delete',
+            'community.posts.comment',
         ];
 
         $staffPermissions = [

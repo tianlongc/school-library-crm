@@ -223,6 +223,10 @@ describe('community post update', function () {
             ->assertJsonPath(
                 'post.book.id',
                 $book->id,
+            )
+            ->assertJsonPath(
+                'post.updated_at',
+                fn (mixed $value): bool => is_string($value) && $value !== '',
             );
 
         $this->assertDatabaseHas('community_posts', [
@@ -281,6 +285,145 @@ describe('community post update', function () {
             'book_id' => null,
             'body' => 'Updated body',
         ]);
+    });
+
+    it('updates the gallery by removing selected images and adding replacements', function () {
+        Storage::fake('public');
+
+        $post = CommunityPost::factory()->create([
+            'user_id' => $this->student->id,
+        ]);
+        $removedImage = $post
+            ->addMedia(UploadedFile::fake()->image('removed.jpg'))
+            ->toMediaCollection('images');
+        $retainedImage = $post
+            ->addMedia(UploadedFile::fake()->image('retained.jpg'))
+            ->toMediaCollection('images');
+
+        $this->post(
+            route('member.community.posts.update', $post),
+            [
+                'body' => 'Updated with a new gallery.',
+                'book_id' => '',
+                'remove_image_uuids' => [$removedImage->uuid],
+                'images' => [UploadedFile::fake()->image('replacement.webp')],
+            ],
+        )
+            ->assertSuccessful()
+            ->assertJsonCount(2, 'post.images');
+
+        expect($post->refresh()->getMedia('images')->pluck('uuid')->all())
+            ->toContain($retainedImage->uuid)
+            ->not->toContain($removedImage->uuid);
+
+        Storage::disk('public')->assertMissing(
+            $removedImage->getPathRelativeToRoot(),
+        );
+    });
+
+    it('allows a student to remove every image from a post', function () {
+        Storage::fake('public');
+
+        $post = CommunityPost::factory()->create([
+            'user_id' => $this->student->id,
+        ]);
+        $firstImage = $post
+            ->addMedia(UploadedFile::fake()->image('first.jpg'))
+            ->toMediaCollection('images');
+        $secondImage = $post
+            ->addMedia(UploadedFile::fake()->image('second.jpg'))
+            ->toMediaCollection('images');
+
+        $this->post(
+            route('member.community.posts.update', $post),
+            [
+                'body' => $post->body,
+                'book_id' => '',
+                'remove_image_uuids' => [
+                    $firstImage->uuid,
+                    $secondImage->uuid,
+                ],
+            ],
+        )
+            ->assertSuccessful()
+            ->assertJsonCount(0, 'post.images');
+
+        expect($post->refresh()->getMedia('images'))->toHaveCount(0);
+    });
+
+    it('rejects an update that would create more than four images', function () {
+        Storage::fake('public');
+
+        $post = CommunityPost::factory()->create([
+            'user_id' => $this->student->id,
+        ]);
+        $images = collect(range(1, 4))
+            ->map(fn (int $number) => $post
+                ->addMedia(UploadedFile::fake()->image("existing-{$number}.jpg"))
+                ->toMediaCollection('images'));
+
+        $this->withHeaders(['Accept' => 'application/json'])
+            ->post(
+                route('member.community.posts.update', $post),
+                [
+                    'body' => $post->body,
+                    'remove_image_uuids' => [$images->first()->uuid],
+                    'images' => [
+                        UploadedFile::fake()->image('new-one.jpg'),
+                        UploadedFile::fake()->image('new-two.jpg'),
+                    ],
+                ],
+            )
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('images');
+
+        expect($post->refresh()->getMedia('images'))->toHaveCount(4);
+    });
+
+    it('rejects image UUIDs that do not belong to the post', function () {
+        Storage::fake('public');
+
+        $post = CommunityPost::factory()->create([
+            'user_id' => $this->student->id,
+        ]);
+        $foreignPost = CommunityPost::factory()->create();
+        $foreignImage = $foreignPost
+            ->addMedia(UploadedFile::fake()->image('foreign.jpg'))
+            ->toMediaCollection('images');
+
+        $this->withHeaders(['Accept' => 'application/json'])
+            ->post(
+                route('member.community.posts.update', $post),
+                [
+                    'body' => $post->body,
+                    'remove_image_uuids' => [$foreignImage->uuid],
+                ],
+            )
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('remove_image_uuids');
+    });
+
+    it('validates update images with the same file rules as creation', function () {
+        $post = CommunityPost::factory()->create([
+            'user_id' => $this->student->id,
+        ]);
+
+        $this->withHeaders(['Accept' => 'application/json'])
+            ->post(
+                route('member.community.posts.update', $post),
+                [
+                    'body' => $post->body,
+                    'images' => [
+                        UploadedFile::fake()->create(
+                            'not-an-image.svg',
+                            10,
+                            'image/svg+xml',
+                        ),
+                    ],
+                ],
+            )
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('images.0');
     });
 });
 

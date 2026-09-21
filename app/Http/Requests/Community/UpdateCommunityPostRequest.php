@@ -4,6 +4,7 @@ namespace App\Http\Requests\Community;
 
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class UpdateCommunityPostRequest extends FormRequest
 {
@@ -31,7 +32,27 @@ class UpdateCommunityPostRequest extends FormRequest
             'book_id' => [
                 'nullable',
                 'integer',
-                'exists:books,id',
+                Rule::exists('books', 'id')
+                    ->whereNull('deleted_at'),
+            ],
+            'images' => [
+                'nullable',
+                'array',
+                'max:4',
+            ],
+            'images.*' => [
+                'image',
+                'mimes:jpg,jpeg,png,webp',
+                'max:5120',
+            ],
+            'remove_image_uuids' => [
+                'nullable',
+                'array',
+                'max:4',
+            ],
+            'remove_image_uuids.*' => [
+                'required',
+                'uuid',
             ],
         ];
     }

@@ -69,6 +69,10 @@ Route::middleware('auth')
                 Route::post('/posts', 'store')->middleware('can:community.posts.create')->name('posts.store');
                 Route::post('/posts/{post}/update', 'update')->middleware('can:community.posts.update')->name('posts.update');
                 Route::post('/posts/{post}/delete', 'destroy')->middleware('can:community.posts.delete')->name('posts.destroy');
+                Route::post('/posts/{post}/comments/feed', 'comments')->middleware('throttle:60,1')->name('posts.comments.index');
+                Route::post('/posts/{post}/comments', 'storeComment')->middleware('throttle:10,1')->name('posts.comments.store');
+                Route::post('/posts/{post}/like', 'toggleLike')->middleware('throttle:60,1')->name('posts.like');
+                Route::post('/posts/{post}/share', 'share')->middleware('throttle:20,1')->name('posts.share');
             });
     });
 

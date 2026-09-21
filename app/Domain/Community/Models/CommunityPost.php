@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\Attributes\UsePolicy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
@@ -35,6 +36,7 @@ class CommunityPost extends Model implements HasMedia
     {
         return [
             'status' => CommunityPostStatus::class,
+            'shares_count' => 'integer',
         ];
     }
 
@@ -46,5 +48,15 @@ class CommunityPost extends Model implements HasMedia
     public function book(): BelongsTo
     {
         return $this->belongsTo(Book::class)->withTrashed();
+    }
+
+    public function comments(): HasMany
+    {
+        return $this->hasMany(CommunityPostComment::class);
+    }
+
+    public function likes(): HasMany
+    {
+        return $this->hasMany(CommunityPostLike::class);
     }
 }
