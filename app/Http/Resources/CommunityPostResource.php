@@ -4,6 +4,7 @@ namespace App\Http\Resources;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 class CommunityPostResource extends JsonResource
 {
@@ -33,6 +34,17 @@ class CommunityPostResource extends JsonResource
                         'isbn' => $this->book->isbn,
                     ]
                     : null,
+            ),
+            'images' => $this->whenLoaded(
+                'media',
+                fn () => $this->getMedia('images')
+                    ->map(fn (Media $media): array => [
+                        'uuid' => $media->uuid,
+                        'url' => $media->getUrl(),
+                    ])
+                    ->values()
+                    ->all(),
+                [],
             ),
 
             'can' => [

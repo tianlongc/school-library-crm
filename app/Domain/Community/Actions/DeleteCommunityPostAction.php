@@ -11,6 +11,7 @@ class DeleteCommunityPostAction
      */
     public function execute(CommunityPost $post): void
     {
+        $post->clearMediaCollection('images');
         $post->deleteOrFail();
     }
 }

@@ -63,9 +63,14 @@ class CommunityPostController extends Controller
      */
     public function store(StoreCommunityPostRequest $request, CreateCommunityPostAction $action): JsonResponse
     {
+        $validated = $request->validated();
+        $images = $validated['images'] ?? [];
+        unset($validated['images']);
+
         $post = $action->execute(
             $request->user(),
-            $request->validated(),
+            $validated,
+            $images,
         );
 
         return response()->json([

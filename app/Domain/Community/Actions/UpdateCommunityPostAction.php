@@ -22,6 +22,7 @@ class UpdateCommunityPostAction
         return $post->refresh()->load([
             'author:id,name',
             'book:id,title,author,isbn',
+            'media',
         ]);
     }
 }

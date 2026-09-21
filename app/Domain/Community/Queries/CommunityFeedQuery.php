@@ -18,6 +18,7 @@ class CommunityFeedQuery
             ->with([
                 'author:id,name',
                 'book:id,title,author,isbn',
+                'media',
             ])
             ->latest('id')
             ->paginate(

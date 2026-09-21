@@ -35,6 +35,16 @@ class StoreCommunityPostRequest extends FormRequest
                 Rule::exists('books', 'id')
                     ->whereNull('deleted_at'),
             ],
+            'images' => [
+                'nullable',
+                'array',
+                'max:4',
+            ],
+            'images.*' => [
+                'image',
+                'mimes:jpg,jpeg,png,webp',
+                'max:5120',
+            ],
         ];
     }
 }

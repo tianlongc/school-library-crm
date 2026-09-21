@@ -4,6 +4,8 @@ use App\Domain\Book\Models\Book;
 use App\Domain\Community\Models\CommunityPost;
 use App\Domain\User\Models\User;
 use Database\Seeders\RolesAndPermissionsSeeder;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 
 beforeEach(function () {
     $this->seed(RolesAndPermissionsSeeder::class);
@@ -56,7 +58,8 @@ describe('community post creation', function () {
             ->assertJsonPath(
                 'post.body',
                 'Any fantasy recommendations?',
-            );
+            )
+            ->assertJsonPath('post.images', []);
 
         $this->assertDatabaseHas('community_posts', [
             'user_id' => $this->student->id,
@@ -64,6 +67,75 @@ describe('community post creation', function () {
             'body' => 'Any fantasy recommendations?',
             'status' => 'published',
         ]);
+    });
+
+    it('allows a student to publish a post with four images', function () {
+        Storage::fake('public');
+
+        $images = collect(range(1, 4))
+            ->map(fn (int $number) => UploadedFile::fake()->image("gallery-{$number}.jpg"))
+            ->all();
+
+        $response = $this->withHeader('Accept', 'application/json')
+            ->post(
+                route('member.community.posts.store'),
+                [
+                    'body' => 'A four-image gallery.',
+                    'images' => $images,
+                ],
+            );
+
+        $response
+            ->assertCreated()
+            ->assertJsonCount(4, 'post.images')
+            ->assertJsonPath('post.images.0.url', fn (mixed $url): bool => is_string($url) && $url !== '');
+
+        $post = CommunityPost::query()->latest('id')->firstOrFail();
+
+        expect($post->getMedia('images'))->toHaveCount(4);
+    });
+
+    it('rejects more than four images', function () {
+        $images = collect(range(1, 5))
+            ->map(fn (int $number) => UploadedFile::fake()->image("gallery-{$number}.jpg"))
+            ->all();
+
+        $this->withHeader('Accept', 'application/json')
+            ->post(
+                route('member.community.posts.store'),
+                [
+                    'body' => 'Too many images.',
+                    'images' => $images,
+                ],
+            )
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('images');
+    });
+
+    it('rejects non-image gallery files', function () {
+        $this->withHeader('Accept', 'application/json')
+            ->post(
+                route('member.community.posts.store'),
+                [
+                    'body' => 'An invalid image.',
+                    'images' => [UploadedFile::fake()->create('gallery.svg', 10, 'image/svg+xml')],
+                ],
+            )
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('images.0');
+    });
+
+    it('rejects a gallery image larger than five megabytes', function () {
+        $this->withHeader('Accept', 'application/json')
+            ->post(
+                route('member.community.posts.store'),
+                [
+                    'body' => 'An oversized image.',
+                    'images' => [UploadedFile::fake()->image('gallery.jpg')->size(5121)],
+                ],
+            )
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('images.0');
     });
 
     it('does not allow a student to spoof the post author', function () {
@@ -87,6 +159,36 @@ describe('community post creation', function () {
             'user_id' => $otherUser->id,
             'body' => 'Hello',
         ]);
+    });
+});
+
+describe('community post deletion', function () {
+    beforeEach(function () {
+        $this->student = User::factory()->create();
+        $this->student->assignRole('member');
+
+        $this->actingAs($this->student);
+    });
+
+    it('removes attached gallery images when a student deletes their post', function () {
+        Storage::fake('public');
+
+        $post = CommunityPost::factory()->create([
+            'user_id' => $this->student->id,
+        ]);
+        $media = $post
+            ->addMedia(UploadedFile::fake()->image('gallery.jpg'))
+            ->toMediaCollection('images');
+
+        $this->postJson(
+            route('member.community.posts.destroy', $post),
+        )
+            ->assertSuccessful();
+
+        $this->assertDatabaseMissing('media', [
+            'id' => $media->id,
+        ]);
+        Storage::disk('public')->assertMissing($media->getPathRelativeToRoot());
     });
 });
 
