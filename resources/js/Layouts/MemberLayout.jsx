@@ -2,6 +2,7 @@ import AccountMenu from '@/Components/AccountMenu';
 import ApplicationLogo from '@/Components/ApplicationLogo';
 import BookOutlined from '@ant-design/icons/BookOutlined';
 import HomeOutlined from '@ant-design/icons/HomeOutlined';
+import TeamOutlined from '@ant-design/icons/TeamOutlined';
 import UserOutlined from '@ant-design/icons/UserOutlined';
 import { Link } from '@inertiajs/react';
 import { Layout, Menu, Typography } from 'antd';
@@ -27,6 +28,15 @@ export default function MemberLayout({ children }) {
             icon: <BookOutlined aria-hidden="true" />,
         },
         {
+            key: 'member.community.index',
+            label: (
+                <Link href={route('member.community.index')} prefetch>
+                    Community
+                </Link>
+            ),
+            icon: <TeamOutlined aria-hidden="true" />,
+        },
+        {
             key: 'profile.edit',
             label: (
                 <Link href={route('profile.edit')} prefetch>
@@ -38,6 +48,8 @@ export default function MemberLayout({ children }) {
     ];
     const selectedKey = route().current('member.books.*')
         ? 'member.books.index'
+        : route().current('member.community.*')
+          ? 'member.community.index'
         : route().current('profile.*')
           ? 'profile.edit'
           : 'member.dashboard';

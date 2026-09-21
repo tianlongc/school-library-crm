@@ -3,6 +3,7 @@
 namespace App\Domain\Book\Models;
 
 use App\Domain\Category\Models\Category;
+use App\Domain\Community\Models\CommunityPost;
 use App\Domain\Loan\Models\Loan;
 use Database\Factories\BookFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -37,5 +38,10 @@ class Book extends Model implements HasMedia
     public function loans(): HasMany
     {
         return $this->hasMany(Loan::class);
+    }
+
+    public function communityPosts(): HasMany
+    {
+        return $this->hasMany(CommunityPost::class);
     }
 }

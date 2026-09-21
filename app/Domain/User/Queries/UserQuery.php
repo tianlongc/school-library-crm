@@ -3,9 +3,9 @@
 namespace App\Domain\User\Queries;
 
 use App\Domain\Member\Models\Member;
-use App\Shared\Queries\TableQuery;
 use App\Domain\User\Enums\UserRole;
 use App\Domain\User\Models\User;
+use App\Shared\Queries\TableQuery;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Override;

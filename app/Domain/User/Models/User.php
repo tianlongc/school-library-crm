@@ -3,6 +3,7 @@
 namespace App\Domain\User\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Domain\Community\Models\CommunityPost;
 use App\Domain\Member\Models\Member;
 use App\Domain\User\Policies\UserPolicy;
 use Database\Factories\UserFactory;
@@ -11,6 +12,7 @@ use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Attributes\UseFactory;
 use Illuminate\Database\Eloquent\Attributes\UsePolicy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -41,5 +43,10 @@ class User extends Authenticatable
     public function member(): HasOne
     {
         return $this->hasOne(Member::class);
+    }
+
+    public function communityPosts(): HasMany
+    {
+        return $this->hasMany(CommunityPost::class);
     }
 }
