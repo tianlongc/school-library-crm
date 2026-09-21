@@ -1,26 +1,37 @@
-import InertiaButton from '@/Components/InertiaButton';
 import ApplicationLogo from '@/Components/ApplicationLogo';
+import InertiaButton from '@/Components/InertiaButton';
 import { Head, Link } from '@inertiajs/react';
-import { Tag } from 'antd';
 
-const capabilities = [
+const workflowItems = [
     {
-        label: 'Catalogue',
-        title: 'A catalogue everyone can trust',
-        description:
-            'Search titles, authors, ISBNs, and copy counts without losing your place.',
+        title: 'Start with a clear path',
+        description: 'Give every reader a simple way to begin and stay oriented.',
     },
     {
-        label: 'Accounts',
-        title: 'One shared account entry point',
-        description:
-            'Members and library staff use the same secure login and account flow.',
+        title: 'Keep the school day moving',
+        description: 'Bring the work of the library into one calm, shared rhythm.',
     },
     {
-        label: 'Library team',
-        title: 'Roles grow with responsibility',
-        description:
-            'Member accounts register here; staff access is assigned separately by an administrator.',
+        title: 'Support the whole school',
+        description: 'Help library teams and school leaders make better decisions.',
+    },
+];
+
+const audienceRoles = [
+    {
+        number: '01',
+        title: 'Students',
+        description: 'Find a clear way into the library and the next thing they want to read.',
+    },
+    {
+        number: '02',
+        title: 'Librarians',
+        description: 'Keep daily work coordinated, dependable, and easy to follow.',
+    },
+    {
+        number: '03',
+        title: 'Administrators',
+        description: 'Stay connected to the bigger picture without adding more noise.',
     },
 ];
 
@@ -28,84 +39,52 @@ function Brand() {
     return (
         <Link
             href="/"
-            className="guest-wordmark"
+            className="guest-wordmark welcome-wordmark"
             aria-label="School Library home"
             prefetch
         >
-            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-teal-700 text-white shadow-sm">
+            <span className="welcome-brand-mark">
                 <ApplicationLogo className="h-6 w-6" />
             </span>
             <span>
-                <span className="block font-serif text-lg font-semibold leading-none text-[var(--library-ink)]">
-                    School Library
-                </span>
-                <span className="mt-1 block text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-slate-500">
-                    Collection desk
-                </span>
+                <span className="welcome-brand-name">School Library CRM</span>
+                <span className="welcome-brand-label">A shared school workspace</span>
             </span>
         </Link>
     );
 }
 
-function CataloguePreview() {
+function WorkflowVisual() {
     return (
-        <div className="catalogue-stage" aria-hidden="true">
-            <div className="catalogue-shadow-card" />
-            <div className="catalogue-card">
-                <div className="flex items-center justify-between border-b border-[var(--library-line)] pb-5">
-                    <div className="flex items-center gap-3">
-                        <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-teal-50 text-teal-800">
-                            <ApplicationLogo className="h-5 w-5" />
-                        </span>
-                        <div>
-                            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
-                                Catalogue card
-                            </p>
-                            <p className="mt-0.5 text-sm font-semibold text-[var(--library-ink)]">
-                                Record 00418
-                            </p>
-                        </div>
+        <div className="welcome-workflow-visual">
+            <div className="welcome-workflow-backplate" aria-hidden="true" />
+            <div className="welcome-workflow-card">
+                <div className="welcome-workflow-card-header">
+                    <div>
+                        <p className="welcome-workflow-kicker">Shared workflow</p>
+                        <h2 className="welcome-workflow-title">Keep the next step clear.</h2>
                     </div>
-                    <Tag color="success">Available</Tag>
+                    <span className="welcome-workflow-note">Designed for the school day</span>
                 </div>
 
-                <div className="mt-6 grid gap-6 sm:grid-cols-[9rem_1fr]">
-                    <div className="book-cover">
-                        <span className="text-xs font-semibold uppercase tracking-[0.16em] text-white/65">
-                            Fiction
-                        </span>
-                        <div>
-                            <p className="font-serif text-2xl font-semibold leading-tight text-white">
-                                The quiet shelf
-                            </p>
-                            <p className="mt-2 text-sm text-white/70">A. Reader</p>
-                        </div>
-                        <span className="h-1 w-8 rounded-full bg-amber-300" />
-                    </div>
+                <ol className="welcome-workflow-list" aria-label="School library workflow">
+                    {workflowItems.map((item, index) => (
+                        <li key={item.title} className="welcome-workflow-item">
+                            <span className="welcome-workflow-step-number" aria-hidden="true">
+                                {String(index + 1).padStart(2, '0')}
+                            </span>
+                            <div>
+                                <h3>{item.title}</h3>
+                                <p>{item.description}</p>
+                            </div>
+                        </li>
+                    ))}
+                </ol>
 
-                    <dl className="grid content-start grid-cols-2 gap-3">
-                        <div className="catalogue-data-cell col-span-2">
-                            <dt>Title</dt>
-                            <dd>The quiet shelf</dd>
-                        </div>
-                        <div className="catalogue-data-cell">
-                            <dt>Copies</dt>
-                            <dd>4 of 5</dd>
-                        </div>
-                        <div className="catalogue-data-cell">
-                            <dt>Shelf</dt>
-                            <dd>FIC 823</dd>
-                        </div>
-                        <div className="catalogue-data-cell col-span-2">
-                            <dt>ISBN</dt>
-                            <dd>978-1-4028-9462-6</dd>
-                        </div>
-                    </dl>
-                </div>
-
-                <div className="mt-6 flex items-center justify-between border-t border-[var(--library-line)] pt-5 text-xs font-medium text-slate-500">
-                    <span>Updated just now</span>
-                    <span className="text-teal-800">View record &rarr;</span>
+                <div className="welcome-workflow-footer">
+                    <span>One shared place</span>
+                    <span>Less friction</span>
+                    <span>More reading</span>
                 </div>
             </div>
         </div>
@@ -114,14 +93,17 @@ function CataloguePreview() {
 
 export default function Welcome({ auth, canRegister }) {
     const isAuthenticated = Boolean(auth.user);
+    const primaryAction = isAuthenticated
+        ? route('dashboard')
+        : route('login');
 
     return (
         <>
             <Head>
-                <title>School Library</title>
+                <title>School Library CRM</title>
                 <meta
                     name="description"
-                    content="A shared school library workspace for members and library staff."
+                    content="A clear, connected workspace for students, librarians, and administrators."
                     head-key="description"
                 />
             </Head>
@@ -131,15 +113,21 @@ export default function Welcome({ auth, canRegister }) {
                     Skip to main content
                 </a>
 
-                <header className="welcome-header" aria-label="Primary navigation">
+                <header className="welcome-header">
                     <Brand />
 
-                    <nav className="flex items-center gap-2" aria-label="Account">
+                    <nav className="welcome-primary-nav" aria-label="Primary navigation">
+                        <a href="#workflow" className="welcome-nav-link">
+                            How it works
+                        </a>
+                        <a href="#audiences" className="welcome-nav-link">
+                            For your school
+                        </a>
+                    </nav>
+
+                    <div className="welcome-header-actions" aria-label="Account actions">
                         {isAuthenticated ? (
-                            <InertiaButton
-                                href={route('dashboard')}
-                                type="primary"
-                            >
+                            <InertiaButton href={route('dashboard')} type="primary">
                                 Open dashboard
                             </InertiaButton>
                         ) : (
@@ -147,8 +135,9 @@ export default function Welcome({ auth, canRegister }) {
                                 <InertiaButton
                                     href={route('login')}
                                     type="text"
+                                    className="welcome-login-button"
                                 >
-                                    Log in
+                                    Sign in
                                 </InertiaButton>
                                 {canRegister && (
                                     <InertiaButton
@@ -156,87 +145,105 @@ export default function Welcome({ auth, canRegister }) {
                                         type="primary"
                                         className="welcome-register-button"
                                     >
-                                        Create account
+                                        Get started
                                     </InertiaButton>
                                 )}
                             </>
                         )}
-                    </nav>
+                    </div>
                 </header>
 
                 <main id="main-content" tabIndex="-1">
                     <section className="welcome-hero" aria-labelledby="welcome-title">
-                        <div className="self-center">
-                            <p className="ui-eyebrow">School collection workspace</p>
+                        <div className="welcome-hero-copy">
+                            <p className="ui-eyebrow">School library workspace</p>
                             <h1 id="welcome-title" className="welcome-title">
-                                Keep every book within reach.
+                                One library, every reader.
                             </h1>
                             <p className="welcome-lede">
-                                A clear, dependable place to explore the school collection,
-                                check availability, and keep library services moving.
+                                A clear, connected way to help students find their next read
+                                and help library teams keep the school day moving.
                             </p>
 
-                            <div className="mt-8 flex flex-wrap gap-3">
+                            <div className="welcome-actions">
                                 <InertiaButton
-                                    href={
-                                        isAuthenticated
-                                            ? route('dashboard')
-                                            : route('login')
-                                    }
+                                    href={primaryAction}
                                     size="large"
                                     type="primary"
                                 >
                                     {isAuthenticated
-                                        ? 'Open the dashboard'
-                                        : 'Continue to log in'}
+                                        ? 'Open dashboard'
+                                        : 'Sign in'}
                                 </InertiaButton>
                                 {!isAuthenticated && canRegister && (
                                     <InertiaButton
                                         href={route('register')}
                                         size="large"
                                     >
-                                        Create member account
+                                        Get started
                                     </InertiaButton>
                                 )}
                             </div>
 
-                            <ul className="mt-8 grid gap-3 text-sm font-medium text-slate-600 sm:grid-cols-2">
-                                <li className="welcome-check">Fast catalogue search</li>
-                                <li className="welcome-check">Clear availability states</li>
-                            </ul>
+                            <p className="welcome-audience-note">
+                                Designed for students, librarians, and administrators.
+                            </p>
                         </div>
 
-                        <CataloguePreview />
+                        <WorkflowVisual />
                     </section>
 
                     <section
-                        className="welcome-capabilities"
-                        aria-labelledby="capabilities-title"
+                        id="workflow"
+                        className="welcome-workflow-section"
+                        aria-labelledby="workflow-title"
                     >
-                        <h2 id="capabilities-title" className="sr-only">
-                            Designed for the school library
-                        </h2>
-                        {capabilities.map((capability) => (
-                            <article key={capability.title} className="welcome-capability">
-                                <span className="pt-1 text-[0.65rem] font-bold uppercase tracking-[0.14em] text-amber-700">
-                                    {capability.label}
-                                </span>
-                                <div>
-                                    <h3 className="font-serif text-xl font-semibold text-[var(--library-ink)]">
-                                        {capability.title}
-                                    </h3>
-                                    <p className="mt-2 text-sm leading-6 text-slate-600">
-                                        {capability.description}
-                                    </p>
-                                </div>
-                            </article>
-                        ))}
+                        <div className="welcome-section-intro">
+                            <p className="ui-eyebrow">A calmer way to work</p>
+                            <h2 id="workflow-title">
+                                The right information, at the right moment.
+                            </h2>
+                            <p>
+                                Bring the daily rhythm of the school library into one clear
+                                experience that feels useful from the first visit.
+                            </p>
+                        </div>
+
+                        <div className="welcome-workflow-summary" aria-hidden="true">
+                            <span className="welcome-summary-line" />
+                            <span>Shared by the whole school</span>
+                        </div>
+                    </section>
+
+                    <section
+                        id="audiences"
+                        className="welcome-audience-section"
+                        aria-labelledby="audiences-title"
+                    >
+                        <div className="welcome-audience-heading">
+                            <p className="ui-eyebrow">Built around people</p>
+                            <h2 id="audiences-title">One shared system, three perspectives.</h2>
+                        </div>
+
+                        <div className="welcome-audience-grid">
+                            {audienceRoles.map((role) => (
+                                <article key={role.title} className="welcome-audience-card">
+                                    <span className="welcome-audience-number" aria-hidden="true">
+                                        {role.number}
+                                    </span>
+                                    <div className="welcome-audience-card-content">
+                                        <h3>{role.title}</h3>
+                                        <p>{role.description}</p>
+                                    </div>
+                                </article>
+                            ))}
+                        </div>
                     </section>
                 </main>
 
                 <footer className="welcome-footer">
-                    <p>Built for quiet, capable library work.</p>
-                    <p>&copy; {new Date().getFullYear()} School Library</p>
+                    <p>Built for curious minds and capable library teams.</p>
+                    <p>&copy; {new Date().getFullYear()} School Library CRM</p>
                 </footer>
             </div>
         </>
