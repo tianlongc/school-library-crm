@@ -7,8 +7,10 @@ import {
     duplicateCmsBlock,
     insertCmsBlockAt,
     insertCmsBlockAfter,
+    isCanvasBackgroundDropActive,
     moveCmsBlock,
     normalizeCmsDocument,
+    resolveCanvasDropIndex,
     toggleCmsBlockVisibility,
 } from './cmsPageDocument.js';
 
@@ -52,6 +54,26 @@ test('creates a new school-library block with a unique id', () => {
     assert.equal(block.id, 'cta-1');
     assert.equal(block.type, 'call_to_action');
     assert.equal(block.data.target, 'catalogue');
+});
+
+test('creates an image block with accessible media fields', () => {
+    const block = createCmsBlock('image', () => 'image-1');
+
+    assert.deepEqual(block, {
+        id: 'image-1',
+        type: 'image',
+        is_visible: true,
+        data: {
+            media_uuid: null,
+            alt: '',
+        },
+    });
+});
+
+test('creates a hero block with an optional background image', () => {
+    const block = createCmsBlock('hero', () => 'hero-1');
+
+    assert.equal(block.data.media_uuid, null);
 });
 
 test('duplicates, inserts and moves blocks without mutating the input', () => {
@@ -101,6 +123,37 @@ test('moves a block into the requested visual insertion slot', () => {
         'hero-1',
         'text-1',
     ]);
+});
+
+test('uses the bottom slot when a drag ends on the canvas background', () => {
+    assert.equal(resolveCanvasDropIndex(null, 3), 3);
+    assert.equal(
+        resolveCanvasDropIndex({ data: { kind: 'canvas-slot', index: 1 } }, 3),
+        1,
+    );
+});
+
+test('highlights the canvas background only while it is the active drop target', () => {
+    const source = { data: { kind: 'library', type: 'hero' } };
+
+    assert.equal(
+        isCanvasBackgroundDropActive(source, {
+            data: { kind: 'canvas-background' },
+        }),
+        true,
+    );
+    assert.equal(
+        isCanvasBackgroundDropActive(source, {
+            data: { kind: 'canvas-slot' },
+        }),
+        false,
+    );
+    assert.equal(
+        isCanvasBackgroundDropActive(null, {
+            data: { kind: 'canvas-background' },
+        }),
+        false,
+    );
 });
 
 test('inserts a library block at a canvas position', () => {

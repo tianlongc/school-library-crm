@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Domain\Book\Models\Book;
+use App\Domain\Cms\Models\CmsPage;
 use App\Domain\User\Models\User;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Facades\Vite;
@@ -23,6 +25,8 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Relation::enforceMorphMap([
+            'book' => Book::class,
+            'cms_page' => CmsPage::class,
             'user' => User::class,
         ]);
 

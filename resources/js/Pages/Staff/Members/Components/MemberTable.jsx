@@ -1,12 +1,12 @@
 import CheckCircleOutlined from '@ant-design/icons/CheckCircleOutlined';
 import PauseCircleOutlined from '@ant-design/icons/PauseCircleOutlined';
 import StopOutlined from '@ant-design/icons/StopOutlined';
-import { Button, Space, Tag, Tooltip, Typography } from 'antd';
+import { Badge, Button, Space, Tooltip, Typography } from 'antd';
 import { useMemo } from 'react';
 import ServerDataTable from '@/Components/Tables/ServerDataTable';
 import { getSortOrder } from '@/Components/Tables/tableQuery';
 
-const statusColors = {
+const memberStatusBadgeStatuses = {
     active: 'success',
     suspended: 'warning',
     inactive: 'default',
@@ -108,29 +108,33 @@ export default function MemberTable({
             title: 'Member number',
             dataIndex: 'member_number',
             key: 'member_number',
+            align: 'center',
             sorter: true,
             sortOrder: getSortOrder(filters, 'member_number'),
             width: 170,
             render: (memberNumber) => (
-                <Typography.Text code>{memberNumber}</Typography.Text>
+                <span className="table-meta-chip">
+                    {memberNumber}
+                </span>
             ),
         },
         {
             title: 'Status',
             dataIndex: 'status',
             key: 'status',
-            align: 'center',
             width: 130,
             render: (status) => (
-                <Tag color={statusColors[status]}>
-                    {status.charAt(0).toUpperCase() + status.slice(1)}
-                </Tag>
+                <Badge
+                    status={memberStatusBadgeStatuses[status] ?? 'default'}
+                    text={status.charAt(0).toUpperCase() + status.slice(1)}    
+                />
             ),
         },
         {
             title: 'Joined',
             dataIndex: 'created_at',
             key: 'created_at',
+            align: 'center',
             sorter: true,
             sortOrder: getSortOrder(filters, 'created_at'),
             width: 150,

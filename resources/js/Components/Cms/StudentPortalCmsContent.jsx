@@ -11,7 +11,14 @@ const targetRoutes = {
 
 function HeroBlock({ block }) {
     return (
-        <section className="cms-portal-hero">
+        <section
+            className="cms-portal-hero"
+            style={
+                block.data.media_url
+                    ? { backgroundImage: `url("${block.data.media_url}")` }
+                    : undefined
+            }
+        >
             <Typography.Text className="cms-portal-eyebrow">
                 {block.data.eyebrow}
             </Typography.Text>
@@ -74,6 +81,13 @@ function BookCollectionBlock({ block, booksById }) {
                     {books.map((book) => (
                         <Col key={book.id} xs={24} sm={12} lg={8}>
                             <Card className="cms-portal-book" size="small">
+                                {book.cover_url && (
+                                    <img
+                                        alt={`Cover of ${book.title}`}
+                                        className="mb-3 h-44 w-full rounded-lg object-cover"
+                                        src={book.cover_url}
+                                    />
+                                )}
                                 <span className="cms-portal-book-mark">
                                     <ReadOutlined aria-hidden="true" />
                                 </span>
@@ -89,6 +103,22 @@ function BookCollectionBlock({ block, booksById }) {
                 </Row>
             )}
         </section>
+    );
+}
+
+function ImageBlock({ block }) {
+    if (!block.data.media_url) {
+        return null;
+    }
+
+    return (
+        <figure className="cms-portal-image-block">
+            <img
+                alt={block.data.alt ?? ''}
+                className="w-full rounded-lg object-cover"
+                src={block.data.media_url}
+            />
+        </figure>
     );
 }
 
@@ -130,6 +160,7 @@ const renderers = {
     book_collection: BookCollectionBlock,
     call_to_action: CallToActionBlock,
     hero: HeroBlock,
+    image: ImageBlock,
     rich_text: RichTextBlock,
 };
 

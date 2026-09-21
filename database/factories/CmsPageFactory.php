@@ -2,7 +2,7 @@
 
 namespace Database\Factories;
 
-use App\Domain\Cms\CmsPageDocument;
+use App\Domain\Cms\Documents\CmsPageDocument;
 use App\Domain\Cms\Models\CmsPage;
 use Illuminate\Database\Eloquent\Factories\Factory;
 

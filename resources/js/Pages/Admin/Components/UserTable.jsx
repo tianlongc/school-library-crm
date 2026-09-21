@@ -1,16 +1,25 @@
 import ServerDataTable from '@/Components/Tables/ServerDataTable';
 import { getSortOrder } from '@/Components/Tables/tableQuery';
-import UserSwitchOutlined from '@ant-design/icons/UserSwitchOutlined';
-import { Button, Space, Tag, Tooltip, Typography } from 'antd';
+import { ReadOutlined, SafetyCertificateOutlined, UserOutlined, UserSwitchOutlined } from '@ant-design/icons';
+import { Badge, Button, Space, Tag, Tooltip, Typography } from 'antd';
 import { useMemo } from 'react';
 
-const roleColors = {
-    admin: 'purple',
-    librarian: 'blue',
-    member: 'cyan',
+const rolePresentation = {
+    admin: {
+        icon: SafetyCertificateOutlined,
+        className: 'is-admin',
+    },
+    librarian: {
+        icon: ReadOutlined,
+        className: 'is-librarian',
+    },
+    member: {
+        icon: UserOutlined,
+        className: 'is-member',
+    },
 };
 
-const memberStatusColors = {
+const memberStatusBadgeStatuses = {
     active: 'success',
     suspended: 'warning',
     inactive: 'default',
@@ -19,6 +28,24 @@ const memberStatusColors = {
 const dateFormatter = new Intl.DateTimeFormat('en-MY', {
     dateStyle: 'medium',
 });
+
+function RoleTag({ role, label }) {
+    const presentation = rolePresentation[role] ?? {
+        icon: UserOutlined,
+        className: 'is-default',
+    };
+
+    const RoleIcon = presentation.icon;
+
+    return (
+        <Tag
+            className={`table-role-tag ${presentation.className}`}
+            icon={<RoleIcon />}
+        >
+            {label}
+        </Tag>
+    );
+}
 
 function UserActions({ user, onEditRole }) {
     if (user.is_current_user) {
@@ -57,8 +84,12 @@ export default function UserTable({
     roleOptions,
     users,
 }) {
-    const roleLabels = Object.fromEntries(
-        roleOptions.map((role) => [role.value, role.label]),
+    const roleLabels = useMemo(
+        () =>
+            Object.fromEntries(
+                roleOptions.map((role) => [role.value, role.label]),
+            ),
+        [roleOptions],
     );
 
     const columns = useMemo(() => [
@@ -84,18 +115,23 @@ export default function UserTable({
             title: 'Access role',
             dataIndex: 'roles',
             key: 'roles',
+            align: 'center',
             width: 190,
             render: (roles) =>
                 roles.length > 0 ? (
-                    <Space size={[4, 4]} wrap>
+                    <Space size={[6, 6]} wrap>
                         {roles.map((role) => (
-                            <Tag color={roleColors[role]} key={role}>
-                                {roleLabels[role] ?? role}
-                            </Tag>
+                            <RoleTag
+                                key={role}
+                                role={role}
+                                label={roleLabels[role] ?? role}
+                            />
                         ))}
                     </Space>
                 ) : (
-                    <Tag>Unassigned</Tag>
+                    <Tag className="table-role-tag is-default">
+                        Unassigned
+                    </Tag>
                 ),
         },
         {
@@ -107,16 +143,21 @@ export default function UserTable({
             width: 190,
             render: (member) =>
                 member ? (
-                    <div>
-                        <Typography.Text code>
+                    <div className="member-profile-cell">
+                        <span className="member-profile-number">
                             {member.member_number}
-                        </Typography.Text>
-                        <Typography.Text className="table-secondary-line">
-                            <Tag color={memberStatusColors[member.status]}>
-                                {member.status.charAt(0).toUpperCase() +
-                                    member.status.slice(1)}
-                            </Tag>
-                        </Typography.Text>
+                        </span>
+                        
+                        <Badge 
+                            className="member-profile-status"
+                            status={
+                                memberStatusBadgeStatuses[member.status] ??
+                                'default'
+                            }
+                            text={
+                                member.status.charAt(0).toUpperCase() + member.status.slice(1)
+                            }
+                        />
                     </div>
                 ) : (
                     <Typography.Text type="secondary">
@@ -131,15 +172,17 @@ export default function UserTable({
             align: 'center',
             width: 130,
             render: (verified) => (
-                <Tag color={verified ? 'success' : 'warning'}>
-                    {verified ? 'Verified' : 'Unverified'}
-                </Tag>
+                <Badge
+                    status={verified ? 'success' : 'warning'}
+                    text={verified ? 'Verified' : 'Unverified'}
+                />
             ),
         },
         {
             title: 'Created',
             dataIndex: 'created_at',
             key: 'created_at',
+            align: 'center',
             sorter: true,
             sortOrder: getSortOrder(filters, 'created_at'),
             width: 150,

@@ -3,6 +3,7 @@ import { jsonRequest } from '@/Utils/jsonRequest';
 import { getLaravelValidationErrors } from '@/Utils/laravelValidation';
 import { getRequestErrorMessage } from '@/Utils/requestErrorMessage';
 import { useForm } from '@inertiajs/react';
+import { buildBookFormData } from '../Utils/bookForm';
 import { Alert, Button, Card, Flex, Form, Typography } from 'antd';
 import { useState } from 'react';
 import BookFormFields from './BookFormFields';
@@ -21,6 +22,8 @@ export default function BookForm({
         description: book?.description ?? '',
         total_copies: book?.total_copies ?? 1,
         category_id: book?.category_id ?? '',
+        cover: null,
+        cover_url: book?.cover_url ?? null,
     });
     const [submitting, setSubmitting] = useState(false);
     const [requestError, setRequestError] = useState('');
@@ -34,7 +37,7 @@ export default function BookForm({
             const payload = await jsonRequest({
                 url,
                 method: 'POST',
-                data,
+                data: buildBookFormData(data),
             });
 
             onSuccess(payload);

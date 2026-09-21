@@ -149,6 +149,7 @@ export default function LoanTable({
             title: 'Issued',
             dataIndex: 'issued_at',
             key: 'issued_at',
+            align: 'center',
             sorter: true,
             sortOrder: getSortOrder(filters, 'issued_at'),
             width: 175,
@@ -169,6 +170,7 @@ export default function LoanTable({
         {
             title: 'Due / status',
             key: 'due_at',
+            align: 'center',
             sorter: true,
             sortOrder: getSortOrder(filters, 'due_at'),
             width: 175,
@@ -195,6 +197,7 @@ export default function LoanTable({
             title: 'Return activity',
             key: 'returned_at',
             sorter: true,
+            align: 'center',
             sortOrder: getSortOrder(filters, 'returned_at'),
             width: 175,
             render: (_, loan) =>

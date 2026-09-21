@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Domain\Book\Queries\BookQuery;
 use App\Domain\Cms\Actions\PublishCmsPageAction;
 use App\Domain\Cms\Actions\UpdateCmsPageDraftAction;
-use App\Domain\Cms\CmsPageDocument;
+use App\Domain\Cms\Documents\CmsPageDocument;
 use App\Domain\Cms\Queries\CmsPageQuery;
 use App\Http\Requests\UpdateCmsPageContentRequest;
 use App\Http\Resources\BookResource;
@@ -30,7 +30,7 @@ class CmsController extends Controller
     public function preview(CmsPageQuery $cmsPageQuery, BookQuery $bookQuery): Response
     {
         $page = $cmsPageQuery->getStudentPortalHomepage();
-        $content = $page->draft_content;
+        $content = CmsPageDocument::withMediaUrls($page, $page->draft_content);
 
         return Inertia::render('Admin/Cms/Preview', [
             'page' => CmsPageResource::make($page)->resolve(),
@@ -40,6 +40,24 @@ class CmsController extends Controller
             )->resolve(),
             'isDraftPreview' => true,
         ]);
+    }
+
+    public function storeMedia(Request $request, CmsPageQuery $cmsPageQuery): JsonResponse
+    {
+        $validated = $request->validate([
+            'image' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
+        ]);
+
+        $media = $cmsPageQuery->getStudentPortalHomepage()
+            ->addMedia($validated['image'])
+            ->toMediaCollection('builder_images');
+
+        return response()->json([
+            'media' => [
+                'uuid' => $media->uuid,
+                'url' => $media->getUrl(),
+            ],
+        ], 201);
     }
 
     public function updateContent(

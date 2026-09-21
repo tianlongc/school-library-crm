@@ -76,7 +76,8 @@ class BookController extends Controller
                 'isbn' => $request->input('isbn'),
                 'total_copies' => $request->input('total_copies'),
                 'category_id' => $request->input('category_id'),
-            ]
+            ],
+            cover: $request->file('cover'),
         );
 
         return response()->json([
@@ -123,6 +124,7 @@ class BookController extends Controller
                 'total_copies' => $request->input('total_copies'),
                 'category_id' => $request->input('category_id'),
             ],
+            cover: $request->file('cover'),
         );
 
         return response()->json([

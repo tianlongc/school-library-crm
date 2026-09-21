@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Domain\Book\Queries\BookQuery;
-use App\Domain\Cms\CmsPageDocument;
+use App\Domain\Cms\Documents\CmsPageDocument;
 use App\Domain\Cms\Queries\CmsPageQuery;
 use App\Http\Resources\BookResource;
 use App\Http\Resources\LoanResource;
@@ -36,7 +36,7 @@ class MemberDashboardController extends Controller
             ->get();
 
         $cmsPage = $cmsPageQuery->getStudentPortalHomepage();
-        $cmsContent = $cmsPage->published_content;
+        $cmsContent = CmsPageDocument::withMediaUrls($cmsPage, $cmsPage->published_content);
         $homepageBooks = $bookQuery->getCmsBooks(
             CmsPageDocument::visibleBookIds($cmsContent),
         );

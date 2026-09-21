@@ -8,6 +8,8 @@ use Illuminate\Support\Facades\DB;
 
 class UpdateCmsPageDraftAction
 {
+    public function __construct(private readonly CleanupCmsPageMediaAction $cleanupMedia) {}
+
     /**
      * @param  array<string, mixed>  $content
      */
@@ -23,7 +25,10 @@ class UpdateCmsPageDraftAction
                 'updated_by_user_id' => $updatedBy->id,
             ]);
 
-            return $lockedPage->refresh();
+            $lockedPage->refresh();
+            $this->cleanupMedia->execute($lockedPage);
+
+            return $lockedPage;
         });
     }
 }
