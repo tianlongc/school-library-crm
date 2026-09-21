@@ -2,12 +2,12 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Http\Controllers\Controller;
 use App\Domain\Book\Queries\BookQuery;
 use App\Domain\Cms\Actions\PublishCmsPageAction;
 use App\Domain\Cms\Actions\UpdateCmsPageDraftAction;
 use App\Domain\Cms\Documents\CmsPageDocument;
 use App\Domain\Cms\Queries\CmsPageQuery;
+use App\Http\Controllers\Controller;
 use App\Http\Requests\Cms\UpdateCmsPageContentRequest;
 use App\Http\Resources\BookResource;
 use App\Http\Resources\CmsPageResource;

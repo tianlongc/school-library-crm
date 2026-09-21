@@ -2,13 +2,13 @@
 
 namespace App\Http\Controllers\Staff;
 
-use App\Http\Controllers\Controller;
 use App\Domain\Loan\Actions\IssueLoanAction;
 use App\Domain\Loan\Actions\RenewLoanAction;
 use App\Domain\Loan\Actions\RequestLoanReturnAction;
 use App\Domain\Loan\Actions\ReturnLoanAction;
 use App\Domain\Loan\Models\Loan;
 use App\Domain\Loan\Queries\LoanQuery;
+use App\Http\Controllers\Controller;
 use App\Http\Requests\Loan\IssueLoanRequest;
 use App\Http\Requests\Loan\LoanIndexRequest;
 use App\Http\Resources\LoanResource;

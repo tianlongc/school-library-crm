@@ -2,13 +2,13 @@
 
 namespace App\Http\Controllers\Staff;
 
-use App\Http\Controllers\Controller;
 use App\Domain\Book\Actions\CreateBookAction;
 use App\Domain\Book\Actions\DeleteBookAction;
 use App\Domain\Book\Actions\UpdateBookAction;
 use App\Domain\Book\Models\Book;
 use App\Domain\Book\Queries\BookQuery;
 use App\Domain\Category\Queries\CategoryQuery;
+use App\Http\Controllers\Controller;
 use App\Http\Requests\Book\BookIndexRequest;
 use App\Http\Requests\Book\StoreBookRequest;
 use App\Http\Requests\Book\UpdateBookRequest;

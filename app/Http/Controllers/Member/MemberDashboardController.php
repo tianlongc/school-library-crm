@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers\Member;
 
-use App\Http\Controllers\Controller;
 use App\Domain\Book\Queries\BookQuery;
 use App\Domain\Cms\Documents\CmsPageDocument;
 use App\Domain\Cms\Queries\CmsPageQuery;
+use App\Http\Controllers\Controller;
 use App\Http\Resources\BookResource;
 use App\Http\Resources\LoanResource;
 use App\Http\Resources\MemberResource;

@@ -2,13 +2,13 @@
 
 namespace App\Http\Controllers\Staff;
 
-use App\Http\Controllers\Controller;
 use App\Domain\Member\Actions\DeactivateMemberAction;
 use App\Domain\Member\Actions\ReactivateMemberAction;
 use App\Domain\Member\Actions\SuspendMemberAction;
 use App\Domain\Member\Enums\MemberStatus;
 use App\Domain\Member\Models\Member;
 use App\Domain\Member\Queries\MemberQuery;
+use App\Http\Controllers\Controller;
 use App\Http\Requests\Member\MemberIndexRequest;
 use App\Http\Resources\MemberResource;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;

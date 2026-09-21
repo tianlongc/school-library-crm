@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Http\Controllers\Controller;
 use App\Domain\User\Actions\UpdateUserRoleAction;
 use App\Domain\User\Enums\UserRole;
 use App\Domain\User\Models\User;
 use App\Domain\User\Queries\UserQuery;
+use App\Http\Controllers\Controller;
 use App\Http\Requests\User\UpdateUserRoleRequest;
 use App\Http\Requests\User\UserIndexRequest;
 use App\Http\Resources\UserResource;

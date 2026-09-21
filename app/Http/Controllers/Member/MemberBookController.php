@@ -2,12 +2,12 @@
 
 namespace App\Http\Controllers\Member;
 
-use App\Http\Controllers\Controller;
 use App\Domain\Book\Models\Book;
 use App\Domain\Book\Queries\BookQuery;
 use App\Domain\Loan\Actions\BorrowBookAction;
 use App\Domain\Loan\Models\Loan;
 use App\Domain\Member\Models\Member;
+use App\Http\Controllers\Controller;
 use App\Http\Resources\BookResource;
 use App\Http\Resources\LoanResource;
 use Illuminate\Http\JsonResponse;
