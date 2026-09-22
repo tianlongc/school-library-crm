@@ -1,5 +1,6 @@
 import ApplicationLogo from '@/Components/ApplicationLogo';
 import InertiaButton from '@/Components/InertiaButton';
+import WelcomeFeatureMarquee from '@/Components/WelcomeFeatureMarquee';
 import { Head, Link } from '@inertiajs/react';
 
 const workflowItems = [
@@ -192,6 +193,8 @@ export default function Welcome({ auth, canRegister }) {
 
                         <WorkflowVisual />
                     </section>
+
+                    <WelcomeFeatureMarquee />
 
                     <section
                         id="workflow"
