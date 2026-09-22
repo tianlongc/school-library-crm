@@ -6,6 +6,8 @@ use App\Domain\Member\Enums\MemberStatus;
 use App\Domain\Member\Models\Member;
 use App\Domain\User\Models\User;
 use Database\Seeders\RolesAndPermissionsSeeder;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Testing\AssertableInertia as Assert;
 
 beforeEach(function () {
@@ -32,6 +34,8 @@ it('requires authentication for the member catalogue', function () {
 });
 
 it('renders a searchable catalogue with availability for the signed in member', function () {
+    Storage::fake('public');
+
     [$user, $member] = memberCirculationAccount();
     $otherMember = Member::factory()->create();
 
@@ -39,6 +43,9 @@ it('renders a searchable catalogue with availability for the signed in member', 
         'title' => 'The Borrowers Guide',
         'total_copies' => 3,
     ]);
+    $cover = $matchingBook
+        ->addMedia(UploadedFile::fake()->image('borrowers-guide.jpg'))
+        ->toMediaCollection('cover');
     Book::factory()->create(['title' => 'Unrelated Reference']);
 
     Loan::factory()->for($member)->for($matchingBook)->create();
@@ -51,6 +58,7 @@ it('renders a searchable catalogue with availability for the signed in member', 
             ->component('Member/Books/Index')
             ->has('books.data', 1)
             ->where('books.data.0.id', $matchingBook->id)
+            ->where('books.data.0.cover_url', $cover->getUrl())
             ->where('books.data.0.available_copies', 1)
             ->where('books.data.0.has_active_loan', true)
             ->where('filters.search', 'Borrowers')

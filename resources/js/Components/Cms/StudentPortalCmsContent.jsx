@@ -1,8 +1,10 @@
 import InertiaButton from '@/Components/InertiaButton';
 import BookOutlined from '@ant-design/icons/BookOutlined';
+import LeftOutlined from '@ant-design/icons/LeftOutlined';
 import NotificationOutlined from '@ant-design/icons/NotificationOutlined';
 import ReadOutlined from '@ant-design/icons/ReadOutlined';
-import { Card, Col, Empty, Flex, Row, Tag, Typography } from 'antd';
+import RightOutlined from '@ant-design/icons/RightOutlined';
+import { Card, Carousel, Col, Empty, Flex, Row, Tag, Typography } from 'antd';
 
 const targetRoutes = {
     account: 'profile.edit',
@@ -52,10 +54,91 @@ function AnnouncementBlock({ block }) {
     );
 }
 
+function BookCarouselArrow({ direction, ...props }) {
+    const className = props.className;
+    const arrowProps = { ...props };
+    const isPrevious = direction === 'previous';
+
+    delete arrowProps.currentSlide;
+    delete arrowProps.slideCount;
+
+    return (
+        <button
+            {...arrowProps}
+            aria-label={isPrevious ? 'Previous slide' : 'Next slide'}
+            className={['cms-portal-carousel-arrow', className].filter(Boolean).join(' ')}
+            type="button"
+        >
+            {isPrevious ? <LeftOutlined aria-hidden="true" /> : <RightOutlined aria-hidden="true" />}
+        </button>
+    );
+}
+
 function BookCollectionBlock({ block, booksById }) {
     const books = (block.data.book_ids ?? [])
         .map((bookId) => booksById[bookId])
         .filter(Boolean);
+    const shouldUseCarousel = books.length > 3;
+
+    const bookGrid = (
+        <Row gutter={[16, 16]}>
+            {books.map((book) => (
+                <Col key={book.id} lg={8} sm={12} xs={24}>
+                    <BookCard book={book} />
+                </Col>
+            ))}
+        </Row>
+    );
+
+    const bookCarousel = (
+        <div
+            aria-label={block.data.heading}
+            aria-roledescription="carousel"
+            className="cms-portal-book-carousel"
+            role="region"
+        >
+            <Carousel
+                accessibility
+                arrows
+                autoplay={false}
+                dotPlacement="bottom"
+                infinite={false}
+                nextArrow={<BookCarouselArrow direction="next" />}
+                prevArrow={<BookCarouselArrow direction="previous" />}
+                responsive={[
+                    {
+                        breakpoint: 960,
+                        settings: {
+                            slidesToShow: 2,
+                            slidesToScroll: 1,
+                        },
+                    },
+                    {
+                        breakpoint: 640,
+                        settings: {
+                            slidesToShow: 1,
+                            slidesToScroll: 1,
+                        },
+                    },
+                ]}
+                slidesToScroll={1}
+                slidesToShow={3}
+                swipeToSlide
+            >
+                {books.map((book, index) => (
+                    <div
+                        aria-label={`${index + 1} of ${books.length}: ${book.title}`}
+                        aria-roledescription="slide"
+                        className="cms-portal-book-slide"
+                        key={book.id}
+                        role="group"
+                    >
+                        <BookCard book={book} />
+                    </div>
+                ))}
+            </Carousel>
+        </div>
+    );
 
     return (
         <section className="cms-portal-section">
@@ -76,31 +159,10 @@ function BookCollectionBlock({ block, booksById }) {
                     description="No books have been selected yet."
                     image={Empty.PRESENTED_IMAGE_SIMPLE}
                 />
+            ) : shouldUseCarousel ? (
+                bookCarousel
             ) : (
-                <Row gutter={[16, 16]}>
-                    {books.map((book) => (
-                        <Col key={book.id} xs={24} sm={12} lg={8}>
-                            <Card className="cms-portal-book" size="small">
-                                {book.cover_url && (
-                                    <img
-                                        alt={`Cover of ${book.title}`}
-                                        className="mb-3 h-44 w-full rounded-lg object-cover"
-                                        src={book.cover_url}
-                                    />
-                                )}
-                                <span className="cms-portal-book-mark">
-                                    <ReadOutlined aria-hidden="true" />
-                                </span>
-                                <Typography.Title level={4} className="cms-portal-book-title">
-                                    {book.title}
-                                </Typography.Title>
-                                <Typography.Text type="secondary">
-                                    {book.author}
-                                </Typography.Text>
-                            </Card>
-                        </Col>
-                    ))}
-                </Row>
+                bookGrid
             )}
         </section>
     );
@@ -152,6 +214,45 @@ function CallToActionBlock({ block }) {
                 {block.data.label}
             </InertiaButton>
         </section>
+    );
+}
+
+function BookCard({ book }) {
+    return (
+        <Card className="cms-portal-book" size="small">
+            {book.cover_url ? (
+                <img
+                    alt={`Cover of ${book.title}`}
+                    className="cms-portal-book-cover"
+                    loading="lazy"
+                    src={book.cover_url}
+                />
+            ) : (
+                <div
+                    aria-label={`No cover available for ${book.title}`}
+                    className="cms-portal-book-cover-placeholder"
+                    role="img"
+                >
+                    <BookOutlined aria-hidden="true" />
+                    <span>No cover</span>
+                </div>
+            )}
+
+            <span className="cms-portal-book-mark">
+                <ReadOutlined aria-hidden="true" />
+            </span>
+
+            <Typography.Title
+                className="cms-portal-book-title"
+                level={4}
+            >
+                {book.title}
+            </Typography.Title>
+
+            <Typography.Text type="secondary">
+                {book.author}
+            </Typography.Text>
+        </Card>
     );
 }
 
