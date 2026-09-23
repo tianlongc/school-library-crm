@@ -6,6 +6,8 @@ use App\Domain\Loan\Models\Loan;
 use App\Domain\Member\Models\Member;
 use App\Domain\User\Models\User;
 use Database\Seeders\RolesAndPermissionsSeeder;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Testing\AssertableInertia as Assert;
 
 beforeEach(function () {
@@ -95,11 +97,16 @@ it('shows only the signed in members current loans', function () {
 });
 
 it('shows members only the published student portal content', function () {
+    Storage::fake('public');
+
     $user = User::factory()->create();
     Member::factory()->for($user)->create();
     $user->assignRole('member');
 
     $featuredBook = Book::factory()->create();
+    $cover = $featuredBook
+        ->addMedia(UploadedFile::fake()->image('featured-book.jpg'))
+        ->toMediaCollection('cover');
     $draftBook = Book::factory()->create();
     $publishedContent = [
         'schema_version' => 1,
@@ -161,6 +168,54 @@ it('shows members only the published student portal content', function () {
             ->where('cmsContent', $publishedContent)
             ->has('homepageBooks', 1)
             ->where('homepageBooks.0.id', $featuredBook->id)
+            ->where('homepageBooks.0.cover_url', $cover->getUrl())
+        );
+});
+
+it('provides every selected homepage book for carousel rendering', function () {
+    Storage::fake('public');
+
+    $user = User::factory()->create();
+    Member::factory()->for($user)->create();
+    $user->assignRole('member');
+
+    $books = Book::factory()->count(4)->create();
+    $covers = $books->map(function (Book $book, int $index): string {
+        return $book
+            ->addMedia(UploadedFile::fake()->image("carousel-book-{$index}.jpg"))
+            ->toMediaCollection('cover')
+            ->getUrl();
+    });
+
+    $publishedContent = [
+        'schema_version' => 1,
+        'blocks' => [[
+            'id' => 'carousel-books',
+            'type' => 'book_collection',
+            'is_visible' => true,
+            'data' => [
+                'heading' => 'Browse the collection',
+                'body' => 'Explore the latest recommendations.',
+                'book_ids' => $books->pluck('id')->all(),
+            ],
+        ]],
+    ];
+
+    CmsPage::query()->where('key', 'student_portal_homepage')->firstOrFail()->update([
+        'published_content' => $publishedContent,
+        'published_at' => now(),
+    ]);
+
+    $this->actingAs($user)
+        ->get(route('member.dashboard'))
+        ->assertSuccessful()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('Member/Dashboard')
+            ->has('homepageBooks', 4)
+            ->where('homepageBooks.0.id', $books[0]->id)
+            ->where('homepageBooks.0.cover_url', $covers[0])
+            ->where('homepageBooks.3.id', $books[3]->id)
+            ->where('homepageBooks.3.cover_url', $covers[3])
         );
 });
 

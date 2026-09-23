@@ -71,13 +71,19 @@ describe('authenticated book management', function () {
     });
 
     it('renders the book index', function () {
-        Book::factory()->create();
+        Storage::fake('public');
+
+        $book = Book::factory()->create();
+        $cover = $book
+            ->addMedia(UploadedFile::fake()->image('book-index-cover.jpg'))
+            ->toMediaCollection('cover');
 
         $this->get(route('staff.books.index'))
             ->assertSuccessful()
             ->assertInertia(fn (Assert $page) => $page
                 ->component('Staff/Books/Index')
                 ->has('books.data', 1)
+                ->where('books.data.0.cover_url', $cover->getUrl())
                 ->where('filters.search', '')
                 ->where('filters.page', 1)
             );

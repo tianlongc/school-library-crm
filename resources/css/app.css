@@ -1650,6 +1650,68 @@
         padding-block: 24px;
     }
 
+    .cms-portal-book-carousel {
+        padding: 0 36px 28px;
+    }
+
+    .cms-portal-book-carousel .cms-portal-carousel-arrow {
+        display: flex !important;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        border: 1px solid rgb(255 255 255 / 0.24);
+        border-radius: 999px;
+        color: #fff !important;
+        background: var(--library-ink) !important;
+        opacity: 1 !important;
+        box-shadow: 0 4px 12px rgb(20 36 46 / 0.18);
+        font-size: 14px;
+        line-height: 1;
+    }
+
+    .cms-portal-book-carousel .cms-portal-carousel-arrow::after {
+        display: none;
+    }
+
+    .cms-portal-book-carousel .cms-portal-carousel-arrow:hover,
+    .cms-portal-book-carousel .cms-portal-carousel-arrow:focus-visible {
+        color: #fff !important;
+        background: var(--library-teal) !important;
+        outline: 3px solid rgb(15 118 110 / 0.22);
+        outline-offset: 2px;
+    }
+
+    .cms-portal-book-carousel .cms-portal-carousel-arrow.slick-disabled {
+        opacity: 0.38 !important;
+    }
+
+    .cms-portal-book-slide {
+        height: auto;
+        padding-inline: 8px;
+    }
+
+    .cms-portal-book-cover,
+    .cms-portal-book-cover-placeholder {
+        display: flex;
+        width: 100%;
+        aspect-ratio: 3 / 4;
+        margin-bottom: 12px;
+        border-radius: 8px;
+        object-fit: cover;
+    }
+
+    .cms-portal-book-cover-placeholder {
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        gap: 8px;
+        background: #e4f1ee;
+        color: var(--library-teal);
+        font-size: 12px;
+        font-weight: 600;
+    }
+
     .cms-portal-book.ant-card {
         height: 100%;
         border-color: var(--library-line);
@@ -1663,6 +1725,12 @@
         margin: 0 0 3px;
         color: var(--library-ink);
         font-size: 15px;
+    }
+
+    @media (max-width: 640px) {
+        .cms-portal-book-carousel {
+            padding-inline: 28px;
+        }
     }
 
     .cms-portal-rich-text {
@@ -1927,6 +1995,56 @@
     .welcome-workflow-section {
         @apply mx-auto grid w-full max-w-[88rem] gap-8 border-y px-5 py-10 sm:px-8 sm:py-12 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,0.54fr)] lg:items-end lg:gap-16 lg:px-10 lg:py-14;
         border-color: var(--ant-color-border, var(--library-line));
+    }
+
+    .welcome-feature-marquee-section {
+        @apply mx-auto flex w-full max-w-[88rem] flex-col gap-5 border-y px-5 py-8 sm:px-8 lg:flex-row lg:items-center lg:justify-between lg:gap-12 lg:px-10 lg:py-9;
+        border-color: var(--ant-color-border, var(--library-line));
+        background: var(--ant-color-bg-container, #fffefa);
+    }
+
+    .welcome-feature-marquee-heading {
+        @apply max-w-md;
+    }
+
+    .welcome-feature-marquee-heading h2 {
+        @apply font-serif text-2xl font-semibold leading-tight tracking-[-0.025em] sm:text-3xl;
+        color: var(--library-ink);
+    }
+
+    .welcome-feature-marquee-heading p {
+        @apply mt-2 text-sm leading-6;
+        color: var(--ant-color-text-secondary, #595959);
+    }
+
+    .welcome-feature-marquee-viewport {
+        @apply min-w-0 lg:w-[58%];
+        overflow: hidden;
+    }
+
+    .welcome-feature-marquee {
+        width: 100%;
+    }
+
+    .welcome-feature-marquee-tag.ant-tag {
+        @apply m-0 inline-flex items-center whitespace-nowrap rounded-full px-4 py-2 text-sm font-semibold;
+        border-color: var(--ant-color-border, var(--library-line));
+        color: var(--library-ink);
+        background: var(--ant-color-bg-layout, #f5f8f7);
+    }
+
+    .welcome-feature-marquee-icon {
+        color: var(--library-teal);
+    }
+
+    .welcome-feature-marquee-item {
+        display: inline-flex;
+        margin-inline-end: 12px;
+    }
+
+    .welcome-feature-marquee-static {
+        @apply m-0 flex flex-wrap gap-2;
+        list-style: none;
     }
 
     .welcome-section-intro {

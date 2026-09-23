@@ -85,6 +85,31 @@ it('renders the student portal page builder for administrators', function () {
             ->where('page.draft_content.blocks.0.type', 'hero')
             ->where('bookOptions.0.value', $book->id)
             ->where('bookOptions.0.label', 'The Hobbit - J. R. R. Tolkien')
+            ->where('bookOptions.0.cover_url', null)
+        );
+});
+
+it('includes book cover urls in page builder options', function () {
+    Storage::fake('public');
+
+    $admin = User::factory()->create();
+    $admin->assignRole('admin');
+    $book = Book::factory()->create([
+        'title' => 'The Left Hand of Darkness',
+        'author' => 'Ursula K. Le Guin',
+    ]);
+    $cover = $book
+        ->addMedia(UploadedFile::fake()->image('left-hand-of-darkness.jpg'))
+        ->toMediaCollection('cover');
+
+    createCmsPageForControllerTest();
+
+    $this->actingAs($admin)
+        ->get(route('admin.cms.index'))
+        ->assertSuccessful()
+        ->assertInertia(fn (Assert $inertia) => $inertia
+            ->where('bookOptions.0.id', $book->id)
+            ->where('bookOptions.0.cover_url', $cover->getUrl())
         );
 });
 

@@ -106,6 +106,7 @@ class BookQuery extends TableQuery
     {
         return Book::query()
             ->select(['id', 'title', 'author'])
+            ->with('media')
             ->orderBy('title')
             ->orderBy('id')
             ->get();

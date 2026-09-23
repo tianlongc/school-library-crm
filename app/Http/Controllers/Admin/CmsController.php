@@ -106,6 +106,7 @@ class CmsController extends Controller
                 'id' => $book->id,
                 'title' => $book->title,
                 'author' => $book->author,
+                'cover_url' => $book->getFirstMediaUrl('cover') ?: null,
             ])
             ->values()
             ->all();
