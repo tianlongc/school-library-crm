@@ -1,14 +1,17 @@
 import ApplicationLogo from '@/Components/ApplicationLogo';
-import { LayoutOutlined } from '@ant-design/icons';
-import BookOutlined from '@ant-design/icons/BookOutlined';
-import DashboardOutlined from '@ant-design/icons/DashboardOutlined';
-import LogoutOutlined from '@ant-design/icons/LogoutOutlined';
-import ReadOutlined from '@ant-design/icons/ReadOutlined';
-import SettingOutlined from '@ant-design/icons/SettingOutlined';
-import TagsOutlined from '@ant-design/icons/TagsOutlined';
-import TeamOutlined from '@ant-design/icons/TeamOutlined';
-import UserSwitchOutlined from '@ant-design/icons/UserSwitchOutlined';
-import { router, usePage } from '@inertiajs/react';
+import {
+    LayoutOutlined,
+    BookOutlined,
+    DashboardOutlined,
+    LogoutOutlined,
+    ReadOutlined,
+    SettingOutlined,
+    TagsOutlined,
+    TeamOutlined,
+    UserSwitchOutlined,
+    BarChartOutlined,
+} from '@ant-design/icons';
+import { Link, router, usePage } from '@inertiajs/react';
 import { Menu, Typography } from 'antd';
 
 const primaryNavigation = [
@@ -60,6 +63,13 @@ const cmsNavigation = {
     active: 'admin.cms.*',
 };
 
+const reportsNavigation = {
+    key: 'staff.reports.overdue',
+    label: 'Reports',
+    icon: <BarChartOutlined />,
+    active: 'staff.reports.*',
+};
+
 export default function StaffSidebar({ onNavigate }) {
     const { auth } = usePage().props;
     const navigation = [
@@ -68,6 +78,7 @@ export default function StaffSidebar({ onNavigate }) {
         ...(auth.can.viewMembers ? [memberNavigation] : []),
         ...(auth.can.viewAdminDashboard ? [adminNavigation] : []),
         ...(auth.can.viewCms ? [cmsNavigation] : []),
+        ...(auth.can.viewReports ? [reportsNavigation] : []),
     ];
     const selectedNavigation = navigation.find((item) =>
         route().current(item.active),
@@ -76,16 +87,10 @@ export default function StaffSidebar({ onNavigate }) {
         ? ['profile.edit']
         : [];
 
-    const navigate = ({ key }) => {
-        onNavigate?.();
-
-        if (key === 'logout') {
-            router.post(route('logout'));
-            return;
-        }
-
-        router.get(route(key));
-    };
+    const navigationItems = navigation.map((item) => ({
+        ...item,
+        label: <Link href={route(item.key)} onClick={onNavigate}>{item.label}</Link>,
+    }));
 
     return (
         <div className="staff-sidebar">
@@ -105,9 +110,8 @@ export default function StaffSidebar({ onNavigate }) {
 
             <Menu
                 className="staff-navigation"
-                items={navigation}
+                items={navigationItems}
                 mode="inline"
-                onClick={navigate}
                 selectedKeys={selectedNavigation ? [selectedNavigation.key] : []}
                 theme="dark"
             />
@@ -117,7 +121,7 @@ export default function StaffSidebar({ onNavigate }) {
                 items={[
                     {
                         key: 'profile.edit',
-                        label: 'Settings',
+                        label: <Link href={route('profile.edit')} onClick={onNavigate}>Settings</Link>,
                         icon: <SettingOutlined />,
                     },
                     {
@@ -128,7 +132,12 @@ export default function StaffSidebar({ onNavigate }) {
                     },
                 ]}
                 mode="inline"
-                onClick={navigate}
+                onClick={({ key }) => {
+                    if (key === 'logout') {
+                        onNavigate?.();
+                        router.post(route('logout'));
+                    }
+                }}
                 selectedKeys={selectedUtility}
                 theme="dark"
             />

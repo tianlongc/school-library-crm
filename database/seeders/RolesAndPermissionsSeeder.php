@@ -44,6 +44,8 @@ class RolesAndPermissionsSeeder extends Seeder
             'loans.return',
             'loans.renew',
             'community.posts.moderate',
+            'reports.view',
+            'reports.export',
         ];
 
         $adminPermissions = [

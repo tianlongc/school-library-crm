@@ -10,6 +10,7 @@ use App\Http\Controllers\Staff\BookController;
 use App\Http\Controllers\Staff\CategoryController;
 use App\Http\Controllers\Staff\LoanController;
 use App\Http\Controllers\Staff\MemberController;
+use App\Http\Controllers\Staff\ReportController;
 use Illuminate\Foundation\Application;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -162,4 +163,20 @@ Route::middleware(['auth', 'can:workspace.access'])
                 Route::post('/{loan}/renew', 'renew')->name('renew');
                 Route::post('/{loan}/return', 'returnLoan')->name('return');
             });
+
+        Route::controller(ReportController::class)
+            ->prefix('reports')
+            ->name('reports.')
+            ->group(function (): void {
+                Route::get('/overdue', 'overdue')
+                    ->middleware('can:reports.view')
+                    ->name('overdue');
+
+                Route::post('/overdue/query', 'overdueQuery')
+                    ->middleware('can:reports.view')
+                    ->name('overdue.query');
+
+                Route::get('/overdue/export', 'overdueExport')
+                    ->middleware('can:reports.export')
+                    ->name('overdue.export');
     });
