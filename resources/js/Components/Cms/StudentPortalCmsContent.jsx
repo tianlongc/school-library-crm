@@ -11,6 +11,23 @@ const targetRoutes = {
     catalogue: 'member.books.index',
 };
 
+function CmsBlockBody({ body, bodyFormat, className }) {
+    if (bodyFormat === 'html') {
+        return (
+            <div
+                className="cms-portal-section-copy-rich"
+                dangerouslySetInnerHTML={{ __html: body ?? '' }}
+            />
+        );
+    }
+
+    return (
+        <Typography.Paragraph className={className}>
+            {body}
+        </Typography.Paragraph>
+    );
+}
+
 function HeroBlock({ block }) {
     return (
         <section
@@ -27,9 +44,11 @@ function HeroBlock({ block }) {
             <Typography.Title level={2} className="cms-portal-hero-title">
                 {block.data.heading}
             </Typography.Title>
-            <Typography.Paragraph className="cms-portal-hero-copy">
-                {block.data.body}
-            </Typography.Paragraph>
+            <CmsBlockBody
+                body={block.data.body}
+                bodyFormat={block.data.body_format}
+                className="cms-portal-hero-copy"
+            />
         </section>
     );
 }
@@ -45,9 +64,11 @@ function AnnouncementBlock({ block }) {
                     <Typography.Title level={3} className="cms-portal-block-title">
                         {block.data.heading}
                     </Typography.Title>
-                    <Typography.Paragraph className="cms-portal-block-copy">
-                        {block.data.body}
-                    </Typography.Paragraph>
+                    <CmsBlockBody
+                        body={block.data.body}
+                        bodyFormat={block.data.body_format}
+                        className="cms-portal-block-copy"
+                    />
                 </div>
             </Flex>
         </Card>
@@ -190,9 +211,11 @@ function RichTextBlock({ block }) {
             <Typography.Title level={2} className="cms-portal-section-title">
                 {block.data.heading}
             </Typography.Title>
-            <Typography.Paragraph className="cms-portal-section-copy">
-                {block.data.body}
-            </Typography.Paragraph>
+            <CmsBlockBody
+                body={block.data.body}
+                bodyFormat={block.data.body_format}
+                className="cms-portal-section-copy"
+            />
         </section>
     );
 }

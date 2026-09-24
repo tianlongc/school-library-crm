@@ -6,16 +6,23 @@ use App\Domain\Community\Enums\CommunityPostStatus;
 use App\Domain\Community\Models\CommunityPost;
 use App\Domain\User\Models\User;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Pagination\CursorPaginator;
 
 class CommunityFeedQuery
 {
-    public function paginate(User $viewer, int $page = 1, int $perPage = 10): LengthAwarePaginator
+    public function cursorPaginate(User $viewer, ?string $cursor = null, int $perPage = 10, ?int $categoryId = null): CursorPaginator
     {
         return CommunityPost::query()
             ->where(
                 'status',
                 CommunityPostStatus::Published->value,
+            )
+            ->when(
+                $categoryId !== null,
+                fn (Builder $query) => $query->whereHas(
+                    'book',
+                    fn (Builder $bookQuery) => $bookQuery->where('category_id', $categoryId),
+                ),
             )
             ->with([
                 'author:id,name',
@@ -31,11 +38,11 @@ class CommunityFeedQuery
                     ->where('user_id', $viewer->id),
             ])
             ->latest('id')
-            ->paginate(
+            ->cursorPaginate(
                 $perPage,
                 ['*'],
-                'page',
-                $page,
+                'cursor',
+                $cursor,
             );
     }
 }

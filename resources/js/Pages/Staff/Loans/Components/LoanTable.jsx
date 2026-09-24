@@ -1,4 +1,5 @@
 import ServerDataTable from '@/Components/Tables/ServerDataTable';
+import MobileRecord from '@/Components/Tables/MobileRecord';
 import { getSortOrder } from '@/Components/Tables/tableQuery';
 import CheckOutlined from '@ant-design/icons/CheckOutlined';
 import RedoOutlined from '@ant-design/icons/RedoOutlined';
@@ -253,6 +254,21 @@ export default function LoanTable({
         <ServerDataTable
             columns={columns}
             data={loans}
+            mobileSort={filters}
+            mobileRenderItem={(loan) => (
+                <MobileRecord
+                    title={loan.book.title}
+                    subtitle={`${loan.member.name} · ${loan.member.member_number}`}
+                    status={<Tag color={statusColors[loan.status]}>{statusLabels[loan.status] ?? 'Unknown'}</Tag>}
+                    details={[
+                        { label: 'Due', value: formatDate(loan.due_at) },
+                        { label: 'Issued', value: formatDateTime(loan.issued_at) },
+                        { label: 'ISBN', value: loan.book.isbn },
+                        ...(loan.return_requested_at && !loan.returned_at ? [{ label: 'Return requested', value: formatDateTime(loan.return_requested_at) }] : []),
+                    ]}
+                    actions={<LoanAction canRenew={canRenew} canReturn={canReturn} loan={loan} onRenew={onRenew} onReturn={onReturn} />}
+                />
+            )}
             emptyText={
                 isFiltered
                     ? 'No loans match these filters.'

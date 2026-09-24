@@ -1,4 +1,5 @@
-import { Col, Form, Image, Input, InputNumber, Row, Select } from 'antd';
+import { Button, Col, Form, Image, Input, InputNumber, Row, Select, Typography } from 'antd';
+import { useEffect, useRef, useState } from 'react';
 
 const errorStatus = (message) => (message ? 'error' : undefined);
 
@@ -9,6 +10,21 @@ export default function BookFormFields({
     errors,
     setData,
 }) {
+    const coverInputRef = useRef(null);
+    const [coverPreviewUrl, setCoverPreviewUrl] = useState(null);
+
+    useEffect(() => {
+        if (!data.cover) {
+            setCoverPreviewUrl(null);
+            return;
+        }
+
+        const previewUrl = URL.createObjectURL(data.cover);
+        setCoverPreviewUrl(previewUrl);
+
+        return () => URL.revokeObjectURL(previewUrl);
+    }, [data.cover]);
+
     const updateField = (field, value) => {
         setData(field, value);
         clearErrors(field);
@@ -142,23 +158,34 @@ export default function BookFormFields({
                     validateStatus={errorStatus(errors.cover)}
                     help={errors.cover ?? 'JPEG, PNG or WebP. Maximum 5 MB.'}
                 >
-                    {data.cover_url && !data.cover && (
-                        <Image
-                            src={data.cover_url}
-                            alt="Current book cover"
-                            width={110}
-                            preview
-                            className="book-form-cover"
-                        />
-                    )}
                     <input
                         id="cover"
                         accept="image/jpeg,image/png,image/webp"
+                        className="sr-only"
                         type="file"
-                        onChange={(event) =>
-                            updateField('cover', event.target.files?.[0] ?? null)
-                        }
+                        ref={coverInputRef}
+                        tabIndex={-1}
+                        onChange={(event) => {
+                            const file = event.target.files?.[0];
+                            if (file) updateField('cover', file);
+                            event.target.value = '';
+                        }}
                     />
+                    <div className="flex flex-col items-start gap-2">
+                        {(coverPreviewUrl || (data.cover_url && !data.cover)) && (
+                            <Image
+                                src={coverPreviewUrl ?? data.cover_url}
+                                alt={coverPreviewUrl ? 'Selected book cover preview' : 'Current book cover'}
+                                width={110}
+                                preview
+                                className="book-form-cover"
+                            />
+                        )}
+                        <Button onClick={() => coverInputRef.current?.click()}>
+                            {data.cover || data.cover_url ? 'Replace cover' : 'Choose cover'}
+                        </Button>
+                        {data.cover && <Typography.Text type="secondary">{data.cover.name}</Typography.Text>}
+                    </div>
                 </Form.Item>
             </Col>
 

@@ -1,5 +1,6 @@
 import InertiaButton from '@/Components/InertiaButton';
 import ServerDataTable from '@/Components/Tables/ServerDataTable';
+import MobileRecord from '@/Components/Tables/MobileRecord';
 import { getSortOrder } from '@/Components/Tables/tableQuery';
 import DeleteOutlined from '@ant-design/icons/DeleteOutlined';
 import EditOutlined from '@ant-design/icons/EditOutlined';
@@ -39,7 +40,7 @@ function BookCoverThumbnail({ book }) {
     );
 }
 
-function BookActions({ book, onDelete }) {
+function BookActions({ book, onDelete, compact = false }) {
     return (
         <Space
             size={4}
@@ -53,7 +54,9 @@ function BookActions({ book, onDelete }) {
                     size="small"
                     icon={<EyeOutlined />}
                     aria-label={`View ${book.title}`}
-                />
+                >
+                    {compact ? 'View' : null}
+                </InertiaButton>
             </Tooltip>
 
             <Tooltip title="Edit book">
@@ -63,7 +66,9 @@ function BookActions({ book, onDelete }) {
                     size="small"
                     icon={<EditOutlined />}
                     aria-label={`Edit ${book.title}`}
-                />
+                >
+                    {compact ? 'Edit' : null}
+                </InertiaButton>
             </Tooltip>
 
             <Tooltip title="Delete book">
@@ -74,7 +79,9 @@ function BookActions({ book, onDelete }) {
                     icon={<DeleteOutlined />}
                     onClick={() => onDelete(book)}
                     aria-label={`Delete ${book.title}`}
-                />
+                >
+                    {compact ? 'Delete' : null}
+                </Button>
             </Tooltip>
         </Space>
     );
@@ -222,6 +229,19 @@ export default function BookTable({
         <ServerDataTable
             columns={columns}
             data={books}
+            mobileSort={filters}
+            mobileRenderItem={(book) => (
+                <MobileRecord
+                    title={book.title}
+                    subtitle={book.category?.name ?? 'Uncategorized'}
+                    status={<BookAvailability book={book} />}
+                    details={[
+                        { label: 'Author', value: book.author },
+                        { label: 'ISBN', value: book.isbn },
+                    ]}
+                    actions={<BookActions book={book} compact onDelete={onDelete} />}
+                />
+            )}
             emptyText={emptyText}
             loading={loading}
             meta={meta}

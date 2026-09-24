@@ -2,6 +2,7 @@
 
 use App\Domain\Loan\Models\Loan;
 use App\Domain\Loan\Queries\LoanReportQuery;
+use App\Domain\Member\Models\Member;
 
 beforeEach(function (): void {
     $this->travelTo(now()->setTime(12, 0));
@@ -49,7 +50,7 @@ it('returns only overdue loans', function (): void {
 it('filters overdue loans by search text', function (): void {
     $matchingLoan = Loan::factory()
         ->for(
-            \App\Domain\Member\Models\Member::factory()->create([
+            Member::factory()->create([
                 'member_number' => 'MEM-OVERDUE-001',
             ]),
             'member',

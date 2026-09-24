@@ -19,6 +19,30 @@ import {
 } from 'antd';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+function BookCover({ book }) {
+    const [failedCoverUrl, setFailedCoverUrl] = useState(null);
+    const hasCover = book.cover_url && failedCoverUrl !== book.cover_url;
+
+    return (
+        <div className="flex h-36 w-24 shrink-0 items-center justify-center overflow-hidden rounded-md bg-slate-100 p-2 text-center">
+            {hasCover ? (
+                <img
+                    alt=""
+                    className="h-full w-full object-cover"
+                    decoding="async"
+                    loading="lazy"
+                    onError={() => setFailedCoverUrl(book.cover_url)}
+                    src={book.cover_url}
+                />
+            ) : (
+                <Typography.Text aria-hidden="true" type="secondary">
+                    No cover
+                </Typography.Text>
+            )}
+        </div>
+    );
+}
+
 export default function Index({ books, borrowingEligibility, filters }) {
     const { auth } = usePage().props;
     const [search, setSearch] = useState(filters.search ?? '');
@@ -30,6 +54,7 @@ export default function Index({ books, borrowingEligibility, filters }) {
     const eligibilityMessage = canBorrowBooks
         ? borrowingEligibility.message
         : 'Your account does not currently have borrowing access.';
+    const resultCount = books.meta.total;
 
     const visitCatalogue = useCallback(
         ({ page, search: nextSearch = '' } = {}) => {
@@ -141,17 +166,8 @@ export default function Index({ books, borrowingEligibility, filters }) {
         <MemberLayout>
             <Head title="Catalogue" />
 
-            <Flex
-                align="flex-end"
-                className="mb-6"
-                gap={24}
-                justify="space-between"
-                wrap
-            >
-                <div className="min-w-0">
-                    <Typography.Text className="app-page-eyebrow">
-                        Member catalogue
-                    </Typography.Text>
+            <Flex className="mb-6 w-full max-w-3xl" gap={16} vertical>
+                <div>
                     <Typography.Title level={1} className="member-welcome-title">
                         Find your next book
                     </Typography.Title>
@@ -163,13 +179,12 @@ export default function Index({ books, borrowingEligibility, filters }) {
                         copy.
                     </Typography.Paragraph>
                 </div>
-
                 <Input
                     allowClear
                     aria-busy={loading}
                     aria-label="Search the member catalogue"
                     autoComplete="off"
-                    className="w-full sm:max-w-md"
+                    className="w-full"
                     prefix={<SearchOutlined />}
                     suffix={loading ? <Spin size="small" /> : null}
                     onChange={(event) => setSearch(event.target.value)}
@@ -187,6 +202,17 @@ export default function Index({ books, borrowingEligibility, filters }) {
                     type="warning"
                 />
             )}
+
+            <Typography.Text
+                aria-atomic="true"
+                aria-live="polite"
+                className="mb-4 block"
+                type="secondary"
+            >
+                {resultCount}{' '}
+                {resultCount === 1 ? 'book' : 'books'}{' '}
+                {filters.search ? 'found' : 'in the catalogue'}
+            </Typography.Text>
 
             {books.data.length === 0 ? (
                 <Card>
@@ -208,36 +234,83 @@ export default function Index({ books, borrowingEligibility, filters }) {
                             borrowingEligibility.eligible &&
                             isAvailable &&
                             !book.has_active_loan;
+                        let borrowButtonLabel = 'Borrow';
+
+                        if (book.has_active_loan) {
+                            borrowButtonLabel = 'Already borrowed';
+                        } else if (!isAvailable) {
+                            borrowButtonLabel = 'Unavailable';
+                        } else if (!canBorrow) {
+                            borrowButtonLabel = 'Borrowing unavailable';
+                        }
 
                         return (
                             <Card
                                 key={book.id}
-                                className="h-full"
-                                title={book.title}
-                                extra={
-                                    <Tag color={isAvailable ? 'success' : 'default'}>
-                                        {isAvailable
-                                            ? `${book.available_copies} available`
-                                            : 'Unavailable'}
-                                    </Tag>
-                                }
+                                className="flex h-full flex-col"
+                                classNames={{ body: 'flex flex-1 flex-col' }}
                             >
-                                <Flex className="h-full" gap={16} vertical>
+                                <Flex
+                                    className="h-full flex-1"
+                                    gap={16}
+                                    justify="space-between"
+                                    vertical
+                                >
+                                    <Flex align="flex-start" gap={16}>
+                                        <BookCover book={book} />
+                                        <Flex
+                                            className="min-w-0 flex-1"
+                                            gap={4}
+                                            vertical
+                                        >
+                                            <Typography.Title
+                                                className="!mb-1 break-words"
+                                                level={4}
+                                            >
+                                                {book.title}
+                                            </Typography.Title>
+                                            <Typography.Text
+                                                className="block break-words"
+                                                type="secondary"
+                                            >
+                                                {book.author}
+                                            </Typography.Text>
+                                            {book.category?.name && (
+                                                <Typography.Text
+                                                    className="block break-words text-xs"
+                                                    type="secondary"
+                                                >
+                                                    {book.category.name}
+                                                </Typography.Text>
+                                            )}
+                                            <Tag
+                                                className="!mr-0 w-fit"
+                                                color={isAvailable ? 'success' : 'default'}
+                                            >
+                                                {isAvailable
+                                                    ? `${book.available_copies} available`
+                                                    : 'Unavailable'}
+                                            </Tag>
+                                        </Flex>
+                                    </Flex>
+
                                     <div className="min-w-0 flex-1">
-                                        <Typography.Text type="secondary">
-                                            {book.author}
-                                        </Typography.Text>
                                         <Typography.Paragraph
-                                            className="mt-3"
+                                            className="!mb-2"
                                             ellipsis={{ rows: 3 }}
                                             type="secondary"
                                         >
                                             {book.description ||
                                                 'No description is available for this book.'}
                                         </Typography.Paragraph>
-                                        <Typography.Text type="secondary">
-                                            ISBN {book.isbn}
-                                        </Typography.Text>
+                                        {book.isbn && (
+                                            <Typography.Text
+                                                className="break-words text-xs"
+                                                type="secondary"
+                                            >
+                                                ISBN {book.isbn}
+                                            </Typography.Text>
+                                        )}
                                     </div>
 
                                     <Flex
@@ -262,9 +335,7 @@ export default function Index({ books, borrowingEligibility, filters }) {
                                             onClick={() => confirmBorrow(book)}
                                             type="primary"
                                         >
-                                            {book.has_active_loan
-                                                ? 'Already borrowed'
-                                                : 'Borrow'}
+                                            {borrowButtonLabel}
                                         </Button>
                                     </Flex>
                                 </Flex>

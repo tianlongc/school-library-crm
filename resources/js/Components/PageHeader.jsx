@@ -1,14 +1,24 @@
 import { Link } from '@inertiajs/react';
 import { Breadcrumb, Flex, Typography, theme } from 'antd';
 
-export default function PageHeader({ title, description, eyebrow, breadcrumbs = [], actions }) {
+export default function PageHeader({
+    title,
+    description,
+    eyebrow,
+    breadcrumbs = [],
+    actions,
+    className = '',
+}) {
     const { token } = theme.useToken();
     const breadcrumbItems = breadcrumbs.map((item) => ({
         title: item.href ? <Link href={item.href}>{item.label}</Link> : item.label,
     }));
 
     return (
-        <div className="app-page-header" style={{ borderColor: token.colorBorderSecondary }}>
+        <div
+            className={`app-page-header ${className}`.trim()}
+            style={{ borderColor: token.colorBorderSecondary }}
+        >
             <div className="min-w-0">
                 {breadcrumbs.length > 0 && (
                     <Breadcrumb className="app-breadcrumb" items={breadcrumbItems} />

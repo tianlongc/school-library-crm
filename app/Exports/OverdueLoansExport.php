@@ -19,12 +19,7 @@ use PhpOffice\PhpSpreadsheet\Cell\Cell;
 use PhpOffice\PhpSpreadsheet\Cell\DataType;
 use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
 
-class OverdueLoansExport extends DefaultValueBinder implements
-    FromQuery,
-    WithHeadings,
-    WithMapping,
-    WithColumnFormatting,
-    WithCustomValueBinder
+class OverdueLoansExport extends DefaultValueBinder implements FromQuery, WithColumnFormatting, WithCustomValueBinder, WithHeadings, WithMapping
 {
     use Exportable;
 
@@ -67,7 +62,7 @@ class OverdueLoansExport extends DefaultValueBinder implements
     #[Override]
     public function map(mixed $row): array
     {
-        if (!$row instanceof Loan) {
+        if (! $row instanceof Loan) {
             throw new LogicException('Expected an overdue loan row.');
         }
 
@@ -78,7 +73,7 @@ class OverdueLoansExport extends DefaultValueBinder implements
             (string) $row->book->isbn,
             $row->issued_at->format('Y-m-d'),
             $row->due_at->format('Y-m-d'),
-            (int)$row->due_at->diffInDays(now()),
+            (int) $row->due_at->diffInDays(now()),
         ];
     }
 

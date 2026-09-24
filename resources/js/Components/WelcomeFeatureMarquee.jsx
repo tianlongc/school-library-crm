@@ -9,7 +9,7 @@ const featureItems = [
     { label: 'Discover a new read', Icon: BookOutlined },
     { label: 'Keep loans in view', Icon: ReadOutlined },
     { label: 'Request returns clearly', Icon: CheckCircleOutlined },
-    { label: 'Share one school rhythm', Icon: TeamOutlined },
+    { label: 'Manage the library desk', Icon: TeamOutlined },
 ];
 
 function FeatureTag({ item }) {
@@ -61,8 +61,8 @@ export default function WelcomeFeatureMarquee() {
     return (
         <section className="welcome-feature-marquee-section" aria-labelledby="feature-marquee-title">
             <div className="welcome-feature-marquee-heading">
-                <h2 id="feature-marquee-title">A smoother rhythm for the school day.</h2>
-                <p>Simple library moments, kept together for everyone.</p>
+                <h2 id="feature-marquee-title">What you can do here.</h2>
+                <p>Find books, track loans, and handle returns.</p>
             </div>
 
             <div className="welcome-feature-marquee-viewport">
