@@ -6,7 +6,7 @@ import { getRequestErrorMessage } from '@/Utils/requestErrorMessage';
 import { useCmsContentAutosave } from '@/Utils/useCmsContentAutosave';
 import { CheckCircleFilled, CloudSyncOutlined, EyeOutlined } from '@ant-design/icons';
 import { Head } from '@inertiajs/react';
-import { App as AntdApp, Button, Flex } from 'antd';
+import { App as AntdApp, Button, Flex, Typography } from 'antd';
 import { useState } from 'react';
 import CmsPageBuilder from './Components/CmsPageBuilder';
 
@@ -19,27 +19,56 @@ const autosaveLabels = {
 };
 
 export default function Builder({ bookOptions = [], page }) {
-    const { message } = AntdApp.useApp();
+    const { message, modal } = AntdApp.useApp();
     const [content, setContent] = useState(() => normalizeCmsDocument(page.draft_content));
+    const [publishedContent, setPublishedContent] = useState(() => normalizeCmsDocument(page.published_content));
+    const [publishedAt, setPublishedAt] = useState(page.published_at);
     const [publishing, setPublishing] = useState(false);
     const { saveNow, status } = useCmsContentAutosave({ content });
     const autosave = autosaveLabels[status];
+    const hasUnpublishedChanges =
+        !publishedAt || JSON.stringify(content) !== JSON.stringify(publishedContent);
+    const publishedLabel = publishedAt
+        ? `Last published ${new Intl.DateTimeFormat('en-MY', {
+            dateStyle: 'medium',
+            timeStyle: 'short',
+        }).format(new Date(publishedAt))}`
+        : 'Not published yet';
 
-    const publish = async () => {
-        setPublishing(true);
+    const publish = () => {
+        const visibleBlockCount = content.blocks.filter((block) => block.is_visible !== false).length;
 
-        try {
-            await saveNow();
-            const payload = await jsonRequest({
-                url: route('admin.cms.publish'),
-                method: 'POST',
-            });
-            message.success(payload.message);
-        } catch (error) {
-            message.error(getRequestErrorMessage(error, 'The student portal could not be published.'));
-        } finally {
-            setPublishing(false);
-        }
+        modal.confirm({
+            title: 'Publish student portal changes?',
+            content: (
+                <div>
+                    <p>{visibleBlockCount} visible {visibleBlockCount === 1 ? 'block' : 'blocks'} will appear on the student portal.</p>
+                    <p>{publishedLabel}</p>
+                    <a href={route('admin.cms.preview')} rel="noopener noreferrer" target="_blank">Review draft in a new tab</a>
+                </div>
+            ),
+            okText: 'Publish changes',
+            cancelText: 'Keep editing',
+            async onOk() {
+                setPublishing(true);
+
+                try {
+                    await saveNow();
+                    const payload = await jsonRequest({
+                        url: route('admin.cms.publish'),
+                        method: 'POST',
+                    });
+                    setPublishedContent(normalizeCmsDocument(payload.page.published_content));
+                    setPublishedAt(payload.page.published_at);
+                    message.success(payload.message);
+                } catch (error) {
+                    message.error(getRequestErrorMessage(error, 'The student portal could not be published.'));
+                    throw error;
+                } finally {
+                    setPublishing(false);
+                }
+            },
+        });
     };
 
     return (
@@ -55,10 +84,23 @@ export default function Builder({ bookOptions = [], page }) {
                             {status === 'saved' ? <CheckCircleFilled /> : <CloudSyncOutlined />}
                             {autosave.label}
                         </span>
+                        {status === 'error' && (
+                            <Button
+                                onClick={() => void saveNow().catch((error) => {
+                                    message.error(getRequestErrorMessage(error, 'The draft could not be saved. Try again.'));
+                                })}
+                                size="small"
+                            >
+                                Retry save
+                            </Button>
+                        )}
+                        <Typography.Text aria-live="polite" type={hasUnpublishedChanges ? 'warning' : 'secondary'}>
+                            {hasUnpublishedChanges ? `Unpublished changes · ${publishedLabel}` : publishedLabel}
+                        </Typography.Text>
                         <Button href={route('admin.cms.preview')} icon={<EyeOutlined />} target="_blank">
                             Preview draft
                         </Button>
-                        <Button loading={publishing} onClick={publish} type="primary">
+                        <Button disabled={!hasUnpublishedChanges} loading={publishing} onClick={publish} type="primary">
                             Publish
                         </Button>
                     </Flex>

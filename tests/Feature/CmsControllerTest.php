@@ -1,6 +1,7 @@
 <?php
 
 use App\Domain\Book\Models\Book;
+use App\Domain\Cms\Actions\SanitizeCmsRichTextAction;
 use App\Domain\Cms\Models\CmsPage;
 use App\Domain\User\Models\User;
 use Database\Seeders\RolesAndPermissionsSeeder;
@@ -331,6 +332,96 @@ it('autosaves a private draft without changing published content', function () {
         ->and($page->published_content)->toBe($publishedContent)
         ->and($page->updated_by_user_id)->toEqual($admin->id);
 });
+
+it('sanitizes formatted body html for rich text capable blocks', function (string $type) {
+    $admin = User::factory()->create();
+    $admin->assignRole('admin');
+    $page = createCmsPageForControllerTest();
+
+    $this->actingAs($admin)
+        ->postJson(route('admin.cms.content.update'), [
+            'content' => cmsPageDocument([[
+                'id' => 'formatted-body',
+                'type' => $type,
+                'is_visible' => true,
+                'data' => [
+                    'heading' => 'Formatted body',
+                    'body' => '<p style="text-align: justify" onclick="alert(1)"><strong>Welcome</strong></p><ul><li><p>First item</p></li></ul>',
+                    'body_format' => 'html',
+                ],
+            ]]),
+        ])
+        ->assertSuccessful();
+
+    $body = $page->refresh()->draft_content['blocks'][0]['data']['body'];
+
+    expect($body)
+        ->toContain('text-align: justify')
+        ->toContain('<strong>Welcome</strong>')
+        ->toContain('<ul>')
+        ->not->toContain('onclick');
+})->with([
+    'hero' => 'hero',
+    'announcement' => 'announcement',
+    'rich text' => 'rich_text',
+]);
+
+it('enforces the 500 character limit on formatted body text', function (string $type) {
+    $admin = User::factory()->create();
+    $admin->assignRole('admin');
+    createCmsPageForControllerTest();
+
+    $this->actingAs($admin)
+        ->postJson(route('admin.cms.content.update'), [
+            'content' => cmsPageDocument([[
+                'id' => 'long-formatted-body',
+                'type' => $type,
+                'is_visible' => true,
+                'data' => [
+                    'body' => '<p>'.str_repeat('a', 501).'</p>',
+                    'body_format' => 'html',
+                ],
+            ]]),
+        ])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors('content.blocks.0.data.body');
+})->with([
+    'hero' => 'hero',
+    'announcement' => 'announcement',
+    'rich text' => 'rich_text',
+]);
+
+it('allows formatted body text to be shortened after reaching the 500 character limit', function (string $type) {
+    $admin = User::factory()->create();
+    $admin->assignRole('admin');
+    $page = createCmsPageForControllerTest();
+
+    $saveBody = function (string $body) use ($admin, $type) {
+        return $this->actingAs($admin)
+            ->postJson(route('admin.cms.content.update'), [
+                'content' => cmsPageDocument([[
+                    'id' => 'shortenable-body',
+                    'type' => $type,
+                    'is_visible' => true,
+                    'data' => [
+                        'body' => $body,
+                        'body_format' => 'html',
+                    ],
+                ]]),
+            ]);
+    };
+
+    $saveBody('<p>'.str_repeat('a', 500).'</p>')->assertSuccessful();
+    $saveBody('<p>'.str_repeat('b', 42).'</p>')->assertSuccessful();
+
+    expect(app(SanitizeCmsRichTextAction::class)
+        ->characterCount($page->refresh()->draft_content['blocks'][0]['data']['body']))
+        ->toBe(42);
+})->with([
+    'hero' => 'hero',
+    'announcement' => 'announcement',
+    'rich text' => 'rich_text',
+]);
 
 it('rejects unknown page builder blocks and data fields', function (array $block) {
     $admin = User::factory()->create();

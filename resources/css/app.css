@@ -976,7 +976,7 @@
         color: var(--library-ink);
 
         text-align: left;
-        cursor: grab;
+        cursor: pointer;
 
         transition:
             border-color 140ms ease,
@@ -1047,6 +1047,18 @@
 
         font-size: 17px;
         cursor: grab;
+    }
+
+    .cms-builder-component-copy {
+        min-width: 0;
+        flex: 1;
+    }
+
+    .cms-builder-component-add-icon {
+        flex: 0 0 auto;
+        margin-left: auto;
+        color: var(--library-teal);
+        opacity: 0.75;
     }
 
     .cms-builder-component strong,
@@ -1414,6 +1426,188 @@
         font-weight: 600;
     }
 
+    .cms-builder-field-hint {
+        margin: 0;
+        color: var(--ant-color-text-secondary, #595959);
+        font-size: 12px;
+        font-weight: 400;
+        line-height: 1.5;
+    }
+
+    .rich-text-editor {
+        border: 1px solid #d9d9d9;
+        border-radius: 6px;
+        overflow: hidden;
+        background: #ffffff;
+    }
+
+    .rich-text-toolbar {
+        container-type: inline-size;
+        padding: 6px 8px;
+        border-bottom: 1px solid #f0f0f0;
+        background: #fafafa;
+    }
+
+    .rich-text-toolbar-layout {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 6px 12px;
+        flex-wrap: wrap;
+    }
+
+    .rich-text-toolbar-groups {
+        display: flex;
+        min-width: 0;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 2px;
+    }
+
+    .rich-text-toolbar-row {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        flex-wrap: wrap;
+    }
+
+    .rich-text-toolbar-group-controls {
+        display: flex;
+        min-height: 28px;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .rich-text-toolbar-divider {
+        width: 1px;
+        height: 20px;
+        flex: 0 0 auto;
+        background: #d9dfe7;
+    }
+
+    .rich-text-toolbar-menu-icon {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .rich-text-toolbar-menu-chevron {
+        color: var(--ant-color-text-secondary, #595959);
+        font-size: 10px;
+    }
+
+    .rich-text-toolbar-menu-button {
+        min-width: 44px;
+        padding-inline: 6px;
+    }
+
+    .rich-text-toolbar-footer {
+        display: flex;
+        align-items: center;
+        margin-left: auto;
+        gap: 6px;
+    }
+
+    .rich-text-toolbar-count-label {
+        color: var(--ant-color-text-secondary, #595959);
+        font-size: 11px;
+    }
+
+    .rich-text-character-count {
+        color: var(--ant-color-text-secondary, #595959);
+        font-size: 12px;
+        white-space: nowrap;
+    }
+
+    .rich-text-character-count.is-over-limit {
+        color: #cf1322;
+    }
+
+    .rich-text-content {
+        min-height: 280px;
+    }
+
+    .rich-text-content .tiptap {
+        min-height: 280px;
+        padding: 16px 20px;
+        outline: none;
+        font-weight: 400;
+    }
+
+    .rich-text-content .tiptap strong,
+    .rich-text-content .tiptap b {
+        font-weight: 700;
+    }
+
+    .rich-text-content .tiptap p {
+        margin: 0 0 12px;
+    }
+
+    .rich-text-content .tiptap ul,
+    .rich-text-content .tiptap ol {
+        padding-left: 24px;
+    }
+
+    .rich-text-content .tiptap ul {
+        list-style-type: disc;
+    }
+
+    .rich-text-content .tiptap ol {
+        list-style-type: decimal;
+    }
+
+    .rich-text-content .tiptap li + li {
+        margin-top: 4px;
+    }
+
+    .rich-text-content .tiptap li > p {
+        margin-bottom: 0;
+    }
+
+    .rich-text-content .tiptap ul ul {
+        list-style-type: circle;
+    }
+
+    .rich-text-content .tiptap ol ol {
+        list-style-type: lower-alpha;
+    }
+
+    .rich-text-content .tiptap:focus {
+        outline: none;
+    }
+
+    .rich-text-content .tiptap:focus-visible {
+        outline: 2px solid var(--ant-color-primary, #1677ff);
+        outline-offset: 2px;
+    }
+
+    @container (max-width: 360px) {
+        .rich-text-toolbar-layout {
+            align-items: stretch;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .rich-text-toolbar-groups {
+            align-items: stretch;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .rich-text-toolbar-row {
+            display: flex;
+            min-height: 30px;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .rich-text-toolbar-footer {
+            align-self: flex-end;
+            margin-left: 0;
+            justify-content: flex-end;
+        }
+    }
+
     .cms-builder-field .ant-select {
         width: 100%;
     }
@@ -1606,6 +1800,46 @@
         color: #566862;
         line-height: 1.7;
         white-space: pre-line;
+    }
+
+    .cms-portal-section-copy-rich {
+        max-width: 44rem;
+        color: #566862;
+        line-height: 1.7;
+    }
+
+    .cms-portal-section-copy-rich p {
+        margin: 0 0 0.75rem;
+    }
+
+    .cms-portal-section-copy-rich p:last-child {
+        margin-bottom: 0;
+    }
+
+    .cms-portal-section-copy-rich ul {
+        padding-inline-start: 1.5rem;
+        list-style-type: disc;
+    }
+
+    .cms-portal-section-copy-rich ol {
+        padding-inline-start: 1.5rem;
+        list-style-type: decimal;
+    }
+
+    .cms-portal-section-copy-rich li + li {
+        margin-top: 0.25rem;
+    }
+
+    .cms-portal-section-copy-rich li > p {
+        margin-bottom: 0;
+    }
+
+    .cms-portal-section-copy-rich ul ul {
+        list-style-type: circle;
+    }
+
+    .cms-portal-section-copy-rich ol ol {
+        list-style-type: lower-alpha;
     }
 
     .cms-portal-card.ant-card,
@@ -2257,6 +2491,121 @@
 
     .cms-builder-canvas-block + .cms-builder-canvas-block {
         margin-top: 18px;
+    }
+}
+
+.mobile-directory-list,
+.mobile-directory-sort {
+    display: none;
+}
+
+.loan-ledger-alert {
+    margin: 16px;
+}
+
+@media (max-width: 767px) {
+    .desktop-directory-table {
+        display: none;
+    }
+
+    .mobile-directory-list,
+    .mobile-directory-sort {
+        display: block;
+    }
+
+    .mobile-directory-sort {
+        display: flex;
+        padding: 12px 16px;
+        border-bottom: 1px solid var(--ant-color-border-secondary, #f0f0f0);
+    }
+
+    .mobile-directory-sort-select {
+        flex: 1 1 10rem;
+        min-width: 0;
+    }
+
+    .mobile-directory-list ul {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+
+    .mobile-directory-loading {
+        display: flex;
+        min-height: 44px;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 16px;
+        color: var(--ant-color-text-secondary, #595959);
+        font-size: 0.875rem;
+    }
+
+    .mobile-directory-list li + li {
+        border-top: 1px solid var(--ant-color-border-secondary, #f0f0f0);
+    }
+
+    .mobile-directory-record {
+        padding: 16px;
+    }
+
+    .mobile-directory-heading {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 12px;
+    }
+
+    .mobile-directory-title {
+        min-width: 0;
+    }
+
+    .mobile-directory-name {
+        overflow-wrap: anywhere;
+        font-weight: 600;
+        line-height: 1.4;
+    }
+
+    .mobile-directory-subtitle {
+        margin-top: 2px;
+        overflow-wrap: anywhere;
+        color: var(--ant-color-text-secondary, #595959);
+        font-size: 0.875rem;
+    }
+
+    .mobile-directory-status {
+        flex: 0 0 auto;
+        max-width: 45%;
+        text-align: right;
+    }
+
+    .mobile-directory-details {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px 16px;
+        margin: 12px 0;
+    }
+
+    .mobile-directory-details dt {
+        color: var(--ant-color-text-secondary, #595959);
+        font-size: 0.75rem;
+    }
+
+    .mobile-directory-details dd {
+        margin: 2px 0 0;
+        overflow-wrap: anywhere;
+        font-size: 0.875rem;
+    }
+
+    .mobile-directory-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        padding-top: 8px;
+    }
+
+    .mobile-directory-actions button,
+    .mobile-directory-actions a {
+        min-height: 44px;
     }
 }
 
