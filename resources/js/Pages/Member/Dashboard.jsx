@@ -186,8 +186,6 @@ export default function Dashboard() {
                 </Col>
             </Row>
 
-            <StudentPortalCmsContent books={homepageBooks} content={cmsContent} />
-
             <Card
                 className="member-services-card"
                 extra={
@@ -306,6 +304,8 @@ export default function Dashboard() {
                     </Flex>
                 )}
             </Card>
+
+            <StudentPortalCmsContent books={homepageBooks} content={cmsContent} />
         </MemberLayout>
     );
 }

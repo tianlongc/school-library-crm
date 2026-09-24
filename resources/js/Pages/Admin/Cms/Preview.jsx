@@ -30,11 +30,11 @@ export default function Preview({ content, homepageBooks = [] }) {
                     </Card>
                 </Col>
             </Row>
-            <div className="cms-preview-editable-label"><span>Editable CMS area</span></div>
-            <StudentPortalCmsContent books={homepageBooks} content={content} />
             <Card className="member-services-card" title={<Flex align="center" gap={8}><ReadOutlined /><span>Current loans</span></Flex>} extra={<Tag>Protected</Tag>}>
                 <Typography.Text type="secondary">Loan data and return actions remain outside the page builder.</Typography.Text>
             </Card>
+            <div className="cms-preview-editable-label"><span>Editable CMS area</span></div>
+            <StudentPortalCmsContent books={homepageBooks} content={content} />
         </MemberLayout>
     );
 }

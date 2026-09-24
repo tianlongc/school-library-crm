@@ -11,6 +11,7 @@ use App\Http\Controllers\Staff\CategoryController;
 use App\Http\Controllers\Staff\LoanController;
 use App\Http\Controllers\Staff\MemberController;
 use App\Http\Controllers\Staff\ReportController;
+use App\Http\Controllers\Staff\StaffDashboardController;
 use Illuminate\Foundation\Application;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -110,9 +111,7 @@ Route::middleware(['auth', 'can:workspace.access'])
     ->prefix('staff')
     ->name('staff.')
     ->group(function (): void {
-        Route::get('/', function () {
-            return Inertia::render('Staff/Dashboard');
-        })->name('dashboard');
+        Route::get('/', StaffDashboardController::class)->name('dashboard');
 
         Route::controller(BookController::class)
             ->prefix('books')
@@ -157,7 +156,9 @@ Route::middleware(['auth', 'can:workspace.access'])
             ->name('loans.')
             ->group(function (): void {
                 Route::get('/', 'index')->name('index');
+                Route::get('/attention/{status}', 'attention')->name('attention');
                 Route::post('/query', 'query')->name('query');
+                Route::post('/preview', 'preview')->name('preview');
                 Route::get('/create', 'create')->name('create');
                 Route::post('/', 'store')->name('store');
                 Route::post('/{loan}/renew', 'renew')->name('renew');
@@ -179,4 +180,5 @@ Route::middleware(['auth', 'can:workspace.access'])
                 Route::get('/overdue/export', 'overdueExport')
                     ->middleware('can:reports.export')
                     ->name('overdue.export');
+            });
     });

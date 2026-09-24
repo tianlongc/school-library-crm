@@ -1,12 +1,13 @@
 import StudentPortalCmsContent from '@/Components/Cms/StudentPortalCmsContent';
-import { CMS_BLOCK_DEFINITIONS, createCmsBlock, duplicateCmsBlock, insertCmsBlockAfter, insertCmsBlockAt, isCanvasBackgroundDropActive, moveCmsBlock, resolveCanvasDropIndex, toggleCmsBlockVisibility } from '@/Utils/cmsPageDocument';
+import RichTextEditor from '@/Components/Cms/RichTextEditor/RichTextEditor';
+import { CMS_BLOCK_DEFINITIONS, createCmsBlock, duplicateCmsBlock, insertCmsBlockAfter, insertCmsBlockAt, isCanvasBackgroundDropActive, mergeCmsBlockData, moveCmsBlock, resolveCanvasDropIndex, shiftCmsBlock, toggleCmsBlockVisibility } from '@/Utils/cmsPageDocument';
 import { jsonRequest } from '@/Utils/jsonRequest';
 import { getRequestErrorMessage } from '@/Utils/requestErrorMessage';
 import { BookOutlined, CopyOutlined, DeleteOutlined, DesktopOutlined, EyeInvisibleOutlined, EyeOutlined, FontSizeOutlined, HolderOutlined, LayoutOutlined, LinkOutlined, MenuFoldOutlined, MenuUnfoldOutlined, MobileOutlined, NotificationOutlined, FileImageOutlined , PlusOutlined, TabletOutlined } from '@ant-design/icons';
 import { DragDropProvider, useDragOperation, useDraggable, useDroppable } from '@dnd-kit/react';
 import { useSortable } from '@dnd-kit/react/sortable';
-import { Button, Drawer, Dropdown, Empty, Flex, Grid, Input, Segmented, Select, Tabs, Tooltip, Typography } from 'antd';
-import { useEffect, useMemo, useState } from 'react';
+import { Button, Drawer, Dropdown, Empty, Flex, Grid, Input, Popconfirm, Segmented, Select, Tabs, Tooltip, Typography } from 'antd';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import LayersPanel from './LayersPanel';
 
 const BLOCK_ICONS = {
@@ -33,15 +34,22 @@ function ComponentItem({ definition, onAdd, type, compact = false }) {
         },
     });
     const Icon = BLOCK_ICONS[type];
+    const addFromClick = (event) => {
+        if (event.defaultPrevented) {
+            return;
+        }
+
+        onAdd(type);
+    };
 
     if (compact) {
         return (
-            <Tooltip title={`Add ${definition.label}`} placement="right">
+            <Tooltip title={`Click to add ${definition.label} after the selected block. Drag onto the canvas to position it.`} placement="right">
                 <button
                     ref={draggable.ref}
                     aria-label={`Add ${definition.label}`}
                     className="cms-builder-component-compact"
-                    onClick={() => onAdd(type)}
+                    onClick={addFromClick}
                     style={{
                         opacity: draggable.isDragging ? 0.5 : 1,
                     }}
@@ -56,9 +64,10 @@ function ComponentItem({ definition, onAdd, type, compact = false }) {
     }
 
     return (
-        <button ref={draggable.ref} className="cms-builder-component" onClick={() => onAdd(type)} style={{ opacity: draggable.isDragging ? 0.5 : 1 }} type="button">
+        <button ref={draggable.ref} className="cms-builder-component" onClick={addFromClick} style={{ opacity: draggable.isDragging ? 0.5 : 1 }} type="button">
             <span className="cms-builder-component-icon"><Icon aria-hidden="true" /></span>
-            <span><strong>{definition.label}</strong><small>{definition.description}</small></span>
+            <span className="cms-builder-component-copy"><strong>{definition.label}</strong><small>{definition.description}</small></span>
+            <PlusOutlined aria-hidden="true" className="cms-builder-component-add-icon" />
         </button>
     );
 }
@@ -67,7 +76,7 @@ function ComponentLibrary({ onAdd }) {
     return (
         <div className="cms-builder-panel-body">
             <Typography.Text className="cms-builder-panel-label">Components</Typography.Text>
-            <Typography.Paragraph type="secondary" className="cms-builder-help">Add content inside the student dashboard. Library tools stay protected.</Typography.Paragraph>
+            <Typography.Paragraph type="secondary" className="cms-builder-help">Click a component to add it after the selected block, or at the end if none is selected. Drag it onto the canvas to choose its position.</Typography.Paragraph>
             <div className="cms-builder-component-list">
                 {Object.entries(CMS_BLOCK_DEFINITIONS).map(([type, definition]) => (
                     <ComponentItem key={type} definition={definition} onAdd={onAdd} type={type} />
@@ -187,16 +196,21 @@ function CanvasBlock({ block, bookOptions, index, onAddAfter, onDelete, onDuplic
                         />
                     </Tooltip>
 
-                    <Tooltip title="Delete block">
+                    <Popconfirm
+                        description="This removes the block from the autosaved draft."
+                        okButtonProps={{ danger: true }}
+                        okText="Delete block"
+                        onConfirm={() => onDelete(block.id)}
+                        title="Delete this block?"
+                    >
                         <Button
-                            aria-label="Delete block"
+                            aria-label={`Delete ${CMS_BLOCK_DEFINITIONS[block.type].label} block`}
                             danger
                             icon={<DeleteOutlined />}
-                            onClick={() => onDelete(block.id)}
                             size="small"
                             type="text"
                         />
-                    </Tooltip>
+                    </Popconfirm>
                 </div>
             </div>
 
@@ -266,12 +280,13 @@ function CanvasSurface({ bookOptions, content, onAddAfter, onDelete, onDuplicate
 function Inspector({ block, bookOptions, onBeforeMediaUpload, onChange }) {
     const [uploading, setUploading] = useState(false);
     const [uploadError, setUploadError] = useState('');
+    const imageInputRef = useRef(null);
 
     if (!block) {
         return <div className="cms-builder-empty-panel"><Empty description="Select a canvas block to edit it." image={Empty.PRESENTED_IMAGE_SIMPLE} /></div>;
     }
 
-    const updateData = (field, value) => onChange({ ...block, data: { ...block.data, [field]: value } });
+    const updateData = (field, value) => onChange({ [field]: value });
     const uploadImage = async (file) => {
         const formData = new FormData();
         formData.append('image', file);
@@ -286,12 +301,8 @@ function Inspector({ block, bookOptions, onBeforeMediaUpload, onChange }) {
                 data: formData,
             });
             onChange({
-                ...block,
-                data: {
-                    ...block.data,
-                    media_uuid: payload.media.uuid,
-                    media_url: payload.media.url,
-                },
+                media_uuid: payload.media.uuid,
+                media_url: payload.media.url,
             });
         } catch (error) {
             setUploadError(getRequestErrorMessage(error, 'The image could not be uploaded.'));
@@ -300,30 +311,53 @@ function Inspector({ block, bookOptions, onBeforeMediaUpload, onChange }) {
         }
     };
     const removeImage = () => onChange({
-        ...block,
-        data: { ...block.data, media_uuid: null, media_url: undefined },
+        media_uuid: null,
+        media_url: undefined,
     });
+    const supportsRichText = ['hero', 'announcement', 'rich_text'].includes(block.type);
 
     return (
         <div className="cms-builder-inspector-fields">
             {'eyebrow' in block.data && <label className="cms-builder-field"><span>Eyebrow</span><Input maxLength={120} value={block.data.eyebrow} onChange={(event) => updateData('eyebrow', event.target.value)} /></label>}
             {'heading' in block.data && <label className="cms-builder-field"><span>Heading</span><Input maxLength={255} value={block.data.heading} onChange={(event) => updateData('heading', event.target.value)} /></label>}
-            {'body' in block.data && <label className="cms-builder-field"><span>Body</span><Input.TextArea autoSize={{ minRows: 4, maxRows: 10 }} maxLength={2000} value={block.data.body} onChange={(event) => updateData('body', event.target.value)} /></label>}
+            {'body' in block.data && !supportsRichText && <label className="cms-builder-field"><span>Body</span><Input.TextArea showCount autoSize={{ minRows: 4, maxRows: 10 }} maxLength={500} value={block.data.body} onChange={(event) => updateData('body', event.target.value)} /></label>}
+            {supportsRichText && (
+                <div className="cms-builder-field">
+                    <span>Body</span>
+                    <p className="cms-builder-field-hint">
+                        Select text to format. Lists and alignment apply to this paragraph. Drafts autosave; students see changes after Publish.
+                    </p>
+                    <RichTextEditor
+                        key={block.id}
+                        format={block.data.body_format ?? 'text'}
+                        onChange={(body) => onChange({ body, body_format: 'html' })}
+                        value={block.data.body}
+                    />
+                </div>
+            )}
             {(block.type === 'hero' || block.type === 'image') && (
                 <div className="cms-builder-field">
                     <span>Image</span>
-                    {block.data.media_url && <img alt="" className="w-full rounded-lg object-cover" src={block.data.media_url} />}
+                    {block.data.media_url && <img alt="Current block image" className="w-full rounded-lg object-cover" src={block.data.media_url} />}
                     <input
                         accept="image/jpeg,image/png,image/webp"
+                        aria-label="Choose block image"
+                        className="sr-only"
                         disabled={uploading}
                         onChange={(event) => {
                             const file = event.target.files?.[0];
                             if (file) uploadImage(file);
                             event.target.value = '';
                         }}
+                        ref={imageInputRef}
+                        tabIndex={-1}
                         type="file"
                     />
-                    {uploadError && <Typography.Text type="danger">{uploadError}</Typography.Text>}
+                    <Button disabled={uploading} onClick={() => imageInputRef.current?.click()}>
+                        {uploading ? 'Uploading image…' : block.data.media_uuid ? 'Replace image' : 'Choose image'}
+                    </Button>
+                    <Typography.Text type="secondary">JPEG, PNG or WebP. Maximum 5 MB.</Typography.Text>
+                    {uploadError && <Typography.Text role="alert" type="danger">{uploadError}</Typography.Text>}
                     {block.data.media_uuid && <Button danger disabled={uploading} onClick={removeImage} size="small">Remove image</Button>}
                 </div>
             )}
@@ -373,7 +407,7 @@ export default function CmsPageBuilder({ bookOptions, content, onBeforeMediaUplo
 
     const addBlock = (type) => {
         const block = createCmsBlock(type);
-        onChange({ ...content, blocks: [...content.blocks, block] });
+        onChange((currentContent) => insertCmsBlockAfter(currentContent, selectedId, block));
         setSelectedId(block.id);
 
         if (isMobile) {
@@ -387,7 +421,8 @@ export default function CmsPageBuilder({ bookOptions, content, onBeforeMediaUplo
         setSelectedId(block.id);
     };
 
-    const updateBlock = (updatedBlock) => onChange({ ...content, blocks: content.blocks.map((block) => block.id === updatedBlock.id ? updatedBlock : block) });
+    const updateBlockData = (blockId, dataPatch) =>
+        onChange((currentContent) => mergeCmsBlockData(currentContent, blockId, dataPatch));
     const deleteBlock = (blockId) => onChange({ ...content, blocks: content.blocks.filter(({ id }) => id !== blockId) });
     const toggleBlockVisibility = (blockId) => onChange(toggleCmsBlockVisibility(content, blockId));
     const duplicateBlock = (blockId) => {
@@ -437,6 +472,9 @@ export default function CmsPageBuilder({ bookOptions, content, onBeforeMediaUplo
                         }
                     }}
                     onToggleVisibility={toggleBlockVisibility}
+                    onMove={(blockId, direction) =>
+                        onChange((currentContent) => shiftCmsBlock(currentContent, blockId, direction))
+                    }
                     onChange={(blocks) => onChange({ ...content, blocks })}
                 />
             ),
@@ -515,7 +553,7 @@ export default function CmsPageBuilder({ bookOptions, content, onBeforeMediaUplo
                         <span className="cms-builder-collapsed-label">Settings</span>
                     ) : (
                         <div className="cms-builder-panel-scroll">
-                            <Inspector block={selectedBlock} bookOptions={bookOptions} onBeforeMediaUpload={onBeforeMediaUpload} onChange={updateBlock} />
+                            <Inspector block={selectedBlock} bookOptions={bookOptions} onBeforeMediaUpload={onBeforeMediaUpload} onChange={(dataPatch) => updateBlockData(selectedBlock.id, dataPatch)} />
                         </div>
                     )}
                 </aside>
@@ -527,7 +565,7 @@ export default function CmsPageBuilder({ bookOptions, content, onBeforeMediaUplo
                         <Tabs defaultActiveKey="components" items={libraryTabs} />
                     </Drawer>
                     <Drawer open={mobileInspectorOpen} onClose={() => setMobileInspectorOpen(false)} placement="right" size="min(92vw, 380px)" title={selectedBlock ? `Block settings · ${CMS_BLOCK_DEFINITIONS[selectedBlock.type].label}` : 'Block settings'}>
-                        <Inspector block={selectedBlock} bookOptions={bookOptions} onBeforeMediaUpload={onBeforeMediaUpload} onChange={updateBlock} />
+                        <Inspector block={selectedBlock} bookOptions={bookOptions} onBeforeMediaUpload={onBeforeMediaUpload} onChange={(dataPatch) => updateBlockData(selectedBlock.id, dataPatch)} />
                     </Drawer>
                 </>
             )}

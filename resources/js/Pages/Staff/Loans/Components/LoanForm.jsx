@@ -18,7 +18,7 @@ import {
     Typography,
 } from 'antd';
 import dayjs from 'dayjs';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 
 const errorStatus = (message) => (message ? 'error' : undefined);
 
@@ -30,13 +30,71 @@ export default function LoanForm({ onSuccess }) {
     });
     const [requestError, setRequestError] = useState('');
     const [submitting, setSubmitting] = useState(false);
+    const [previewing, setPreviewing] = useState(false);
+    const [preview, setPreview] = useState(null);
+    const previewVersion = useRef(0);
 
     const updateField = (field, value) => {
         setData(field, value);
         clearErrors(field);
+
+        if (field === 'member_number' || field === 'isbn') {
+            previewVersion.current += 1;
+            setPreview(null);
+            setPreviewing(false);
+            setRequestError('');
+        }
+    };
+
+    const checkPreview = async () => {
+        const version = ++previewVersion.current;
+        setPreview(null);
+        setPreviewing(true);
+        setRequestError('');
+        clearErrors('member_number', 'isbn');
+
+        try {
+            const result = await jsonRequest({
+                data: {
+                    member_number: data.member_number,
+                    isbn: data.isbn,
+                },
+                method: 'POST',
+                url: route('staff.loans.preview'),
+            });
+
+            if (version === previewVersion.current) {
+                setPreview(result);
+            }
+        } catch (error) {
+            if (version !== previewVersion.current) {
+                return;
+            }
+
+            const validationErrors = getLaravelValidationErrors(error);
+
+            if (validationErrors) {
+                setError(validationErrors);
+            } else {
+                setRequestError(
+                    getRequestErrorMessage(
+                        error,
+                        'The member and book could not be checked. Try again.',
+                    ),
+                );
+            }
+        } finally {
+            if (version === previewVersion.current) {
+                setPreviewing(false);
+            }
+        }
     };
 
     const submit = async () => {
+        if (!preview || preview.book.available_copies < 1 || previewing) {
+            return;
+        }
+
         clearErrors();
         setRequestError('');
         setSubmitting(true);
@@ -54,6 +112,7 @@ export default function LoanForm({ onSuccess }) {
 
             if (validationErrors) {
                 setError(validationErrors);
+                setPreview(null);
             } else {
                 setRequestError(
                     getRequestErrorMessage(
@@ -79,7 +138,7 @@ export default function LoanForm({ onSuccess }) {
         >
             <Alert
                 className="loan-form-note"
-                description="Confirm the member, scan the book ISBN, then choose the date it should be returned."
+                description="Enter the member number and book ISBN, check the match, then choose a due date and issue the loan."
                 showIcon
                 title="At the circulation desk"
                 type="info"
@@ -119,7 +178,7 @@ export default function LoanForm({ onSuccess }) {
                                         event.target.value,
                                     )
                                 }
-                                placeholder="For example, MBR-000123"
+                                placeholder="For example, MEM000123"
                                 prefix={<IdcardOutlined />}
                                 value={data.member_number}
                             />
@@ -192,11 +251,53 @@ export default function LoanForm({ onSuccess }) {
                     </Col>
                 </Row>
 
+                <Flex className="mb-5" gap={8} justify="flex-start" wrap>
+                    <Button
+                        disabled={!data.member_number || !data.isbn || submitting}
+                        loading={previewing}
+                        onClick={checkPreview}
+                        type="default"
+                    >
+                        Check member and book
+                    </Button>
+                </Flex>
+
+                {preview && (
+                    <Alert
+                        className="mb-5"
+                        description={
+                            <div>
+                                <div>
+                                    <strong>Member:</strong> {preview.member.name} ({preview.member.member_number})
+                                </div>
+                                <div>
+                                    <strong>Book:</strong> {preview.book.title} ({preview.book.isbn})
+                                </div>
+                                <div>
+                                    <strong>Available copies:</strong> {preview.book.available_copies}
+                                </div>
+                                <Typography.Text type="secondary">
+                                    Availability and borrowing eligibility are checked again when you issue.
+                                </Typography.Text>
+                            </div>
+                        }
+                        role="status"
+                        showIcon
+                        title={preview.book.available_copies > 0 ? 'Match confirmed' : 'No copies available'}
+                        type={preview.book.available_copies > 0 ? 'success' : 'warning'}
+                    />
+                )}
+
                 <Flex className="form-actions" gap={8} justify="flex-end" wrap>
                     <InertiaButton href={route('staff.loans.index')}>
                         Cancel
                     </InertiaButton>
-                    <Button htmlType="submit" loading={submitting} type="primary">
+                    <Button
+                        disabled={!preview || preview.book.available_copies < 1 || previewing}
+                        htmlType="submit"
+                        loading={submitting}
+                        type="primary"
+                    >
                         Issue loan
                     </Button>
                 </Flex>

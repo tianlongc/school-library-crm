@@ -9,10 +9,54 @@ import {
     insertCmsBlockAfter,
     isCanvasBackgroundDropActive,
     moveCmsBlock,
+    mergeCmsBlockData,
     normalizeCmsDocument,
     resolveCanvasDropIndex,
+    shiftCmsBlock,
     toggleCmsBlockVisibility,
 } from './cmsPageDocument.js';
+
+test('merges uploaded media into the latest edited block', () => {
+    const original = {
+        schema_version: 1,
+        blocks: [createCmsBlock('hero', () => 'hero-1')],
+    };
+    const edited = mergeCmsBlockData(original, 'hero-1', {
+        heading: 'A new heading while the image uploads',
+    });
+    const uploaded = mergeCmsBlockData(edited, 'hero-1', {
+        media_uuid: 'media-1',
+        media_url: '/storage/media-1.jpg',
+    });
+
+    assert.equal(uploaded.blocks[0].data.heading, 'A new heading while the image uploads');
+    assert.equal(uploaded.blocks[0].data.media_uuid, 'media-1');
+    assert.equal(original.blocks[0].data.media_uuid, null);
+});
+
+test('moves a CMS block one position with boundary protection', () => {
+    const source = {
+        schema_version: 1,
+        blocks: [
+            createCmsBlock('hero', () => 'hero-1'),
+            createCmsBlock('announcement', () => 'announcement-1'),
+            createCmsBlock('image', () => 'image-1'),
+        ],
+    };
+
+    assert.deepEqual(
+        shiftCmsBlock(source, 'announcement-1', 'up').blocks.map(({ id }) => id),
+        ['announcement-1', 'hero-1', 'image-1'],
+    );
+    assert.deepEqual(
+        shiftCmsBlock(source, 'announcement-1', 'down').blocks.map(({ id }) => id),
+        ['hero-1', 'image-1', 'announcement-1'],
+    );
+    assert.deepEqual(
+        shiftCmsBlock(source, 'hero-1', 'up').blocks.map(({ id }) => id),
+        ['hero-1', 'announcement-1', 'image-1'],
+    );
+});
 
 test('creates a fallback id when randomUUID is unavailable', () => {
     assert.equal(

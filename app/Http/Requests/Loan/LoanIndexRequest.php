@@ -14,7 +14,7 @@ class LoanIndexRequest extends TableIndexRequest
 
         $this->merge([
             'status' => LoanStatus::tryFrom(
-                (string) $this->string('status'),
+                (string) ($this->route('status') ?? $this->string('status')),
             )?->value ?? '',
         ]);
     }

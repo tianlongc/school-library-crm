@@ -1,11 +1,13 @@
 <?php
 
 use App\Domain\Book\Models\Book;
+use App\Domain\Category\Models\Category;
 use App\Domain\Community\Models\CommunityPost;
 use App\Domain\User\Models\User;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use Inertia\Testing\AssertableInertia as Assert;
 
 beforeEach(function () {
     $this->seed(RolesAndPermissionsSeeder::class);
@@ -460,5 +462,132 @@ describe('community feed', function () {
             ->assertJsonMissing([
                 'body' => 'Hidden post',
             ]);
+    });
+
+    it('filters the feed by the selected book category', function () {
+        $category = Category::factory()->create();
+        $otherCategory = Category::factory()->create();
+
+        $matchingPost = CommunityPost::factory()->create([
+            'book_id' => Book::factory()->create([
+                'category_id' => $category->id,
+            ])->id,
+        ]);
+
+        CommunityPost::factory()->create([
+            'book_id' => Book::factory()->create([
+                'category_id' => $otherCategory->id,
+            ])->id,
+        ]);
+
+        CommunityPost::factory()->create(); // No attached book.
+
+        $this->postJson(
+            route('member.community.feed'),
+            [
+                'category_id' => $category->id,
+                'per_page' => 10,
+            ],
+        )
+            ->assertSuccessful()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.id', $matchingPost->id);
+    });
+
+    it('filters the initial community page by the selected book category', function () {
+        $category = Category::factory()->create(['name' => 'English']);
+        $otherCategory = Category::factory()->create(['name' => 'Science']);
+
+        $matchingBook = Book::factory()->create([
+            'category_id' => $category->id,
+        ]);
+
+        $matchingPost = CommunityPost::factory()->create([
+            'book_id' => $matchingBook->id,
+        ]);
+
+        CommunityPost::factory()->create([
+            'book_id' => Book::factory()->create([
+                'category_id' => $otherCategory->id,
+            ])->id,
+        ]);
+
+        $this->get(route('member.community.index', ['category_id' => $category->id]))
+            ->assertSuccessful()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('Member/Community/Index')
+                ->where('selectedCategoryId', $category->id)
+                ->has('categoryOptions', 2)
+                ->where('categoryOptions.0.value', $category->id)
+                ->where('categoryOptions.0.label', 'English')
+                ->has('trendingBooks', 2)
+                ->where('trendingBooks.0.id', $matchingBook->id)
+                ->where('trendingBooks.0.discussionsCount', 1)
+                ->has('initialPosts.data', 1)
+                ->where('initialPosts.data.0.id', $matchingPost->id)
+            );
+    });
+
+    it('keeps the selected category when loading the next cursor page', function () {
+        $category = Category::factory()->create();
+        $otherCategory = Category::factory()->create();
+        $selectedBook = Book::factory()->create([
+            'category_id' => $category->id,
+        ]);
+        $otherBook = Book::factory()->create([
+            'category_id' => $otherCategory->id,
+        ]);
+
+        CommunityPost::factory()
+            ->count(11)
+            ->create([
+                'book_id' => $otherBook->id,
+                'user_id' => $this->student->id,
+            ]);
+
+        $matchingPosts = CommunityPost::factory()
+            ->count(11)
+            ->create([
+                'book_id' => $selectedBook->id,
+                'user_id' => $this->student->id,
+            ]);
+
+        $firstPage = $this->postJson(
+            route('member.community.feed'),
+            [
+                'category_id' => $category->id,
+                'per_page' => 10,
+            ],
+        )
+            ->assertSuccessful()
+            ->assertJsonCount(10, 'data');
+
+        $cursor = $firstPage->json('meta.next_cursor');
+
+        expect($cursor)->not->toBeNull();
+
+        $this->postJson(
+            route('member.community.feed'),
+            [
+                'category_id' => $category->id,
+                'cursor' => $cursor,
+                'per_page' => 10,
+            ],
+        )
+            ->assertSuccessful()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.id', $matchingPosts->first()->id);
+    });
+
+    it('rejects a category id that does not exist', function () {
+        $this->postJson(
+            route('member.community.feed'),
+            [
+                'category_id' => 999999,
+                'per_page' => 10,
+            ],
+        )
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('category_id');
     });
 });

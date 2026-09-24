@@ -21,7 +21,6 @@ class CommunityFeedRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         $this->merge([
-            'page' => $this->input('page', 1),
             'per_page' => $this->input('per_page', 10),
         ]);
     }
@@ -34,15 +33,20 @@ class CommunityFeedRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'page' => [
-                'required',
-                'integer',
-                'min:1',
+            'cursor' => [
+                'nullable',
+                'string',
+                'max:2048',
             ],
             'per_page' => [
                 'required',
                 'integer',
                 Rule::in([10, 20]),
+            ],
+            'category_id' => [
+                'nullable',
+                'integer',
+                'exists:categories,id',
             ],
         ];
     }

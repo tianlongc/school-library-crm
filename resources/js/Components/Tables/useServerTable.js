@@ -16,17 +16,32 @@ export function useServerTable({
     const [search, setSearch] = useState(initialFilters.search ?? '');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
-    const abortControllerRef = useRef(null);
+    const [failureCount, setFailureCount] = useState(0);
+    const activeRequestRef = useRef(null);
+    const [refreshing, setRefreshing] = useState(false);
 
     const load = useCallback(
-        async (overrides = {}) => {
-            abortControllerRef.current?.abort();
+        async (overrides = {}, { silent = false } = {}) => {
+            if (silent && activeRequestRef.current) {
+                return false;
+            }
+
+            if (activeRequestRef.current) {
+                activeRequestRef.current.abortController.abort();
+
+                if (activeRequestRef.current.silent) {
+                    setRefreshing(false);
+                }
+            }
 
             const abortController = new AbortController();
-            abortControllerRef.current = abortController;
+            activeRequestRef.current = { abortController, silent };
 
-            setLoading(true);
-            setError(null);
+            if (silent) {
+                setRefreshing(true);
+            } else {
+                setLoading(true);
+            }
 
             try {
                 const payload = await jsonRequest({
@@ -49,14 +64,26 @@ export function useServerTable({
                     meta: payload.meta,
                 });
                 setFilters(payload.filters);
+                setError(null);
+                setFailureCount(0);
+
+                return true;
             } catch (requestError) {
                 if (!isCancelledRequest(requestError)) {
                     setError(requestError);
+                    setFailureCount((count) => count + 1);
                 }
+
+                return false;
             } finally {
-                if (abortControllerRef.current === abortController) {
-                    abortControllerRef.current = null;
-                    setLoading(false);
+                if (activeRequestRef.current?.abortController === abortController) {
+                    activeRequestRef.current = null;
+
+                    if (silent) {
+                        setRefreshing(false);
+                    } else {
+                        setLoading(false);
+                    }
                 }
             }
         },
@@ -133,22 +160,29 @@ export function useServerTable({
         [load, search],
     );
 
+    const refreshSilently = useCallback(
+        () => load({}, { silent: true }),
+        [load],
+    );
+
     useEffect(
-        () => () => abortControllerRef.current?.abort(),
+        () => () => activeRequestRef.current?.abortController.abort(),
         [],
     );
 
     return {
         error,
+        failureCount,
         filters,
         handlePageChange,
         handleTableChange,
         loading,
         refresh: load,
+        refreshing,
+        refreshSilently,
         resource,
         search,
         setFilter,
         setSearch,
     };
 }
-

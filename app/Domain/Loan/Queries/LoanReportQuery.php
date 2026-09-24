@@ -72,8 +72,8 @@ class LoanReportQuery extends TableQuery
                                 $query
                                     ->where('title', 'like', "%{$search}%")
                                     ->orWhere('isbn', 'like', "%{$search}%");
+                            });
                         });
-                    });
                 });
             });
     }
@@ -86,8 +86,7 @@ class LoanReportQuery extends TableQuery
         int $perPage = 10,
         string $sort = 'due_at',
         string $direction = 'asc',
-    ): LengthAwarePaginator
-    {
+    ): LengthAwarePaginator {
         return $this->paginateTable(
             query: $this->overdue(
                 search: $search,
@@ -105,8 +104,7 @@ class LoanReportQuery extends TableQuery
         string $search = '',
         ?CarbonInterface $from = null,
         ?CarbonInterface $to = null
-    ): Builder
-    {
+    ): Builder {
         return $this->overdue(
             search: $search,
             from: $from,

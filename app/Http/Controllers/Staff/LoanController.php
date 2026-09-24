@@ -2,15 +2,19 @@
 
 namespace App\Http\Controllers\Staff;
 
+use App\Domain\Book\Models\Book;
 use App\Domain\Loan\Actions\IssueLoanAction;
 use App\Domain\Loan\Actions\RenewLoanAction;
 use App\Domain\Loan\Actions\RequestLoanReturnAction;
 use App\Domain\Loan\Actions\ReturnLoanAction;
+use App\Domain\Loan\Enums\LoanStatus;
 use App\Domain\Loan\Models\Loan;
 use App\Domain\Loan\Queries\LoanQuery;
+use App\Domain\Member\Models\Member;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Loan\IssueLoanRequest;
 use App\Http\Requests\Loan\LoanIndexRequest;
+use App\Http\Requests\Loan\PreviewLoanRequest;
 use App\Http\Resources\LoanResource;
 use Carbon\CarbonImmutable;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
@@ -18,11 +22,19 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class LoanController extends Controller
 {
+    public function attention(LoanIndexRequest $request, LoanQuery $loanQuery, string $status): Response
+    {
+        abort_unless(LoanStatus::tryFrom($status) !== null, 404);
+
+        return $this->index($request, $loanQuery);
+    }
+
     /**
      * Display a listing of the resource.
      */
@@ -69,6 +81,49 @@ class LoanController extends Controller
         Gate::authorize('create', Loan::class);
 
         return Inertia::render('Staff/Loans/Create');
+    }
+
+    public function preview(PreviewLoanRequest $request): JsonResponse
+    {
+        $attributes = $request->validated();
+
+        $member = Member::query()
+            ->with('user')
+            ->where('member_number', $attributes['member_number'])
+            ->first();
+
+        if ($member === null) {
+            throw ValidationException::withMessages([
+                'member_number' => 'Member not found.',
+            ]);
+        }
+
+        $book = Book::query()
+            ->where('isbn', $attributes['isbn'])
+            ->first();
+
+        if ($book === null) {
+            throw ValidationException::withMessages([
+                'isbn' => 'Book not found.',
+            ]);
+        }
+
+        $activeLoans = Loan::query()
+            ->where('book_id', $book->id)
+            ->whereNull('returned_at')
+            ->count();
+
+        return response()->json([
+            'member' => [
+                'name' => $member->user->name,
+                'member_number' => $member->member_number,
+            ],
+            'book' => [
+                'title' => $book->title,
+                'isbn' => $book->isbn,
+                'available_copies' => max(0, $book->total_copies - $activeLoans),
+            ],
+        ]);
     }
 
     /**

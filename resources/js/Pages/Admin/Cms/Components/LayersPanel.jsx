@@ -3,11 +3,14 @@ import {
     EyeInvisibleOutlined,
     EyeOutlined,
     HolderOutlined,
+    MoreOutlined,
 } from '@ant-design/icons';
 import { move } from '@dnd-kit/helpers';
 import { DragDropProvider } from '@dnd-kit/react';
 import { useSortable } from '@dnd-kit/react/sortable';
 import {
+    Button,
+    Dropdown,
     Empty,
     Tooltip,
     Typography,
@@ -15,7 +18,9 @@ import {
 
 function LayersItem({
     block,
+    blockCount,
     index,
+    onMove,
     onSelect,
     onToggleVisibility,
     selected,
@@ -88,6 +93,23 @@ function LayersItem({
                     )}
                 </button>
             </Tooltip>
+            <Dropdown
+                menu={{
+                    items: [
+                        { key: 'up', label: 'Move up', disabled: index === 0 },
+                        { key: 'down', label: 'Move down', disabled: index === blockCount - 1 },
+                    ],
+                    onClick: ({ key }) => onMove(block.id, key),
+                }}
+                trigger={['click']}
+            >
+                <Button
+                    aria-label={`Move ${block.data.heading || definition.label}`}
+                    icon={<MoreOutlined aria-hidden="true" />}
+                    size="small"
+                    type="text"
+                />
+            </Dropdown>
         </div>
     );
 }
@@ -95,6 +117,7 @@ function LayersItem({
 export default function LayersPanel({
     blocks,
     onChange,
+    onMove,
     onSelect,
     onToggleVisibility,
     selectedId,
@@ -127,7 +150,7 @@ export default function LayersPanel({
                 type="secondary"
                 className="cms-builder-help"
             >
-                Select or drag a layer to reorder it.
+                Select a layer, or use its menu or drag handle to reorder it.
             </Typography.Paragraph>
 
             <DragDropProvider
@@ -138,7 +161,9 @@ export default function LayersPanel({
                         <LayersItem
                             key={block.id}
                             block={block}
+                            blockCount={blocks.length}
                             index={index}
+                            onMove={onMove}
                             onSelect={onSelect}
                             onToggleVisibility={
                                 onToggleVisibility

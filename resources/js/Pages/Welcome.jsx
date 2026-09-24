@@ -5,16 +5,16 @@ import { Head, Link } from '@inertiajs/react';
 
 const workflowItems = [
     {
-        title: 'Start with a clear path',
-        description: 'Give every reader a simple way to begin and stay oriented.',
+        title: 'Find a book',
+        description: 'Search the catalogue and check which copies are available.',
     },
     {
-        title: 'Keep the school day moving',
-        description: 'Bring the work of the library into one calm, shared rhythm.',
+        title: 'Track a loan',
+        description: 'See due dates and request a return from your account.',
     },
     {
-        title: 'Support the whole school',
-        description: 'Help library teams and school leaders make better decisions.',
+        title: 'Run the library desk',
+        description: 'Issue books and review overdue loans and return requests.',
     },
 ];
 
@@ -22,17 +22,17 @@ const audienceRoles = [
     {
         number: '01',
         title: 'Students',
-        description: 'Find a clear way into the library and the next thing they want to read.',
+        description: 'Browse books, check due dates, and request returns.',
     },
     {
         number: '02',
         title: 'Librarians',
-        description: 'Keep daily work coordinated, dependable, and easy to follow.',
+        description: 'Manage the catalogue, issue loans, and handle returns.',
     },
     {
         number: '03',
         title: 'Administrators',
-        description: 'Stay connected to the bigger picture without adding more noise.',
+        description: 'Manage user access and publish the member homepage.',
     },
 ];
 
@@ -63,7 +63,7 @@ function WorkflowVisual() {
                 <div className="welcome-workflow-card-header">
                     <div>
                         <p className="welcome-workflow-kicker">Shared workflow</p>
-                        <h2 className="welcome-workflow-title">Keep the next step clear.</h2>
+                        <h2 className="welcome-workflow-title">From catalogue to return.</h2>
                     </div>
                     <span className="welcome-workflow-note">Designed for the school day</span>
                 </div>
@@ -83,9 +83,9 @@ function WorkflowVisual() {
                 </ol>
 
                 <div className="welcome-workflow-footer">
-                    <span>One shared place</span>
-                    <span>Less friction</span>
-                    <span>More reading</span>
+                    <span>Catalogue</span>
+                    <span>Loans</span>
+                    <span>Returns</span>
                 </div>
             </div>
         </div>
@@ -104,7 +104,7 @@ export default function Welcome({ auth, canRegister }) {
                 <title>School Library CRM</title>
                 <meta
                     name="description"
-                    content="A clear, connected workspace for students, librarians, and administrators."
+                    content="Browse books and manage school library loans in one workspace."
                     head-key="description"
                 />
             </Head>
@@ -162,8 +162,8 @@ export default function Welcome({ auth, canRegister }) {
                                 One library, every reader.
                             </h1>
                             <p className="welcome-lede">
-                                A clear, connected way to help students find their next read
-                                and help library teams keep the school day moving.
+                                Browse the catalogue, see your due dates, and request a return.
+                                Library staff can issue books and track loans in the same workspace.
                             </p>
 
                             <div className="welcome-actions">
@@ -202,19 +202,19 @@ export default function Welcome({ auth, canRegister }) {
                         aria-labelledby="workflow-title"
                     >
                         <div className="welcome-section-intro">
-                            <p className="ui-eyebrow">A calmer way to work</p>
+                            <p className="ui-eyebrow">Library tasks</p>
                             <h2 id="workflow-title">
-                                The right information, at the right moment.
+                                Books, loans, and returns in view.
                             </h2>
                             <p>
-                                Bring the daily rhythm of the school library into one clear
-                                experience that feels useful from the first visit.
+                                Members can check their borrowing status. Staff can act on
+                                overdue loans and return requests.
                             </p>
                         </div>
 
                         <div className="welcome-workflow-summary" aria-hidden="true">
                             <span className="welcome-summary-line" />
-                            <span>Shared by the whole school</span>
+                            <span>One account entry for each role</span>
                         </div>
                     </section>
 
@@ -224,8 +224,8 @@ export default function Welcome({ auth, canRegister }) {
                         aria-labelledby="audiences-title"
                     >
                         <div className="welcome-audience-heading">
-                            <p className="ui-eyebrow">Built around people</p>
-                            <h2 id="audiences-title">One shared system, three perspectives.</h2>
+                            <p className="ui-eyebrow">Who uses it</p>
+                            <h2 id="audiences-title">A workspace for each library role.</h2>
                         </div>
 
                         <div className="welcome-audience-grid">
@@ -245,7 +245,7 @@ export default function Welcome({ auth, canRegister }) {
                 </main>
 
                 <footer className="welcome-footer">
-                    <p>Built for curious minds and capable library teams.</p>
+                    <p>School library catalogue and circulation.</p>
                     <p>&copy; {new Date().getFullYear()} School Library CRM</p>
                 </footer>
             </div>

@@ -234,6 +234,41 @@ it('renders the staff dashboard for authorized staff', function (string $role) {
     'admin' => 'admin',
 ]);
 
+it('shows exclusive overdue and return request counts on the staff dashboard', function () {
+    $staff = User::factory()->create();
+    $staff->assignRole('librarian');
+
+    Loan::factory()->create([
+        'due_at' => now()->subDay(),
+        'return_requested_at' => null,
+        'returned_at' => null,
+    ]);
+    Loan::factory()->create([
+        'due_at' => now()->subDay(),
+        'return_requested_at' => now(),
+        'returned_at' => null,
+    ]);
+    Loan::factory()->create([
+        'due_at' => now()->addDay(),
+        'return_requested_at' => now(),
+        'returned_at' => null,
+    ]);
+    Loan::factory()->create([
+        'due_at' => now()->subDay(),
+        'return_requested_at' => now(),
+        'returned_at' => now(),
+    ]);
+
+    $this->actingAs($staff)
+        ->get(route('staff.dashboard'))
+        ->assertSuccessful()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('Staff/Dashboard')
+            ->where('attention.overdue', 1)
+            ->where('attention.return_requested', 2)
+        );
+});
+
 it('renders user management only for administrators', function () {
     $admin = User::factory()->create();
     $admin->assignRole('admin');

@@ -36,6 +36,11 @@ test('guest cannot query the loan table', function () {
         ->assertUnauthorized();
 });
 
+test('guest cannot preview a loan', function () {
+    $this->postJson(route('staff.loans.preview'), [])
+        ->assertUnauthorized();
+});
+
 test('guest cannot renew a loan', function () {
     $loan = Loan::factory()->create([
         'due_at' => now()->addDays(7)->endOfDay(),
@@ -66,6 +71,14 @@ test('member cannot query loan management', function () {
 
     $this->actingAs($member)
         ->postJson(route('staff.loans.query'))
+        ->assertForbidden();
+});
+
+test('member cannot preview a staff loan', function () {
+    $member = loanStaffWithRole('member');
+
+    $this->actingAs($member)
+        ->postJson(route('staff.loans.preview'), [])
         ->assertForbidden();
 });
 
@@ -142,6 +155,27 @@ describe('authenticated loan management', function () {
             );
     });
 
+    it('opens dashboard attention views without query parameters', function (string $status) {
+        $matchingLoan = Loan::factory()->create([
+            'due_at' => now()->subDay(),
+            'return_requested_at' => $status === 'return_requested' ? now() : null,
+            'returned_at' => null,
+        ]);
+
+        $url = route('staff.loans.attention', ['status' => $status]);
+
+        expect($url)->not->toContain('?');
+
+        $this->get($url)
+            ->assertSuccessful()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('Staff/Loans/Index')
+                ->has('loans.data', 1)
+                ->where('loans.data.0.id', $matchingLoan->id)
+                ->where('filters.status', $status)
+            );
+    })->with(['overdue', 'return_requested']);
+
     it('renders member return requests in the staff ledger', function () {
         $requestedLoan = Loan::factory()->create([
             'return_requested_at' => now(),
@@ -212,6 +246,73 @@ describe('authenticated loan management', function () {
             ->assertInertia(fn (Assert $page) => $page
                 ->component('Staff/Loans/Create')
             );
+    });
+
+    it('previews the exact member and book with current availability without issuing', function () {
+        $member = Member::factory()->create();
+        $book = Book::factory()->create(['total_copies' => 2]);
+
+        Loan::factory()->create([
+            'book_id' => $book->id,
+            'returned_at' => null,
+        ]);
+
+        $this->postJson(route('staff.loans.preview'), [
+            'member_number' => $member->member_number,
+            'isbn' => $book->isbn,
+        ])
+            ->assertSuccessful()
+            ->assertJsonPath('member.name', $member->user->name)
+            ->assertJsonPath('member.member_number', $member->member_number)
+            ->assertJsonPath('book.title', $book->title)
+            ->assertJsonPath('book.isbn', $book->isbn)
+            ->assertJsonPath('book.available_copies', 1);
+
+        expect(Loan::query()->count())->toBe(1);
+    });
+
+    it('rejects unknown preview identifiers without a partial match', function () {
+        $member = Member::factory()->create();
+        $book = Book::factory()->create();
+
+        $this->postJson(route('staff.loans.preview'), [
+            'member_number' => substr($member->member_number, 0, -1),
+            'isbn' => $book->isbn,
+        ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('member_number');
+
+        $this->postJson(route('staff.loans.preview'), [
+            'member_number' => $member->member_number,
+            'isbn' => str_repeat('0', 13),
+        ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('isbn');
+    });
+
+    it('rechecks availability when issuing after a successful preview', function () {
+        $member = Member::factory()->create();
+        $book = Book::factory()->create(['total_copies' => 1]);
+
+        $this->postJson(route('staff.loans.preview'), [
+            'member_number' => $member->member_number,
+            'isbn' => $book->isbn,
+        ])
+            ->assertSuccessful()
+            ->assertJsonPath('book.available_copies', 1);
+
+        Loan::factory()->create([
+            'book_id' => $book->id,
+            'returned_at' => null,
+        ]);
+
+        $this->postJson(route('staff.loans.store'), [
+            'member_number' => $member->member_number,
+            'isbn' => $book->isbn,
+            'due_at' => now()->addWeeks(2)->toDateString(),
+        ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('isbn');
     });
 
     it('issues a loan from valid json', function () {

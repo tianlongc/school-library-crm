@@ -13,7 +13,7 @@ export default function GuestLayout({
             </a>
 
             <div className="guest-frame">
-                <aside className="guest-brand-panel">
+                <aside className="guest-brand-panel hidden lg:flex">
                     <Link
                         href="/"
                         className="guest-wordmark w-fit text-white"
@@ -58,6 +58,15 @@ export default function GuestLayout({
                 >
                     <div className="w-full max-w-md">
                         <header className="mb-8">
+                            <Link
+                                href="/"
+                                className="guest-wordmark mb-8 w-fit text-[var(--library-ink)] lg:hidden"
+                                aria-label="School Library home"
+                                prefetch
+                            >
+                                <ApplicationLogo className="h-7 w-7 text-[var(--library-teal)]" />
+                                <span className="font-serif text-lg font-semibold">School Library</span>
+                            </Link>
                             <p className="ui-eyebrow">School library account</p>
                             <h1 className="mt-4 font-serif text-4xl font-semibold tracking-[-0.03em] text-[var(--library-ink)]">
                                 {title}

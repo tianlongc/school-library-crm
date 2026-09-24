@@ -182,6 +182,40 @@ export function moveCmsBlock(content, blockId, targetIndex) {
     return document;
 }
 
+export function mergeCmsBlockData(content, blockId, dataPatch) {
+    const document = normalizeCmsDocument(content);
+
+    document.blocks = document.blocks.map((block) =>
+        block.id === blockId
+            ? { ...block, data: { ...block.data, ...dataPatch } }
+            : block,
+    );
+
+    return document;
+}
+
+export function shiftCmsBlock(content, blockId, direction) {
+    const document = normalizeCmsDocument(content);
+    const sourceIndex = document.blocks.findIndex(({ id }) => id === blockId);
+    const targetIndex = sourceIndex + (direction === 'up' ? -1 : 1);
+
+    if (
+        sourceIndex === -1 ||
+        (direction !== 'up' && direction !== 'down') ||
+        targetIndex < 0 ||
+        targetIndex >= document.blocks.length
+    ) {
+        return document;
+    }
+
+    [document.blocks[sourceIndex], document.blocks[targetIndex]] = [
+        document.blocks[targetIndex],
+        document.blocks[sourceIndex],
+    ];
+
+    return document;
+}
+
 export function resolveCanvasDropIndex(target, blockCount) {
     return target?.data?.kind === 'canvas-slot'
         ? target.data.index
