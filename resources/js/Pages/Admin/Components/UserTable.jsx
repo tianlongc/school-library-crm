@@ -1,4 +1,5 @@
 import ServerDataTable from '@/Components/Tables/ServerDataTable';
+import MobileRecord from '@/Components/Tables/MobileRecord';
 import { getSortOrder } from '@/Components/Tables/tableQuery';
 import { ReadOutlined, SafetyCertificateOutlined, UserOutlined, UserSwitchOutlined } from '@ant-design/icons';
 import { Badge, Button, Space, Tag, Tooltip, Typography } from 'antd';
@@ -47,7 +48,7 @@ function RoleTag({ role, label }) {
     );
 }
 
-function UserActions({ user, onEditRole }) {
+function UserActions({ user, onEditRole, compact = false }) {
     if (user.is_current_user) {
         return (
             <Typography.Text type="secondary">
@@ -68,7 +69,9 @@ function UserActions({ user, onEditRole }) {
                 icon={<UserSwitchOutlined />}
                 aria-label={`Change role for ${user.name}`}
                 onClick={() => onEditRole(user)}
-            />
+            >
+                {compact ? 'Change role' : null}
+            </Button>
         </Tooltip>
     );
 }
@@ -207,6 +210,19 @@ export default function UserTable({
         <ServerDataTable
             columns={columns}
             data={users}
+            mobileSort={filters}
+            mobileRenderItem={(user) => (
+                <MobileRecord
+                    title={user.name}
+                    subtitle={user.email}
+                    status={<Badge status={user.email_verified ? 'success' : 'warning'} text={user.email_verified ? 'Verified' : 'Unverified'} />}
+                    details={[
+                        { label: 'Access role', value: user.roles.length > 0 ? user.roles.map((role) => roleLabels[role] ?? role).join(', ') : 'Unassigned' },
+                        { label: 'Member number', value: user.member?.member_number ?? 'Not linked' },
+                    ]}
+                    actions={<UserActions user={user} onEditRole={onEditRole} compact />}
+                />
+            )}
             emptyText={
                 filtered
                     ? 'No accounts match these filters.'

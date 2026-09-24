@@ -1,5 +1,6 @@
 import InertiaButton from '@/Components/InertiaButton';
 import ServerDataTable from '@/Components/Tables/ServerDataTable';
+import MobileRecord from '@/Components/Tables/MobileRecord';
 import { getSortOrder } from '@/Components/Tables/tableQuery';
 import DeleteOutlined from '@ant-design/icons/DeleteOutlined';
 import EditOutlined from '@ant-design/icons/EditOutlined';
@@ -11,7 +12,7 @@ const dateFormatter = new Intl.DateTimeFormat('en-MY', {
     dateStyle: 'medium',
 });
 
-function CategoryActions({ category, onDelete }) {
+function CategoryActions({ category, onDelete, compact = false }) {
     return (
         <Space size={4} role="group" aria-label={`Actions for ${category.name}`}>
             <Tooltip title="Edit category">
@@ -21,7 +22,9 @@ function CategoryActions({ category, onDelete }) {
                     size="small"
                     icon={<EditOutlined />}
                     aria-label={`Edit ${category.name}`}
-                />
+                >
+                    {compact ? 'Edit' : null}
+                </InertiaButton>
             </Tooltip>
             <Tooltip title="Delete category">
                 <Button
@@ -31,7 +34,9 @@ function CategoryActions({ category, onDelete }) {
                     icon={<DeleteOutlined />}
                     onClick={() => onDelete(category)}
                     aria-label={`Delete ${category.name}`}
-                />
+                >
+                    {compact ? 'Delete' : null}
+                </Button>
             </Tooltip>
         </Space>
     );
@@ -106,6 +111,17 @@ export default function CategoryTable({
         <ServerDataTable
             columns={columns}
             data={categories}
+            mobileSort={filters}
+            mobileRenderItem={(category) => (
+                <MobileRecord
+                    title={category.name}
+                    status={<Tag color="cyan">{category.books_count} {category.books_count === 1 ? 'book' : 'books'}</Tag>}
+                    details={[
+                        { label: 'Created', value: category.created_at ? dateFormatter.format(new Date(category.created_at)) : '—' },
+                    ]}
+                    actions={<CategoryActions category={category} compact onDelete={onDelete} />}
+                />
+            )}
             emptyText={emptyText}
             loading={loading}
             meta={meta}

@@ -23,12 +23,13 @@ export default function WorkspaceLayout({
 
             <Drawer
                 className="workspace-drawer"
-                closable={false}
+                closable
                 destroyOnHidden
                 mask={{ blur: true, closable: true }}
                 onClose={() => setSidebarOpen(false)}
                 open={sidebarOpen}
                 placement="left"
+                title="Navigation"
                 size="min(18rem, 88vw)"
                 styles={{ body: { padding: 0 } }}
             >

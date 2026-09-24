@@ -4,6 +4,7 @@ import StopOutlined from '@ant-design/icons/StopOutlined';
 import { Badge, Button, Space, Tooltip, Typography } from 'antd';
 import { useMemo } from 'react';
 import ServerDataTable from '@/Components/Tables/ServerDataTable';
+import MobileRecord from '@/Components/Tables/MobileRecord';
 import { getSortOrder } from '@/Components/Tables/tableQuery';
 
 const memberStatusBadgeStatuses = {
@@ -16,7 +17,7 @@ const dateFormatter = new Intl.DateTimeFormat('en-MY', {
     dateStyle: 'medium',
 });
 
-function MemberActions({ member, can, onTransition }) {
+function MemberActions({ member, can, onTransition, compact = false }) {
     const actions = [];
 
     if (member.status === 'active' && can.suspend) {
@@ -28,7 +29,9 @@ function MemberActions({ member, can, onTransition }) {
                     icon={<PauseCircleOutlined />}
                     aria-label={`Suspend ${member.name}`}
                     onClick={() => onTransition(member, 'suspend')}
-                />
+                >
+                    {compact ? 'Suspend' : null}
+                </Button>
             </Tooltip>,
         );
     }
@@ -43,7 +46,9 @@ function MemberActions({ member, can, onTransition }) {
                     icon={<StopOutlined />}
                     aria-label={`Deactivate membership for ${member.name}`}
                     onClick={() => onTransition(member, 'deactivate')}
-                />
+                >
+                    {compact ? 'Deactivate' : null}
+                </Button>
             </Tooltip>,
         );
     }
@@ -57,7 +62,9 @@ function MemberActions({ member, can, onTransition }) {
                     icon={<CheckCircleOutlined />}
                     aria-label={`Reactivate ${member.name}`}
                     onClick={() => onTransition(member, 'reactivate')}
-                />
+                >
+                    {compact ? 'Reactivate' : null}
+                </Button>
             </Tooltip>,
         );
     }
@@ -165,6 +172,19 @@ export default function MemberTable({
         <ServerDataTable
             columns={columns}
             data={members}
+            mobileSort={filters}
+            mobileRenderItem={(member) => (
+                <MobileRecord
+                    title={member.name}
+                    subtitle={member.email}
+                    status={<Badge status={memberStatusBadgeStatuses[member.status] ?? 'default'} text={member.status.charAt(0).toUpperCase() + member.status.slice(1)} />}
+                    details={[
+                        { label: 'Member number', value: member.member_number },
+                        { label: 'Joined', value: member.created_at ? dateFormatter.format(new Date(member.created_at)) : '—' },
+                    ]}
+                    actions={<MemberActions member={member} can={can} onTransition={onTransition} compact />}
+                />
+            )}
             emptyText={
                 isFiltered
                     ? 'No members match these filters.'

@@ -7,7 +7,7 @@ import { jsonRequest } from '@/Utils/jsonRequest';
 import { getRequestErrorMessage } from '@/Utils/requestErrorMessage';
 import PlusOutlined from '@ant-design/icons/PlusOutlined';
 import { Head, usePage } from '@inertiajs/react';
-import { App as AntdApp, Card, Flex, Select } from 'antd';
+import { Alert, App as AntdApp, Button, Card, Flex, Select } from 'antd';
 import { useEffect } from 'react';
 import LoanTable from './Components/LoanTable';
 
@@ -31,11 +31,14 @@ export default function Index({ filters: initialFilters, loans: initialLoans }) 
     const { message, modal } = AntdApp.useApp();
     const {
         error,
+        failureCount,
         filters,
         handlePageChange,
         handleTableChange,
         loading,
         refresh,
+        refreshing,
+        refreshSilently,
         resource: loans,
         search,
         setFilter,
@@ -49,23 +52,12 @@ export default function Index({ filters: initialFilters, loans: initialLoans }) 
     useEffect(() => {
         const interval = window.setInterval(() => {
             if (!loading && document.visibilityState === 'visible') {
-                void refresh();
+                void refreshSilently();
             }
-        }, 10000);
+        }, Math.min(10000 * 2 ** failureCount, 60000));
 
         return () => window.clearInterval(interval);
-    }, [loading, refresh]);
-
-    useEffect(() => {
-        if (error) {
-            message.error(
-                getRequestErrorMessage(
-                    error,
-                    'The loan table could not be refreshed. Try again.',
-                ),
-            );
-        }
-    }, [error, message]);
+    }, [failureCount, loading, refreshSilently]);
 
     const confirmRenew = (loan) => {
         modal.confirm({
@@ -181,6 +173,24 @@ export default function Index({ filters: initialFilters, loans: initialLoans }) 
                     </span>
                 }
             >
+                {error && (
+                    <Alert
+                        className="loan-ledger-alert"
+                        type="warning"
+                        showIcon
+                        title="Data may be out of date"
+                        description="The latest loan records could not be loaded. The last successful results are still shown."
+                        action={
+                            <Button
+                                loading={refreshing}
+                                size="small"
+                                onClick={() => void refreshSilently()}
+                            >
+                                Retry
+                            </Button>
+                        }
+                    />
+                )}
                 <LoanTable
                     canRenew={auth.can.renewLoans}
                     canReturn={auth.can.returnLoans}
