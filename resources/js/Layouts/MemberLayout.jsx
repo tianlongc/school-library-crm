@@ -7,7 +7,7 @@ import UserOutlined from '@ant-design/icons/UserOutlined';
 import { Link } from '@inertiajs/react';
 import { Layout, Menu, Typography } from 'antd';
 
-export default function MemberLayout({ children }) {
+export default function MemberLayout({ children, wide = false }) {
     const items = [
         {
             key: 'member.dashboard',
@@ -95,7 +95,7 @@ export default function MemberLayout({ children }) {
             <Layout.Content
                 id="main-content"
                 tabIndex="-1"
-                className="member-content"
+                className={`member-content${wide ? ' member-content-wide' : ''}`}
             >
                 {children}
             </Layout.Content>

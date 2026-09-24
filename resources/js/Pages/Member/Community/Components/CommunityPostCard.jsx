@@ -1,6 +1,6 @@
 import { jsonRequest } from '@/Utils/jsonRequest';
 import { getRequestErrorMessage } from '@/Utils/requestErrorMessage';
-import { EllipsisOutlined } from '@ant-design/icons';
+import { BookOutlined, EllipsisOutlined } from '@ant-design/icons';
 import {
     App as AntdApp,
     Avatar,
@@ -121,7 +121,7 @@ export default function CommunityPostCard({
     return (
         <div id={`post-${post.id}`}>
             <Card className="overflow-hidden rounded-2xl shadow-sm">
-                <div className="space-y-4">
+                <div className="space-y-3">
                     <div className="flex items-start justify-between gap-4">
                         <Space align="start">
                             <Avatar>
@@ -189,25 +189,31 @@ export default function CommunityPostCard({
                         )}
                     </div>
 
-                    <Typography.Paragraph className="mb-0 whitespace-pre-wrap">
+                    <Typography.Paragraph className="mb-0 max-w-[75ch] whitespace-pre-wrap break-words">
                         {currentPost.body}
                     </Typography.Paragraph>
 
                     {currentPost.images?.length > 0 && (
                         <Image.PreviewGroup>
                             <div
-                                className={`grid gap-2 ${currentPost.images.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}
+                                className={`grid w-full max-w-[640px] gap-2 ${currentPost.images.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}
                             >
                                 {currentPost.images.map((image, index) => (
                                     <Image
                                         key={image.uuid}
                                         alt={`Image ${index + 1} shared by ${currentPost.author.name}`}
-                                        className="h-48 w-full rounded-lg object-cover"
-                                        height={currentPost.images.length === 1 ? 320 : 192}
+                                        classNames={{
+                                            root: 'block aspect-[16/10] overflow-hidden rounded-xl',
+                                            image: 'h-full w-full object-cover',
+                                        }}
                                         preview={{
                                             mask: 'Open image',
                                         }}
                                         src={image.url}
+                                        styles={{
+                                            root: { width: '100%' },
+                                            image: { height: '100%' },
+                                        }}
                                         width="100%"
                                     />
                                 ))}
@@ -217,10 +223,20 @@ export default function CommunityPostCard({
 
                     {currentPost.book && (
                         <div>
-                            <Tag>
-                                {currentPost.book.title}
-                                {' · '}
-                                {currentPost.book.author}
+                            <Tag className="m-0 inline-flex max-w-full whitespace-normal break-words px-3 py-2">
+                                <span className="flex min-w-0 items-center gap-2">
+                                    <BookOutlined aria-hidden="true" className="shrink-0 text-teal-800" />
+                                    <span className="min-w-0">
+                                        <span className="block break-words font-semibold text-slate-900">
+                                            {currentPost.book.title}
+                                        </span>
+                                        {currentPost.book.author && (
+                                            <span className="block break-words text-xs text-slate-600">
+                                                {currentPost.book.author}
+                                            </span>
+                                        )}
+                                    </span>
+                                </span>
                             </Tag>
                         </div>
                     )}

@@ -7,7 +7,7 @@ import { BookOutlined, CopyOutlined, DeleteOutlined, DesktopOutlined, EyeInvisib
 import { DragDropProvider, useDragOperation, useDraggable, useDroppable } from '@dnd-kit/react';
 import { useSortable } from '@dnd-kit/react/sortable';
 import { Button, Drawer, Dropdown, Empty, Flex, Grid, Input, Popconfirm, Segmented, Select, Tabs, Tooltip, Typography } from 'antd';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import LayersPanel from './LayersPanel';
 
 const BLOCK_ICONS = {
@@ -280,6 +280,7 @@ function CanvasSurface({ bookOptions, content, onAddAfter, onDelete, onDuplicate
 function Inspector({ block, bookOptions, onBeforeMediaUpload, onChange }) {
     const [uploading, setUploading] = useState(false);
     const [uploadError, setUploadError] = useState('');
+    const imageInputRef = useRef(null);
 
     if (!block) {
         return <div className="cms-builder-empty-panel"><Empty description="Select a canvas block to edit it." image={Empty.PRESENTED_IMAGE_SIMPLE} /></div>;
@@ -337,18 +338,26 @@ function Inspector({ block, bookOptions, onBeforeMediaUpload, onChange }) {
             {(block.type === 'hero' || block.type === 'image') && (
                 <div className="cms-builder-field">
                     <span>Image</span>
-                    {block.data.media_url && <img alt="" className="w-full rounded-lg object-cover" src={block.data.media_url} />}
+                    {block.data.media_url && <img alt="Current block image" className="w-full rounded-lg object-cover" src={block.data.media_url} />}
                     <input
                         accept="image/jpeg,image/png,image/webp"
+                        aria-label="Choose block image"
+                        className="sr-only"
                         disabled={uploading}
                         onChange={(event) => {
                             const file = event.target.files?.[0];
                             if (file) uploadImage(file);
                             event.target.value = '';
                         }}
+                        ref={imageInputRef}
+                        tabIndex={-1}
                         type="file"
                     />
-                    {uploadError && <Typography.Text type="danger">{uploadError}</Typography.Text>}
+                    <Button disabled={uploading} onClick={() => imageInputRef.current?.click()}>
+                        {uploading ? 'Uploading image…' : block.data.media_uuid ? 'Replace image' : 'Choose image'}
+                    </Button>
+                    <Typography.Text type="secondary">JPEG, PNG or WebP. Maximum 5 MB.</Typography.Text>
+                    {uploadError && <Typography.Text role="alert" type="danger">{uploadError}</Typography.Text>}
                     {block.data.media_uuid && <Button danger disabled={uploading} onClick={removeImage} size="small">Remove image</Button>}
                 </div>
             )}

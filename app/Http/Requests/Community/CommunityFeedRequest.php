@@ -43,6 +43,11 @@ class CommunityFeedRequest extends FormRequest
                 'integer',
                 Rule::in([10, 20]),
             ],
+            'category_id' => [
+                'nullable',
+                'integer',
+                'exists:categories,id',
+            ],
         ];
     }
 }

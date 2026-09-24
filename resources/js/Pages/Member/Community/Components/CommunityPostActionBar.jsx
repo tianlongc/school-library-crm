@@ -1,7 +1,7 @@
 import {
-    CommentOutlined,
     LikeFilled,
     LikeOutlined,
+    MessageOutlined,
     ShareAltOutlined,
 } from '@ant-design/icons';
 import { Alert, App as AntdApp, Avatar, Button, Input, Space, Typography } from 'antd';
@@ -256,7 +256,7 @@ export default function CommunityPostActionBar({ post }) {
 
                 <Button
                     type="text"
-                    icon={<CommentOutlined />}
+                    icon={<MessageOutlined />}
                     loading={commentsLoading}
                     onClick={toggleComments}
                 >

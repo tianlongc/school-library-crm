@@ -2,10 +2,11 @@ import { jsonRequest } from '@/Utils/jsonRequest';
 import { getLaravelValidationErrors } from '@/Utils/laravelValidation';
 import { getRequestErrorMessage } from '@/Utils/requestErrorMessage';
 import { PictureOutlined, PlusOutlined } from '@ant-design/icons';
-import { useForm } from '@inertiajs/react';
+import { useForm, usePage } from '@inertiajs/react';
 import {
     App as AntdApp,
     Alert,
+    Avatar,
     Button,
     Card,
     Form,
@@ -17,13 +18,16 @@ import {
     Typography,
     Upload,
 } from 'antd';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 export default function CreatePostCard({
     bookOptions,
     onCreated,
 }) {
     const { message } = AntdApp.useApp();
+    const { auth } = usePage().props;
+    const authorName = auth?.user?.name?.trim() || 'You';
+    const authorInitial = authorName.charAt(0).toUpperCase();
 
     const {
         data,
@@ -44,6 +48,20 @@ export default function CreatePostCard({
     const [previewOpen, setPreviewOpen] = useState(false);
     const [showBookPicker, setShowBookPicker] = useState(false);
     const [showImagePicker, setShowImagePicker] = useState(false);
+    const [expanded, setExpanded] = useState(false);
+    const bodyInputRef = useRef(null);
+    const compactButtonRef = useRef(null);
+
+    const minimizeComposer = () => {
+        setExpanded(false);
+        requestAnimationFrame(() => compactButtonRef.current?.focus());
+    };
+
+    useEffect(() => {
+        if (expanded) {
+            bodyInputRef.current?.focus();
+        }
+    }, [expanded]);
 
     const selectedBook = bookOptions.find(
         (book) => book.value === data.book_id,
@@ -121,6 +139,7 @@ export default function CreatePostCard({
             );
 
             await onCreated?.(payload.post);
+            setExpanded(false);
         } catch (error) {
             const validationErrors = getLaravelValidationErrors(error);
 
@@ -138,6 +157,26 @@ export default function CreatePostCard({
             setSubmitting(false);
         }
     };
+
+    if (!expanded) {
+        return (
+            <Card className="rounded-2xl shadow-sm" size="small" variant="borderless">
+                <Button
+                    block
+                    aria-label="Write a community post"
+                    className="!flex !h-12 !items-center !justify-start !rounded-xl !bg-slate-50 !px-4 !text-left !text-slate-600 hover:!bg-teal-50"
+                    icon={<Avatar aria-hidden="true" size={32}>{authorInitial}</Avatar>}
+                    onClick={() => setExpanded(true)}
+                    ref={compactButtonRef}
+                    type="text"
+                >
+                    {data.body.trim()
+                        ? 'Continue your post…'
+                        : 'Share a thought, question, or book…'}
+                </Button>
+            </Card>
+        );
+    }
 
     return (
         <Card
@@ -163,6 +202,7 @@ export default function CreatePostCard({
                 >
                     <Input.TextArea
                         id="community-post-body"
+                        ref={bodyInputRef}
                         autoSize={{
                             minRows: 3,
                             maxRows: 8,
@@ -309,14 +349,23 @@ export default function CreatePostCard({
                         )}
                     </div>
 
-                    <Button
-                        type="primary"
-                        htmlType="submit"
-                        loading={submitting}
-                        disabled={!data.body.trim()}
-                    >
-                        Post
-                    </Button>
+                    <div className="flex items-center gap-2">
+                        <Button
+                            type="text"
+                            disabled={submitting}
+                            onClick={minimizeComposer}
+                        >
+                            Minimize
+                        </Button>
+                        <Button
+                            type="primary"
+                            htmlType="submit"
+                            loading={submitting}
+                            disabled={!data.body.trim()}
+                        >
+                            Post
+                        </Button>
+                    </div>
                 </div>
             </Form>
         </Card>

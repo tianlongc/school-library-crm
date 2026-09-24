@@ -10,12 +10,19 @@ use Illuminate\Pagination\CursorPaginator;
 
 class CommunityFeedQuery
 {
-    public function cursorPaginate(User $viewer, ?string $cursor = null, int $perPage = 10): CursorPaginator
+    public function cursorPaginate(User $viewer, ?string $cursor = null, int $perPage = 10, ?int $categoryId = null): CursorPaginator
     {
         return CommunityPost::query()
             ->where(
                 'status',
                 CommunityPostStatus::Published->value,
+            )
+            ->when(
+                $categoryId !== null,
+                fn (Builder $query) => $query->whereHas(
+                    'book',
+                    fn (Builder $bookQuery) => $bookQuery->where('category_id', $categoryId),
+                ),
             )
             ->with([
                 'author:id,name',

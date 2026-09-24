@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Member;
 
 use App\Domain\Book\Models\Book;
 use App\Domain\Book\Queries\BookOptionQuery;
+use App\Domain\Category\Models\Category;
+use App\Domain\Category\Queries\CategoryQuery;
 use App\Domain\Community\Actions\CreateCommunityPostAction;
 use App\Domain\Community\Actions\CreateCommunityPostCommentAction;
 use App\Domain\Community\Actions\DeleteCommunityPostAction;
@@ -12,6 +14,7 @@ use App\Domain\Community\Actions\ToggleCommunityPostLikeAction;
 use App\Domain\Community\Actions\UpdateCommunityPostAction;
 use App\Domain\Community\Models\CommunityPost;
 use App\Domain\Community\Queries\CommunityFeedQuery;
+use App\Domain\Community\Queries\TrendingCommunityBooksQuery;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Community\CommunityFeedRequest;
 use App\Http\Requests\Community\StoreCommunityPostCommentRequest;
@@ -31,8 +34,15 @@ class CommunityPostController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index(Request $request, CommunityFeedQuery $feedQuery, BookOptionQuery $bookOptionQuery): Response
-    {
+    public function index(
+        CommunityFeedRequest $request,
+        CommunityFeedQuery $feedQuery,
+        BookOptionQuery $bookOptionQuery,
+        CategoryQuery $categoryQuery,
+        TrendingCommunityBooksQuery $trendingCommunityBooksQuery
+    ): Response {
+        $validated = $request->validated();
+        $categoryId = isset($validated['category_id']) ? (int) $validated['category_id'] : null;
         $books = $bookOptionQuery->get();
 
         return Inertia::render(
@@ -41,13 +51,29 @@ class CommunityPostController extends Controller
                 'initialPosts' => CommunityPostResource::collection(
                     $feedQuery->cursorPaginate(
                         viewer: $request->user(),
+                        perPage: $validated['per_page'],
+                        categoryId: $categoryId,
                     ),
                 ),
-
+                'categoryOptions' => $categoryQuery->getOptions()->map(
+                    fn (Category $category): array => [
+                        'value' => $category->id,
+                        'label' => $category->name,
+                    ],
+                ),
+                'selectedCategoryId' => $categoryId,
                 'bookOptions' => $books->map(
                     fn (Book $book) => [
                         'value' => $book->id,
                         'label' => "{$book->title} - {$book->author}",
+                    ],
+                ),
+                'trendingBooks' => $trendingCommunityBooksQuery->getTrendingBooks()->map(
+                    fn (Book $book): array => [
+                        'id' => $book->id,
+                        'title' => $book->title,
+                        'author' => $book->author,
+                        'discussionsCount' => (int) $book->discussions_count,
                     ],
                 ),
             ],
@@ -57,12 +83,14 @@ class CommunityPostController extends Controller
     public function feed(CommunityFeedRequest $request, CommunityFeedQuery $feedQuery): AnonymousResourceCollection
     {
         $validated = $request->validated();
+        $categoryId = isset($validated['category_id']) ? (int) $validated['category_id'] : null;
 
         return CommunityPostResource::collection(
             $feedQuery->cursorPaginate(
                 viewer: $request->user(),
                 cursor: $validated['cursor'] ?? null,
                 perPage: $validated['per_page'],
+                categoryId: $categoryId,
             ),
         );
     }
