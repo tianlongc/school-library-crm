@@ -14,26 +14,29 @@ it('seeds community permissions before assigning roles', function () {
         ->exists())->toBeTrue();
 });
 
-it('seeds a paginated community feed with comments', function (): void {
+it('seeds a cursor-paginated community feed with comments', function (): void {
     $this->seed(DatabaseSeeder::class);
 
     $viewer = User::query()
         ->where('email', 'community.reader@example.test')
         ->firstOrFail();
 
-    $this->actingAs($viewer)
+    $response = $this->actingAs($viewer)
         ->postJson(
             route('member.community.feed'),
             [
-                'page' => 1,
                 'per_page' => 10,
             ],
         )
         ->assertSuccessful()
-        ->assertJsonPath('meta.total', 25)
-        ->assertJsonPath('meta.last_page', 3)
+        ->assertJsonPath('meta.per_page', 10)
+        ->assertJsonPath('meta.prev_cursor', null)
         ->assertJsonCount(10, 'data')
         ->assertJsonPath('data.0.comments_count', 3);
+
+    expect($response->json('meta.next_cursor'))
+        ->toBeString()
+        ->not->toBeEmpty();
 
     $post = CommunityPost::query()
         ->where('body', 'What book helped you see a familiar place differently?')

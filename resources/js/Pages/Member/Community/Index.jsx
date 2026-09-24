@@ -3,7 +3,7 @@ import MemberLayout from '@/Layouts/MemberLayout';
 import { isCancelledRequest, jsonRequest } from '@/Utils/jsonRequest';
 import { getRequestErrorMessage } from '@/Utils/requestErrorMessage';
 import { Head } from '@inertiajs/react';
-import { App as AntdApp, Empty, Pagination, Skeleton } from 'antd';
+import { Alert, Button, Divider, Empty, FloatButton, Skeleton } from 'antd';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import CommunityFeed from './Components/CommunityFeed';
 import CreatePostCard from './Components/CreatePostCard';
@@ -14,21 +14,28 @@ export default function Index({
     initialPosts,
     bookOptions,
 }) {
-    const { message } = AntdApp.useApp();
+    const [posts, setPosts] = useState(initialPosts.data ?? []);
+    const [nextCursor, setNextCursor] = useState(initialPosts.meta?.next_cursor ?? null);
+    const [loadingMore, setLoadingMore] = useState(false);
+    const [loadError, setLoadError] = useState('');
+    const [failedCursor, setFailedCursor] = useState(null);
 
-    const [posts, setPosts] = useState(initialPosts);
-    const [loading, setLoading] = useState(false);
-
+    const sentinelRef = useRef(null);
+    const loadingRef = useRef(false);
     const abortControllerRef = useRef(null);
-    const loadPage = useCallback(
-        async (page = 1) => {
-            abortControllerRef.current?.abort();
+
+    const loadMore = useCallback(
+        async (cursor = nextCursor) => {
+            if (!cursor || loadingRef.current) {
+                return;
+            }
 
             const abortController = new AbortController();
-
             abortControllerRef.current = abortController;
 
-            setLoading(true);
+            loadingRef.current = true;
+            setLoadingMore(true);
+            setLoadError('');
 
             try {
                 const payload = await jsonRequest({
@@ -37,63 +44,84 @@ export default function Index({
                     ),
                     method: 'POST',
                     data: {
-                        page,
+                        cursor,
                         per_page: COMMUNITY_PAGE_SIZE,
                     },
                     signal: abortController.signal,
                 });
 
                 if (abortController.signal.aborted) {
-                    return false;
+                    return;
                 }
 
-                setPosts(payload);
+                setPosts((current) => {
+                    const knownIds = new Set(current.map((post) => post.id));
+                    const additions = (payload.data ?? []).filter(
+                        (post) => !knownIds.has(post.id),
+                    );
 
-                return true;
+                    return [...current, ...additions];
+                });
+
+                setNextCursor(payload.meta?.next_cursor ?? null);
+                setFailedCursor(null);
             } catch (error) {
-                if (isCancelledRequest(error)) {
-                    return false;
+                if (!isCancelledRequest(error)) {
+                    setFailedCursor(cursor);
+                    setLoadError(
+                        getRequestErrorMessage(
+                            error,
+                            'Community posts could not be loaded. Try again.',
+                        ),
+                    );
                 }
-
-                message.error(
-                    getRequestErrorMessage(
-                        error,
-                        'Unable to load community posts.',
-                    ),
-                );
-
-                return false;
             } finally {
                 if (abortControllerRef.current === abortController) {
                     abortControllerRef.current = null;
-                    setLoading(false);
+                    loadingRef.current = false;
+                    setLoadingMore(false);
                 }
             }
-        },
-        [message],
-    );
+        }, [nextCursor]);
 
-    useEffect(
-        () => () => {
-            abortControllerRef.current?.abort();
-            abortControllerRef.current = null;
-        },
-        [],
-    );
+    useEffect(() => {
+        if (!nextCursor || loadingMore || loadError || !sentinelRef.current) {
+            return;
+        }
 
-    const handlePostCreated = useCallback(
-        () => loadPage(1),
-        [loadPage],
-    );
+        const observer = new IntersectionObserver(([entry]) => {
+            if (entry.isIntersecting) {
+                void loadMore(nextCursor);
+            }
+        }, { rootMargin: '300px 0px' });
 
-    const handlePostDeleted = useCallback(() => {
-        const page =
-            posts.data.length === 1 && posts.meta.current_page > 1
-                ? posts.meta.current_page - 1
-                : posts.meta.current_page;
+        observer.observe(sentinelRef.current);
 
-        return loadPage(page);
-    }, [loadPage, posts.data.length, posts.meta.current_page]);
+        return () => observer.disconnect();
+    }, [loadError, loadMore, loadingMore, nextCursor]);
+
+    useEffect(() => () => {
+        abortControllerRef.current?.abort();
+        abortControllerRef.current = null;
+        loadingRef.current = false;
+    }, []);
+
+    const handlePostCreated = useCallback((newPost) => {
+        if (!newPost) {
+            return;
+        }
+
+        setPosts((current) => [
+            newPost,
+            ...current.filter((post) => post.id !== newPost.id),
+        ]);
+    }, []);
+
+    const handlePostDeleted = useCallback((deletedPost) => {
+        setPosts((current) =>
+            current.filter((post) => post.id !== deletedPost.id),
+        );
+    }, []);
 
     return (
         <MemberLayout>
@@ -110,32 +138,75 @@ export default function Index({
                     onCreated={handlePostCreated}
                 />
 
-                {loading ? (
-                    <Skeleton active avatar paragraph={{ rows: 3 }} />
-                ) : posts.data.length === 0 ? (
-                    <Empty
-                        description="No posts yet. Be the first to share something."
-                    />
+                {posts.length === 0 ? (
+                    loadError ? (
+                        <Alert
+                            type="error"
+                            showIcon
+                            title="Posts could not be loaded"
+                            description={loadError}
+                            action={
+                                <Button onClick={() => loadMore(failedCursor)}>
+                                    Retry
+                                </Button>
+                            }
+                        />
+                    ) : (
+                        <Empty description="No posts yet. Be the first to share something." />
+                    )
                 ) : (
                     <>
                         <CommunityFeed
                             bookOptions={bookOptions}
-                            posts={posts.data}
+                            posts={posts}
                             onDeleted={handlePostDeleted}
                         />
 
-                        <div className="flex justify-center pt-2">
-                            <Pagination
-                                current={posts.meta.current_page}
-                                pageSize={posts.meta.per_page}
-                                total={posts.meta.total}
-                                showSizeChanger={false}
-                                onChange={loadPage}
+                        {nextCursor && <div ref={sentinelRef} aria-hidden="true" />}
+
+                        {loadingMore && (
+                            <div role="status" aria-live="polite">
+                                <span className="sr-only">Loading more posts</span>
+                                <Skeleton active avatar paragraph={{ rows: 2 }} />
+                            </div>
+                        )}
+
+                        {loadError && (
+                            <Alert
+                                type="error"
+                                showIcon
+                                title="Posts could not be loaded"
+                                description={loadError}
+                                action={
+                                    <Button
+                                        disabled={loadingMore}
+                                        onClick={() => loadMore(failedCursor)}
+                                    >
+                                        Retry
+                                    </Button>
+                                }
                             />
-                        </div>
+                        )}
+
+                        {!nextCursor && !loadingMore && !loadError && (
+                            <Divider plain>
+                                You have reached the bottom of the community!
+                            </Divider>
+                        )}
                     </>
                 )}
             </div>
+
+            <FloatButton.BackTop
+                aria-label="Back to top"
+                tooltip="Back to top"
+                visibilityHeight={600}
+                showProgress
+                style={{
+                    bottom: 'calc(env(safe-area-inset-bottom, 0px) + 24px)',
+                    insetInlineEnd: 24,
+                }}
+            />
         </MemberLayout>
     );
 }

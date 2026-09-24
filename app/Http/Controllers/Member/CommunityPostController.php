@@ -39,7 +39,7 @@ class CommunityPostController extends Controller
             'Member/Community/Index',
             [
                 'initialPosts' => CommunityPostResource::collection(
-                    $feedQuery->paginate(
+                    $feedQuery->cursorPaginate(
                         viewer: $request->user(),
                     ),
                 ),
@@ -59,9 +59,9 @@ class CommunityPostController extends Controller
         $validated = $request->validated();
 
         return CommunityPostResource::collection(
-            $feedQuery->paginate(
+            $feedQuery->cursorPaginate(
                 viewer: $request->user(),
-                page: $validated['page'],
+                cursor: $validated['cursor'] ?? null,
                 perPage: $validated['per_page'],
             ),
         );

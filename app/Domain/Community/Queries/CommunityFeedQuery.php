@@ -6,11 +6,11 @@ use App\Domain\Community\Enums\CommunityPostStatus;
 use App\Domain\Community\Models\CommunityPost;
 use App\Domain\User\Models\User;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Pagination\CursorPaginator;
 
 class CommunityFeedQuery
 {
-    public function paginate(User $viewer, int $page = 1, int $perPage = 10): LengthAwarePaginator
+    public function cursorPaginate(User $viewer, ?string $cursor = null, int $perPage = 10): CursorPaginator
     {
         return CommunityPost::query()
             ->where(
@@ -31,11 +31,11 @@ class CommunityFeedQuery
                     ->where('user_id', $viewer->id),
             ])
             ->latest('id')
-            ->paginate(
+            ->cursorPaginate(
                 $perPage,
                 ['*'],
-                'page',
-                $page,
+                'cursor',
+                $cursor,
             );
     }
 }

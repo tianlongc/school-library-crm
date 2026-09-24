@@ -232,6 +232,9 @@ export default function EditCommunityPostModal({
                             {visibleExistingImages.length + fileList.length}/4
                         </Typography.Text>
                     </div>
+                    <Typography.Paragraph className="mb-2" type="secondary">
+                        Up to 4 JPEG, PNG, or WebP images, 5 MB each.
+                    </Typography.Paragraph>
 
                     {existingImages.length > 0 && (
                         <div className="mb-3 grid grid-cols-2 gap-2 sm:grid-cols-4">

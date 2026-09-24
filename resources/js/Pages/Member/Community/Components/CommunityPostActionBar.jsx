@@ -4,7 +4,7 @@ import {
     LikeOutlined,
     ShareAltOutlined,
 } from '@ant-design/icons';
-import { App as AntdApp, Avatar, Button, Input, Space, Typography } from 'antd';
+import { Alert, App as AntdApp, Avatar, Button, Input, Space, Typography } from 'antd';
 import { useEffect, useState } from 'react';
 import { jsonRequest } from '@/Utils/jsonRequest';
 import { getRequestErrorMessage } from '@/Utils/requestErrorMessage';
@@ -51,6 +51,7 @@ export default function CommunityPostActionBar({ post }) {
     const [commentsOpen, setCommentsOpen] = useState(false);
     const [commentsLoaded, setCommentsLoaded] = useState(false);
     const [commentsLoading, setCommentsLoading] = useState(false);
+    const [commentsError, setCommentsError] = useState('');
     const [submittingComment, setSubmittingComment] = useState(false);
     const [liking, setLiking] = useState(false);
     const [sharing, setSharing] = useState(false);
@@ -61,6 +62,7 @@ export default function CommunityPostActionBar({ post }) {
 
     const loadComments = async () => {
         setCommentsLoading(true);
+        setCommentsError('');
 
         try {
             const payload = await jsonRequest({
@@ -74,10 +76,10 @@ export default function CommunityPostActionBar({ post }) {
             setComments(payload.data ?? []);
             setCommentsLoaded(true);
         } catch (error) {
-            message.error(
+            setCommentsError(
                 getRequestErrorMessage(
                     error,
-                    'Unable to load comments.',
+                    'Comments could not be loaded. Try again.',
                 ),
             );
         } finally {
@@ -273,11 +275,25 @@ export default function CommunityPostActionBar({ post }) {
 
             {commentsOpen && (
                 <div className="mt-4 space-y-3">
-                    {comments.length === 0 ? (
+                    {commentsError && (
+                        <Alert
+                            type="error"
+                            showIcon
+                            title="Comments could not be loaded"
+                            description={commentsError}
+                            action={<Button onClick={loadComments}>Retry</Button>}
+                        />
+                    )}
+
+                    {commentsLoading && !commentsLoaded ? (
+                        <Typography.Text type="secondary">
+                            Loading comments…
+                        </Typography.Text>
+                    ) : commentsLoaded && comments.length === 0 ? (
                         <Typography.Text type="secondary">
                             No comments yet.
                         </Typography.Text>
-                    ) : (
+                    ) : comments.length > 0 ? (
                         <div className="space-y-3">
                             {comments.map((comment) => (
                                 <div
@@ -321,11 +337,15 @@ export default function CommunityPostActionBar({ post }) {
                                 </div>
                             ))}
                         </div>
-                    )}
+                    ) : null}
 
-                    {currentPost.can?.comment && (
+                    {currentPost.can?.comment && commentsLoaded && (
                         <div className="flex items-end gap-2">
+                            <label className="sr-only" htmlFor={`community-comment-${post.id}`}>
+                                Write a comment
+                            </label>
                             <Input.TextArea
+                                id={`community-comment-${post.id}`}
                                 value={commentBody}
                                 maxLength={1000}
                                 autoSize={{

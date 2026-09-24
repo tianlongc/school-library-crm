@@ -144,7 +144,7 @@ export default function CreatePostCard({
             className="overflow-hidden rounded-2xl shadow-sm"
             variant="borderless"
         >
-            <Form onFinish={submit}>
+            <Form layout="vertical" onFinish={submit} requiredMark={false}>
                 {requestError && (
                     <Alert
                         className="mb-4"
@@ -154,8 +154,15 @@ export default function CreatePostCard({
                     />
                 )}
 
-                <div>
+                <Form.Item
+                    label="Post"
+                    htmlFor="community-post-body"
+                    required
+                    validateStatus={errors.body ? 'error' : undefined}
+                    help={errors.body}
+                >
                     <Input.TextArea
+                        id="community-post-body"
                         autoSize={{
                             minRows: 3,
                             maxRows: 8,
@@ -163,6 +170,7 @@ export default function CreatePostCard({
                         className="text-base"
                         value={data.body}
                         maxLength={2000}
+                        showCount
                         placeholder="Share your thoughts ..."
                         onChange={(event) => {
                             setData(
@@ -174,18 +182,14 @@ export default function CreatePostCard({
                         }}
                     />
 
-                    {errors.body && (
-                        <Typography.Text
-                            className="mt-1 block"
-                            type="danger"
-                        >
-                            {errors.body}
-                        </Typography.Text>
-                    )}
-                </div>
+                </Form.Item>
 
                 {(showImagePicker || fileList.length > 0) && (
                     <div className="mt-3">
+                        <Typography.Text strong>Images (optional)</Typography.Text>
+                        <Typography.Paragraph className="mb-2" type="secondary">
+                            Up to 4 JPEG, PNG, or WebP images, 5 MB each.
+                        </Typography.Paragraph>
                         <Upload
                             accept="image/jpeg,image/png,image/webp"
                             beforeUpload={() => false}
@@ -211,8 +215,15 @@ export default function CreatePostCard({
                 )}
 
                 {showBookPicker && (
-                    <div className="mt-3">
+                    <Form.Item
+                        className="mt-3"
+                        label="Related book (optional)"
+                        htmlFor="community-post-book"
+                        validateStatus={errors.book_id ? 'error' : undefined}
+                        help={errors.book_id}
+                    >
                         <Select
+                            id="community-post-book"
                             className="w-full"
                             value={data.book_id ?? undefined}
                             options={bookOptions}
@@ -229,15 +240,7 @@ export default function CreatePostCard({
                             }}
                         />
 
-                        {errors.book_id && (
-                            <Typography.Text
-                                className="mt-1 block"
-                                type="danger"
-                            >
-                                {errors.book_id}
-                            </Typography.Text>
-                        )}
-                    </div>
+                    </Form.Item>
                 )}
 
                 {previewImage && (
