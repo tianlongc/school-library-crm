@@ -2,105 +2,67 @@ import InertiaButton from '@/Components/InertiaButton';
 import PageHeader from '@/Components/PageHeader';
 import StaffLayout from '@/Layouts/StaffLayout';
 import PlusOutlined from '@ant-design/icons/PlusOutlined';
-import { Head } from '@inertiajs/react';
-import { Card, Col, Flex, Row, Tag, Typography } from 'antd';
+import { Head, usePage } from '@inertiajs/react';
+import { Card, Divider, Flex, Typography } from 'antd';
 
-const plannedWorkflows = [
-    { name: 'Reporting', detail: 'Availability, overdue, and activity insights' },
-    {
-        name: 'Account security',
-        detail: 'Disable user accounts independently from membership status',
-    },
-];
+export default function Dashboard({ attention }) {
+    const { auth } = usePage().props;
 
-export default function Dashboard() {
     return (
         <StaffLayout title="Dashboard">
             <Head title="Dashboard" />
 
             <PageHeader
-                eyebrow="Workspace"
-                title="Library dashboard"
-                description="Issue, renewal, and return workflows are live. Reporting and account controls are planned next."
-            />
-
-            <Card
-                title="Catalogue workspace"
-                extra={<Tag color="success">Active</Tag>}
-            >
-                <Flex className="dashboard-feature" align="center" justify="space-between" gap={24} wrap>
-                    <div className="dashboard-feature-copy">
-                        <Typography.Title level={3}>
-                            Keep every title findable and ready for circulation.
-                        </Typography.Title>
-                        <Typography.Paragraph type="secondary">
-                            Create catalogue records, search by title, author, or ISBN,
-                            and maintain copy counts from one focused workspace.
-                        </Typography.Paragraph>
-                    </div>
-                    <Flex gap={8} wrap>
-                        <InertiaButton href={route('staff.books.index')}>
-                            Browse books
-                        </InertiaButton>
-                        <InertiaButton
-                            href={route('staff.books.create')}
-                            type="primary"
-                            icon={<PlusOutlined />}
-                        >
-                            Add book
-                        </InertiaButton>
-                    </Flex>
-                </Flex>
-            </Card>
-
-            <Card
-                title="Circulation workspace"
-                extra={<Tag color="success">Active</Tag>}
-            >
-                <Flex className="dashboard-feature" align="center" justify="space-between" gap={24} wrap>
-                    <div className="dashboard-feature-copy">
-                        <Typography.Title level={3}>
-                            Manage every loan from issue through renewal and return.
-                        </Typography.Title>
-                        <Typography.Paragraph type="secondary">
-                            Review due dates, renew eligible loans once, and confirm
-                            returned books from the circulation ledger.
-                        </Typography.Paragraph>
-                    </div>
-                    <Flex gap={8} wrap>
-                        <InertiaButton href={route('staff.loans.index')}>
-                            View loans
-                        </InertiaButton>
+                actions={
+                    auth.can.issueLoans ? (
                         <InertiaButton
                             href={route('staff.loans.create')}
-                            type="primary"
                             icon={<PlusOutlined />}
+                            type="primary"
                         >
                             Issue loan
                         </InertiaButton>
-                    </Flex>
+                    ) : undefined
+                }
+                description="Start a loan or resolve books that need staff attention."
+                title="Circulation desk"
+            />
+
+            <Card className="max-w-4xl" title="Needs attention">
+                <Flex align="center" gap={16} justify="space-between" wrap>
+                    <div>
+                        <Typography.Title level={3} style={{ marginBottom: 0 }}>
+                            {attention.overdue} overdue loans
+                        </Typography.Title>
+                        <Typography.Text type="secondary">
+                            Books past their due date without a return request.
+                        </Typography.Text>
+                    </div>
+                    <InertiaButton href={route('staff.loans.index', { status: 'overdue' })}>
+                        Review overdue
+                    </InertiaButton>
+                </Flex>
+
+                <Divider />
+
+                <Flex align="center" gap={16} justify="space-between" wrap>
+                    <div>
+                        <Typography.Title level={3} style={{ marginBottom: 0 }}>
+                            {attention.return_requested} return requests
+                        </Typography.Title>
+                        <Typography.Text type="secondary">
+                            Confirm books received before closing these loans.
+                        </Typography.Text>
+                    </div>
+                    <InertiaButton href={route('staff.loans.index', { status: 'return_requested' })}>
+                        Review requests
+                    </InertiaButton>
                 </Flex>
             </Card>
 
-            <Card
-                title="Next workflows"
-                extra={<Typography.Text type="secondary">Planned</Typography.Text>}
-                className="dashboard-next-card"
-            >
-                <Row gutter={[16, 16]}>
-                    {plannedWorkflows.map((workflow) => (
-                        <Col xs={24} md={12} key={workflow.name}>
-                            <Card size="small" variant="outlined" className="planned-workflow-card">
-                                <Typography.Text strong>{workflow.name}</Typography.Text>
-                                <Typography.Paragraph type="secondary">
-                                    {workflow.detail}
-                                </Typography.Paragraph>
-                                <Tag>Planned</Tag>
-                            </Card>
-                        </Col>
-                    ))}
-                </Row>
-            </Card>
+            <Flex className="mt-6" gap={8} wrap>
+                <InertiaButton href={route('staff.loans.index')}>All loans</InertiaButton>
+            </Flex>
         </StaffLayout>
     );
 }
